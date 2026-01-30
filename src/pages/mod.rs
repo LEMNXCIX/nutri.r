@@ -1,4 +1,11 @@
+pub mod achievements;
+pub mod calendar;
 pub mod config;
+pub mod dashboard;
+pub mod favorites;
 pub mod home;
+pub mod ingredients;
+pub mod pantry;
 pub mod plan;
 pub mod plan_detail;
+pub mod shopping_list;

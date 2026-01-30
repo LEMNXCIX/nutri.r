@@ -2,5 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    nutri_r_lib::run()
+    env_logger::init();
+    nutri_r_lib::run();
 }

@@ -1,0 +1,116 @@
+use crate::models::AppBackup;
+use crate::repositories::{
+    CalendarRepository, ConfigRepository, IngredientRepository, MetadataRepository,
+    PantryRepository, PlanRepository, TagRepository,
+};
+use crate::utils::error::AppResult;
+
+pub struct ImportExportService<
+    P: PlanRepository,
+    C: ConfigRepository,
+    I: IngredientRepository,
+    M: MetadataRepository,
+    CL: CalendarRepository,
+    T: TagRepository,
+    PY: PantryRepository,
+> {
+    plan_repo: P,
+    config_repo: C,
+    ingredient_repo: I,
+    metadata_repo: M,
+    calendar_repo: CL,
+    tag_repo: T,
+    pantry_repo: PY,
+}
+
+impl<
+        P: PlanRepository,
+        C: ConfigRepository,
+        I: IngredientRepository,
+        M: MetadataRepository,
+        CL: CalendarRepository,
+        T: TagRepository,
+        PY: PantryRepository,
+    > ImportExportService<P, C, I, M, CL, T, PY>
+{
+    pub fn new(
+        plan_repo: P,
+        config_repo: C,
+        ingredient_repo: I,
+        metadata_repo: M,
+        calendar_repo: CL,
+        tag_repo: T,
+        pantry_repo: PY,
+    ) -> Self {
+        Self {
+            plan_repo,
+            config_repo,
+            ingredient_repo,
+            metadata_repo,
+            calendar_repo,
+            tag_repo,
+            pantry_repo,
+        }
+    }
+
+    pub fn create_backup(&self) -> AppResult<AppBackup> {
+        let config = self.config_repo.get()?;
+        let plans = self.plan_repo.get_all()?;
+
+        let mut plan_details = Vec::new();
+        for plan in &plans {
+            // get_by_id devuelve AppResult<PlanDetail> (no Option)
+            if let Ok(detail) = self.plan_repo.get_by_id(&plan.id) {
+                plan_details.push(detail);
+            }
+        }
+
+        let mut metadata = Vec::new();
+        for plan in &plans {
+            if let Ok(Some(meta)) = self.metadata_repo.get(&plan.id) {
+                metadata.push(meta);
+            }
+        }
+
+        let tags = self.tag_repo.get_all()?;
+        let calendar = self.calendar_repo.get_all()?;
+        let pantry = self.pantry_repo.get_all()?;
+        let excluded_ingredients = self.ingredient_repo.get_excluded()?;
+
+        Ok(AppBackup {
+            version: "1.0.0".to_string(),
+            config,
+            plans,
+            plan_details,
+            metadata,
+            tags,
+            calendar,
+            pantry,
+            excluded_ingredients,
+        })
+    }
+
+    pub fn restore_backup(&self, backup: AppBackup) -> AppResult<()> {
+        // Restaurar cada componente
+        self.config_repo.save(&backup.config)?;
+
+        // Para planes, sobreescribimos el índice y guardamos cada detalle
+        self.plan_repo.overwrite_index(backup.plans)?;
+        for detail in backup.plan_details {
+            self.plan_repo.save_detail(detail)?;
+        }
+
+        // Metadatos
+        for meta in backup.metadata {
+            self.metadata_repo.save(meta)?;
+        }
+
+        self.tag_repo.save_all(backup.tags)?;
+        self.calendar_repo.save_all(backup.calendar)?;
+        self.pantry_repo.save_all(backup.pantry)?;
+        self.ingredient_repo
+            .save_excluded(&backup.excluded_ingredients)?;
+
+        Ok(())
+    }
+}

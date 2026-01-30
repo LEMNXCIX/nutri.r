@@ -1,97 +1,81 @@
-use log::info;
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-//
-use crate::models::{AppConfig, PlanIndex};
-
-pub mod ai;
-pub mod db;
+pub mod commands;
 pub mod models;
+pub mod repositories;
+pub mod services;
+pub mod state;
+pub mod utils;
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+// Legacy modules - removed
+// pub mod ai;
+// pub mod db;
 
-pub fn build_exclusion_list(index: &Vec<PlanIndex>) -> String {
-    // Implementar lógica para construir la lista de exclusión
-    // Tomamos las últimas 3 semanas (o menos si hay menos)
-    let start = if index.len() >= 3 { index.len() - 3 } else { 0 };
-    let recent = &index[start..];
-    info!("Recent plans: {:?}", recent);
-    let proteins: Vec<String> = recent
-        .iter()
-        .flat_map(|item| item.proteinas.clone())
-        .collect();
-
-    proteins.join(", ")
-}
-
-#[tauri::command]
-async fn generate_week(app_handle: tauri::AppHandle) -> Result<String, String> {
-    // 1. Leer Config y Index
-    let data_dir = db::get_data_dir(&app_handle);
-    let index_path = data_dir.join("index.json");
-    let index = db::read_index(&index_path);
-
-    // 2. Construir lista de exclusión (últimas 3 semanas)
-    let exclusion_list = build_exclusion_list(&index);
-
-    // 3. Llamar a ai::generate_plan_with_ollama
-    // TODO: Obtener prompt de config o usar default
-    let prompt = "Genera un plan nutricional semanal.".to_string();
-    let (plan_content, proteins) = ai::generate_plan(prompt, exclusion_list).await?;
-
-    // 4. Guardar resultado en archivo y actualizar index
-    let plan_id = db::save_plan(&data_dir, &plan_content);
-    db::update_index(&index_path, &plan_id, proteins);
-
-    // 5. Retornar "OK" o el ID generado
-    Ok(plan_id)
-}
-
-#[tauri::command]
-async fn get_plan_content(app_handle: tauri::AppHandle, id: &str) -> Result<String, String> {
-    let data_dir = db::get_data_dir(&app_handle);
-    let plan_path = data_dir.join(format!("{}.json", id));
-    db::get_plan_content(&plan_path)
-}
-
-#[tauri::command]
-async fn get_index(app_handle: tauri::AppHandle) -> Result<Vec<PlanIndex>, String> {
-    let data_dir = db::get_data_dir(&app_handle);
-    let index_path = data_dir.join("index.json");
-    let index = db::read_index(&index_path);
-    Ok(index)
-}
-
-#[tauri::command]
-async fn get_config(app_handle: tauri::AppHandle) -> Result<AppConfig, String> {
-    let data_dir = db::get_data_dir(&app_handle);
-    let config_path = data_dir.join("config.json");
-    db::read_config(&config_path)
-}
-
-#[tauri::command]
-async fn save_config(app_handle: tauri::AppHandle, config: AppConfig) -> Result<(), String> {
-    let data_dir = db::get_data_dir(&app_handle);
-    let config_path = data_dir.join("config.json");
-    db::save_config(&config_path, &config)
-}
+use crate::state::AppState;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
-        .init();
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            // Initialize AppState with data directory
+            let data_dir = app
+                .path()
+                .app_data_dir()
+                .expect("failed to get app data dir");
+
+            // Ensure data directory exists
+            if !data_dir.exists() {
+                std::fs::create_dir_all(&data_dir).expect("failed to create data dir");
+            }
+
+            let app_state = AppState::new(data_dir);
+            app.manage(app_state);
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
-            greet,
-            generate_week,
-            get_index,
-            get_plan_content,
-            get_config,
-            save_config
+            commands::generate_week,
+            commands::get_index,
+            commands::get_favorite_plans,
+            commands::get_plan_content,
+            commands::get_config,
+            commands::save_config,
+            commands::list_ollama_models,
+            commands::get_excluded_ingredients,
+            commands::save_excluded_ingredients,
+            commands::get_ingredient_stats,
+            commands::toggle_ingredient_exclusion,
+            commands::metadata::toggle_favorite,
+            commands::metadata::get_plan_metadata,
+            commands::metadata::get_favorites,
+            commands::metadata::set_plan_rating,
+            commands::metadata::set_plan_note,
+            commands::shopping::generate_shopping_list,
+            commands::shopping::get_shopping_list,
+            commands::shopping::toggle_shopping_item,
+            commands::calendar::assign_plan_to_date,
+            commands::calendar::get_calendar_range,
+            commands::calendar::remove_calendar_entry,
+            commands::statistics::get_statistics,
+            commands::statistics::get_ingredient_trends,
+            commands::nutrition::calculate_nutrition,
+            commands::plans::generate_variation,
+            commands::plans::search_plans,
+            commands::tags::get_all_tags,
+            commands::tags::create_tag,
+            commands::tags::delete_tag,
+            commands::tags::add_tag_to_plan,
+            commands::tags::remove_tag_from_plan,
+            commands::pantry::get_pantry_items,
+            commands::pantry::add_pantry_item,
+            commands::pantry::update_pantry_item,
+            commands::pantry::delete_pantry_item,
+            commands::import_export::export_data,
+            commands::import_export::import_data,
+            commands::preferences::get_ui_preferences,
+            commands::preferences::save_ui_preferences,
+            commands::achievements::get_achievements,
+            commands::email::send_plan_email,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

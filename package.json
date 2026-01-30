@@ -1,0 +1,25 @@
+{
+  "name": "nutri-r",
+  "version": "1.0.0",
+  "description": "This template should help get you started developing with Tauri and Leptos.",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LEMNXCIX/nurtri.r.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/LEMNXCIX/nurtri.r/issues"
+  },
+  "homepage": "https://github.com/LEMNXCIX/nurtri.r#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
+  }
+}
