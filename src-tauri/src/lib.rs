@@ -76,6 +76,7 @@ pub fn run() {
             commands::preferences::save_ui_preferences,
             commands::achievements::get_achievements,
             commands::email::send_plan_email,
+            commands::sync::perform_sync,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

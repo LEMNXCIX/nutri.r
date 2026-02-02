@@ -43,6 +43,8 @@ pub struct AppConfig {
     pub ollama_model: String,
     pub ollama_url: String,
     pub usda_api_key: String,
+    pub sync_server_url: String,
+    pub last_updated: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
@@ -156,6 +158,16 @@ struct ToggleItemArgs<'a> {
 extern "C" {
     #[wasm_bindgen(js_namespace = ["window","__TAURI__","core"], catch)]
     async fn invoke(cmd: &str, args: JsValue) -> Result<JsValue, JsValue>;
+}
+
+pub async fn perform_sync() -> Result<String, String> {
+    match invoke("perform_sync", JsValue::NULL).await {
+        Ok(response) => match response.as_string() {
+            Some(result) => Ok(result),
+            None => Err("Sincronización falló: respuesta inesperada".to_string()),
+        },
+        Err(e) => Err(format!("{:?}", e)),
+    }
 }
 
 pub async fn generate_week() -> Result<String, String> {
@@ -612,6 +624,7 @@ pub struct PantryItem {
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct AppBackup {
     pub version: String,
+    pub last_updated: String,
     pub config: AppConfig,
     pub plans: Vec<PlanIndex>,
     pub plan_details: Vec<PlanDetail>,

@@ -3,3 +3,4 @@
 /Cargo.lock
 styles.css
 node_modules
+/sync-server/vault.json

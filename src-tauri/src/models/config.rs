@@ -25,6 +25,10 @@ pub struct AppConfig {
     pub ollama_url: String,
     #[serde(alias = "usda_api_key")]
     pub usda_api_key: String,
+    #[serde(default, alias = "sync_server_url")]
+    pub sync_server_url: String,
+    #[serde(default, alias = "last_updated")]
+    pub last_updated: String,
 }
 
 fn deserialize_smtp_port<'de, D>(deserializer: D) -> Result<u16, D::Error>
@@ -86,6 +90,8 @@ impl Default for AppConfig {
             ollama_model: "llama3.2".to_string(),
             ollama_url: "http://127.0.0.1:11434".to_string(),
             usda_api_key: String::new(),
+            sync_server_url: String::new(),
+            last_updated: String::new(),
         }
     }
 }

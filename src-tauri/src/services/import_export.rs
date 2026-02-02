@@ -77,8 +77,15 @@ impl<
         let pantry = self.pantry_repo.get_all()?;
         let excluded_ingredients = self.ingredient_repo.get_excluded()?;
 
+        let last_updated = if config.last_updated.is_empty() {
+            chrono::Local::now().to_rfc3339()
+        } else {
+            config.last_updated.clone()
+        };
+
         Ok(AppBackup {
             version: "1.0.0".to_string(),
+            last_updated,
             config,
             plans,
             plan_details,

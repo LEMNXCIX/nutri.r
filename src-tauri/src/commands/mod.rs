@@ -12,6 +12,7 @@ pub mod plans;
 pub mod preferences;
 pub mod shopping;
 pub mod statistics;
+pub mod sync;
 pub mod tags;
 
 pub use calendar::*;
@@ -25,4 +26,5 @@ pub use pantry::*;
 pub use plans::*;
 pub use shopping::*;
 pub use statistics::*;
+pub use sync::*;
 pub use tags::*;

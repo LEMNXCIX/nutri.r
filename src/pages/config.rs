@@ -19,6 +19,8 @@ pub fn Config() -> impl IntoView {
         ollama_model: String::new(),
         ollama_url: String::new(),
         usda_api_key: String::new(),
+        sync_server_url: String::new(),
+        last_updated: String::new(),
     });
     let (loading, set_loading) = signal(true);
     let (status_msg, set_status_msg) = signal(String::new());
@@ -120,6 +122,41 @@ pub fn Config() -> impl IntoView {
     let h_update_smtp_to = Callback::new(move |val: String| set_config.update(|c| c.smtp_to = val));
     let h_update_usda_key =
         Callback::new(move |val: String| set_config.update(|c| c.usda_api_key = val));
+    let h_update_sync_url =
+        Callback::new(move |val: String| set_config.update(|c| c.sync_server_url = val));
+
+    let h_sync_click = Callback::new(move |_: web_sys::MouseEvent| {
+        set_status_msg.set("Iniciando sincronización...".to_string());
+        spawn_local(async move {
+            match crate::tauri_bridge::perform_sync().await {
+                Ok(msg) => {
+                    set_status_msg.set(msg);
+                    if let Ok(c) = get_config().await {
+                        set_config.set(c);
+                    }
+                }
+                Err(e) => set_status_msg.set(format!("Error: {}", e)),
+            }
+        });
+    });
+    let h_update_sync_url =
+        Callback::new(move |val: String| set_config.update(|c| c.sync_server_url = val));
+
+    let h_sync_click = Callback::new(move |_: web_sys::MouseEvent| {
+        set_status_msg.set("Iniciando sincronización...".to_string());
+        spawn_local(async move {
+            match crate::tauri_bridge::perform_sync().await {
+                Ok(msg) => {
+                    set_status_msg.set(msg);
+                    if let Ok(c) = get_config().await {
+                        set_config.set(c);
+                    }
+                }
+                Err(e) => set_status_msg.set(format!("Error: {}", e)),
+            }
+        });
+    });
+
     let h_update_new_ing = Callback::new(move |val: String| set_new_ingredient.set(val));
 
     let h_add_ingredient = Callback::new(add_ingredient);
@@ -405,6 +442,51 @@ pub fn Config() -> impl IntoView {
                                 placeholder="Introduce tu API Key..."
                                 class="bg-gray-50 border-gray-200 text-black focus:border-black"
                             />
+                        </div>
+                    </Card>
+                </section>
+
+                // Sync Section
+                <section>
+                    <div class="flex items-center gap-3 mb-4 px-2 mt-8">
+                        <div class="p-2 bg-gray-100 rounded-lg text-black">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                        </div>
+                        <h3 class="text-xl font-black text-black tracking-tight">"SINCRONIZACIÓN"</h3>
+                    </div>
+                    <Card class="p-8 bg-white rounded-[2rem] border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                        <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-relaxed mb-6">
+                            "Conectate a tu servidor Bun para sincronizar tus datos entre dispositivos (PC y Móvil)."
+                        </p>
+
+                        <div class="space-y-6">
+                            <div class="space-y-3">
+                                <label for="sync_url" class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 pl-1">"URL del Servidor Bun"</label>
+                                <Input
+                                    id="sync_url"
+                                    value=Signal::derive(move || config.get().sync_server_url)
+                                    on_input=h_update_sync_url
+                                    placeholder="http://192.168.1.50:3000"
+                                    class="bg-gray-50 border-gray-200 text-black focus:border-black"
+                                />
+                            </div>
+
+                            <div class="flex flex-col gap-4">
+                                <Button
+                                    on_click=h_sync_click
+                                    class="w-full py-4 bg-black hover:bg-gray-900 text-white border-none rounded-xl font-black uppercase text-xs tracking-[0.2em] transition-all transform hover:scale-[1.02] shadow-lg shadow-gray-100".to_string()
+                                >
+                                    "Sincronizar Ahora (LWW)"
+                                </Button>
+
+                                <div class="px-2 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    <span>"Último cambio/sincro:"</span>
+                                    <span class="text-black">{move || {
+                                        let ts = config.get().last_updated;
+                                        if ts.is_empty() { "Nunca".to_string() } else { ts }
+                                    }}</span>
+                                </div>
+                            </div>
                         </div>
                     </Card>
                 </section>

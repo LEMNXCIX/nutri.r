@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AppBackup {
     pub version: String,
+    pub last_updated: String,
     pub config: AppConfig,
     pub plans: Vec<PlanIndex>,
     pub plan_details: Vec<PlanDetail>,
