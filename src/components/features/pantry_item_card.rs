@@ -19,28 +19,22 @@ pub fn PantryItemCard(
                 let days_until = (exp_date - today).num_days();
 
                 if days_until < 0 {
-                    (
-                        "VENCIDO",
-                        "text-red-400 bg-red-500/10 border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]",
-                    )
+                    ("VENCIDO", "text-red-600 bg-red-50 border-red-100")
                 } else if days_until <= 7 {
                     (
                         "VENCE PRONTO",
-                        "text-orange-400 bg-orange-400/10 border-orange-400/20 shadow-[0_0_15px_rgba(251,146,60,0.1)]",
+                        "text-orange-600 bg-orange-50 border-orange-100",
                     )
                 } else {
-                    (
-                        "EN ESTADO",
-                        "text-green-400 bg-green-500/10 border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]",
-                    )
+                    ("EN ESTADO", "text-gray-600 bg-gray-50 border-gray-200")
                 }
             } else {
-                ("FECHA INVÁLIDA", "text-gray-500 bg-gray-900 border-white/5")
+                ("FECHA INVÁLIDA", "text-gray-400 bg-gray-50 border-gray-200")
             }
         } else {
             (
                 "SIN VENCIMIENTO",
-                "text-gray-500 bg-gray-900 border-white/5",
+                "text-gray-400 bg-gray-50 border-gray-200",
             )
         }
     };
@@ -50,17 +44,15 @@ pub fn PantryItemCard(
     let id_qty = item.id.clone();
 
     view! {
-        <div class="glass-light p-6 rounded-[2.5rem] border-white/5 hover:bg-white/5 transition-all duration-500 group relative overflow-hidden flex flex-col justify-between h-full">
-            <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/5 blur-3xl group-hover:bg-blue-500/10 transition-all duration-700"></div>
-
+        <div class="card p-6 flex flex-col justify-between h-full group relative overflow-hidden transition-all duration-300 hover:shadow-soft-lg">
             <div>
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex-1">
-                        <span class="text-[9px] font-black uppercase tracking-[0.2em] text-blue-500/80 mb-1 block">{item.category.clone()}</span>
-                        <h3 class="text-lg font-black text-white tracking-tighter uppercase italic group-hover:text-blue-400 transition-colors">{item.name.clone()}</h3>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 block">{item.category.clone()}</span>
+                        <h3 class="text-lg font-bold text-gray-900 tracking-tight uppercase group-hover:text-black transition-colors">{item.name.clone()}</h3>
                     </div>
 
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             type="button"
                             on:click={
@@ -70,10 +62,10 @@ pub fn PantryItemCard(
                                     on_edit.run(item.clone());
                                 }
                             }
-                            class="p-3 rounded-2xl bg-white/5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 transition-all active:scale-95 flex items-center justify-center z-10 border border-white/5 shadow-xl"
+                            class="p-2 rounded-lg bg-gray-50 text-gray-500 hover:text-black hover:bg-gray-100 transition-all active:scale-95 border border-gray-200"
                             title="Editar producto"
                         >
-                            <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                         </button>
@@ -88,10 +80,10 @@ pub fn PantryItemCard(
                                     on_delete.run(id.clone());
                                 }
                             }
-                            class="p-3 rounded-2xl bg-white/5 text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all active:scale-95 flex items-center justify-center z-10 border border-white/5 shadow-xl"
+                            class="p-2 rounded-lg bg-gray-50 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all active:scale-95 border border-gray-200"
                             title="Eliminar producto"
                         >
-                            <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                         </button>
@@ -99,21 +91,21 @@ pub fn PantryItemCard(
                 </div>
 
                 <div class="flex items-center gap-4 mb-6">
-                    <div class="flex-1 glass-light rounded-2xl p-4 flex items-center justify-between border-white/5 shadow-inner">
+                    <div class="flex-1 bg-gray-50 rounded-xl p-3 flex items-center justify-between border border-gray-100">
                         <button
                             on:click={
                                 let id = id_qty.clone();
                                 let qty = item.quantity;
                                 move |_| on_update_qty.run((id.clone(), (qty - 0.5).max(0.0)))
                             }
-                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white transition-all font-black text-lg active:scale-90"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white text-gray-400 hover:text-black transition-all font-bold text-lg active:scale-90"
                         >
                             "-"
                         </button>
 
                         <div class="flex flex-col items-center">
-                            <span class="text-2xl font-black text-white tracking-tighter italic leading-none">{item.quantity}</span>
-                            <span class="text-[8px] font-black text-gray-500 uppercase tracking-widest mt-1">{item.unit.clone()}</span>
+                            <span class="text-xl font-bold text-gray-900 tracking-tight leading-none">{item.quantity}</span>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">{item.unit.clone()}</span>
                         </div>
 
                         <button
@@ -122,7 +114,7 @@ pub fn PantryItemCard(
                                 let qty = item.quantity;
                                 move |_| on_update_qty.run((id.clone(), qty + 0.5))
                             }
-                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white transition-all font-black text-lg active:scale-90"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white text-gray-400 hover:text-black transition-all font-bold text-lg active:scale-90"
                         >
                             "+"
                         </button>
@@ -130,7 +122,7 @@ pub fn PantryItemCard(
                 </div>
             </div>
 
-            <div class=format!("text-center py-2 px-4 rounded-xl text-[9px] font-black tracking-[0.2em] border transition-all {}", status_class)>
+            <div class=format!("text-center py-2 px-3 rounded-lg text-[9px] font-bold tracking-widest border transition-all {}", status_class)>
                 {status_text}
             </div>
         </div>

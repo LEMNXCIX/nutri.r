@@ -10,7 +10,7 @@ pub fn Button(
     view! {
         <button
             class=format!(
-                "glass-light px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-white hover:bg-white/10 hover:border-blue-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg {}",
+                "btn disabled:opacity-50 disabled:cursor-not-allowed {}",
                 class
             )
             on:click=move |ev| on_click.run(ev)

@@ -79,27 +79,27 @@ pub fn Calendar() -> impl IntoView {
     };
 
     view! {
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-in fade-in duration-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-in fade-in duration-700 font-sans text-gray-900">
             <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <span class="inline-block px-4 py-1.5 rounded-full bg-green-500/10 text-green-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+                    <span class="inline-block px-4 py-1.5 rounded-full border border-gray-200 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
                         "Meal Planning"
                     </span>
-                    <h2 class="text-4xl font-black text-white tracking-tighter mb-2 leading-none uppercase">
+                    <h2 class="text-4xl font-black text-black tracking-tighter mb-2 leading-none uppercase">
                         {move || format!("{} {}", Month::try_from(current_month.get() as u8).ok().map(|m| m.name()).unwrap_or(""), current_year.get())}
                     </h2>
-                    <div class="h-1.5 w-12 bg-green-500 rounded-full mb-4"></div>
-                    <p class="text-gray-400 font-medium font-black uppercase tracking-[0.1em] text-[10px]">"Organiza tus planes nutricionales por día."</p>
+                    <div class="h-1.5 w-12 bg-black rounded-full mb-4"></div>
+                    <p class="text-gray-500 font-medium font-black uppercase tracking-[0.1em] text-[10px]">"Organiza tus planes nutricionales por día."</p>
                 </div>
 
-                <div class="flex items-center gap-2 glass rounded-2xl p-1.5 border-white/5 shadow-2xl">
-                    <button on:click=on_prev_month class="p-3 hover:bg-white/5 rounded-xl transition-all text-gray-400 hover:text-white active:scale-90">
+                <div class="flex items-center gap-2 bg-white rounded-2xl p-1.5 border border-gray-200 shadow-sm">
+                    <button on:click=on_prev_month class="p-3 hover:bg-gray-50 rounded-xl transition-all text-gray-400 hover:text-black active:scale-90">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
-                    <div class="w-px h-6 bg-white/5 mx-1"></div>
-                    <button on:click=on_next_month class="p-3 hover:bg-white/5 rounded-xl transition-all text-gray-400 hover:text-white active:scale-90">
+                    <div class="w-px h-6 bg-gray-100 mx-1"></div>
+                    <button on:click=on_next_month class="p-3 hover:bg-gray-50 rounded-xl transition-all text-gray-400 hover:text-black active:scale-90">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
@@ -107,17 +107,18 @@ pub fn Calendar() -> impl IntoView {
                 </div>
             </header>
 
-            <div class="glass rounded-[2.5rem] overflow-hidden border-white/5 shadow-2xl">
-                <div class="grid grid-cols-7 bg-white/5">
+            // Desktop View (7-column Grid)
+            <div class="hidden md:block bg-white rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-xl">
+                <div class="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
                     {vec!["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"].into_iter().map(|day| view! {
-                        <div class="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-white/5">
+                        <div class="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-r border-gray-100 last:border-r-0">
                             {day}
                         </div>
                     }).collect::<Vec<_>>()}
                 </div>
 
-                <div class="grid grid-cols-7 gap-px bg-white/5">
-                    <Suspense fallback=move || view! { <div class="col-span-7 p-24 flex justify-center bg-gray-950/50"><Loading /></div> }>
+                <div class="grid grid-cols-7 gap-px bg-gray-200">
+                    <Suspense fallback=move || view! { <div class="col-span-7 p-24 flex justify-center bg-gray-50"><Loading /></div> }>
                         {move || {
                             let entries = calendar_resource.get().unwrap_or_default();
                             let mut entries_map = HashMap::new();
@@ -140,7 +141,7 @@ pub fn Calendar() -> impl IntoView {
 
                             // Padding from prev month
                             for _ in 1..weekday {
-                                grid_items.push(view! { <div class="bg-gray-950/20 min-h-[160px]"></div> }.into_any());
+                                grid_items.push(view! { <div class="bg-gray-50/50 min-h-[160px]"></div> }.into_any());
                             }
 
                             // Days of current month
@@ -159,15 +160,15 @@ pub fn Calendar() -> impl IntoView {
                                 let on_remove_d = on_remove.clone();
 
                                 grid_items.push(view! {
-                                    <div class=format!("bg-gray-950/40 min-h-[160px] p-3 flex flex-col gap-2 group transition-all hover:bg-white/5 {}", if is_today { "bg-green-500/5 ring-1 ring-inset ring-green-500/30" } else { "" })>
-                                        <span class=format!("text-xs font-black w-8 h-8 flex items-center justify-center rounded-xl transition-all {}", if is_today { "bg-green-500 text-gray-950 shadow-lg shadow-green-500/20" } else { "text-gray-500 group-hover:text-white" })>
+                                    <div class=format!("bg-white min-h-[160px] p-3 flex flex-col gap-2 group transition-all hover:bg-gray-50 {}", if is_today { "ring-nuni ring-inset ring-2 ring-black" } else { "" })>
+                                        <span class=format!("text-xs font-black w-8 h-8 flex items-center justify-center rounded-xl transition-all {}", if is_today { "bg-black text-white shadow-lg" } else { "text-gray-400 group-hover:text-black" })>
                                             {d}
                                         </span>
 
                                         <div class="flex flex-col gap-1.5 flex-1">
-                                            {render_meal_assigned(&day_entries, MealType::Breakfast, date_for_render_b, set_show_assign_modal, Callback::new(on_remove_b))}
-                                            {render_meal_assigned(&day_entries, MealType::Lunch, date_for_render_l, set_show_assign_modal, Callback::new(on_remove_l))}
-                                            {render_meal_assigned(&day_entries, MealType::Dinner, date_for_render_d, set_show_assign_modal, Callback::new(on_remove_d))}
+                                            {render_meal_assigned(&day_entries, MealType::Breakfast, date_for_render_b, set_show_assign_modal, Callback::new(on_remove_b), false)}
+                                            {render_meal_assigned(&day_entries, MealType::Lunch, date_for_render_l, set_show_assign_modal, Callback::new(on_remove_l), false)}
+                                            {render_meal_assigned(&day_entries, MealType::Dinner, date_for_render_d, set_show_assign_modal, Callback::new(on_remove_d), false)}
                                         </div>
                                     </div>
                                 }.into_any());
@@ -179,15 +180,85 @@ pub fn Calendar() -> impl IntoView {
                 </div>
             </div>
 
+            // Mobile View (Vertical List)
+            <div class="md:hidden space-y-4">
+                <Suspense fallback=move || view! { <div class="py-20 flex justify-center"><Loading /></div> }>
+                    {move || {
+                        let entries = calendar_resource.get().unwrap_or_default();
+                        let mut entries_map = HashMap::new();
+                        for e in entries {
+                            entries_map.entry(e.date.clone()).or_insert_with(Vec::new).push(e);
+                        }
+
+                        let year = current_year.get();
+                        let month = current_month.get();
+                        let days_in_month = if month == 12 {
+                            NaiveDate::from_ymd_opt(year + 1, 1, 1).unwrap().pred_opt().unwrap().day()
+                        } else {
+                            NaiveDate::from_ymd_opt(year, month + 1, 1).unwrap().pred_opt().unwrap().day()
+                        };
+
+                        (1..=days_in_month).map(|d| {
+                            let date = NaiveDate::from_ymd_opt(year, month, d).unwrap();
+                            let date_str = date.to_string();
+                            let day_entries = entries_map.get(&date_str).cloned().unwrap_or_default();
+                            let is_today = date == now;
+                            let day_name = match date.weekday() {
+                                chrono::Weekday::Mon => "Lunes",
+                                chrono::Weekday::Tue => "Martes",
+                                chrono::Weekday::Wed => "Miércoles",
+                                chrono::Weekday::Thu => "Jueves",
+                                chrono::Weekday::Fri => "Viernes",
+                                chrono::Weekday::Sat => "Sábado",
+                                chrono::Weekday::Sun => "Domingo",
+                            };
+
+                            let date_for_render_b = date.clone();
+                            let date_for_render_l = date.clone();
+                            let date_for_render_d = date.clone();
+
+                            let on_remove_b = on_remove.clone();
+                            let on_remove_l = on_remove.clone();
+                            let on_remove_d = on_remove.clone();
+
+                            view! {
+                                <Card class=format!("p-5 bg-white rounded-3xl border border-gray-100 shadow-sm {}", if is_today { "ring-2 ring-black" } else { "" })>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center gap-3">
+                                            <span class=format!("text-lg font-black w-10 h-10 flex items-center justify-center rounded-2xl {}", if is_today { "bg-black text-white" } else { "bg-gray-100 text-black" })>
+                                                {d}
+                                            </span>
+                                            <div class="flex flex-col">
+                                                <span class="text-xs font-black uppercase tracking-widest text-black">{day_name}</span>
+                                                {if is_today {
+                                                    Some(view! { <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">"HOY"</span> })
+                                                } else {
+                                                    None
+                                                }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        {render_meal_assigned(&day_entries, MealType::Breakfast, date_for_render_b, set_show_assign_modal, Callback::new(on_remove_b), true)}
+                                        {render_meal_assigned(&day_entries, MealType::Lunch, date_for_render_l, set_show_assign_modal, Callback::new(on_remove_l), true)}
+                                        {render_meal_assigned(&day_entries, MealType::Dinner, date_for_render_d, set_show_assign_modal, Callback::new(on_remove_d), true)}
+                                    </div>
+                                </Card>
+                            }
+                        }).collect::<Vec<_>>()
+                    }}
+                </Suspense>
+            </div>
+
             // Assign Modal
             {move || if let Some((date, meal)) = show_assign_modal.get() {
                 view! {
-                    <div class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                        <Card class="max-w-md w-full p-10 glass rounded-[3rem] border-white/10 shadow-3xl relative overflow-hidden">
-                            <div class="absolute -top-12 -right-12 w-32 h-32 bg-green-500/10 blur-3xl"></div>
+                    <div class="fixed inset-0 bg-white/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                        <Card class="max-w-md w-full p-6 md:p-10 bg-white rounded-3xl md:rounded-[3rem] border border-gray-200 shadow-2xl relative overflow-hidden text-center">
 
-                            <h3 class="text-2xl font-black text-white mb-2 tracking-tighter uppercase italic">"Asignar Plan"</h3>
-                            <p class="text-gray-400 mb-8 text-[11px] font-black uppercase tracking-widest leading-relaxed">
+                            <h3 class="text-2xl font-black text-black mb-2 tracking-tighter uppercase italic">"Asignar Plan"</h3>
+                            <p class="text-gray-500 mb-8 text-[11px] font-black uppercase tracking-widest leading-relaxed">
                                 {format!("Elige un plan para el {} de {} el {}.",
                                     match meal {
                                         MealType::Breakfast => "desayuno",
@@ -202,17 +273,17 @@ pub fn Calendar() -> impl IntoView {
                             <div class="max-h-[350px] overflow-y-auto space-y-3 mb-8 pr-4 custom-scrollbar">
                                 {move || plans.get().map(|list| {
                                     if list.is_empty() {
-                                        return view! { <div class="text-center py-12 text-gray-600 font-bold uppercase tracking-widest text-[10px]">"No tienes planes guardados"</div> }.into_any()
+                                        return view! { <div class="text-center py-12 text-gray-400 font-bold uppercase tracking-widest text-[10px]">"No tienes planes guardados"</div> }.into_any()
                                     }
                                     list.into_iter().map(|plan| {
                                         let pid = plan.id.clone();
                                         view! {
                                             <button
                                                 on:click=move |_| on_assign(pid.clone())
-                                                class="w-full text-left p-4 rounded-2xl glass-light hover:bg-green-500/10 border-white/5 hover:border-green-500/30 transition-all group active:scale-95"
+                                                class="w-full text-left p-4 rounded-2xl bg-gray-50 hover:bg-black hover:text-white border border-gray-100 transition-all group active:scale-95"
                                             >
-                                                <div class="font-black text-gray-200 group-hover:text-green-400 text-xs tracking-widest uppercase mb-1">{plan.id.chars().take(12).collect::<String>()}</div>
-                                                <div class="text-[10px] text-gray-500 font-black uppercase tracking-tighter">{plan.fecha.clone()}</div>
+                                                <div class="font-black text-gray-900 group-hover:text-white text-xs tracking-widest uppercase mb-1">{plan.id.chars().take(12).collect::<String>()}</div>
+                                                <div class="text-[10px] text-gray-500 group-hover:text-gray-300 font-black uppercase tracking-tighter">{plan.fecha.clone()}</div>
                                             </button>
                                         }
                                     }).collect::<Vec<_>>().into_any()
@@ -222,7 +293,7 @@ pub fn Calendar() -> impl IntoView {
                             <div class="flex flex-col gap-3">
                                 <Button
                                     on_click=Callback::new(move |_| set_show_assign_modal.set(None))
-                                    class="w-full bg-white/5 hover:bg-white/10 text-white border-white/5".to_string()
+                                    class="w-full bg-white hover:bg-gray-50 text-gray-900 border border-gray-200".to_string()
                                 >
                                     "Cerrar"
                                 </Button>
@@ -243,57 +314,78 @@ fn render_meal_assigned(
     date: NaiveDate,
     set_modal: WriteSignal<Option<(NaiveDate, MealType)>>,
     on_remove: Callback<(String, MealType)>,
+    is_mobile: bool,
 ) -> impl IntoView {
     let entry = entries.iter().find(|e| e.meal_type == meal);
-    let (label, color_class, bg_class) = match meal {
-        MealType::Breakfast => ("D", "text-yellow-500", "bg-yellow-500/10"),
-        MealType::Lunch => ("A", "text-blue-500", "bg-blue-500/10"),
-        MealType::Dinner => ("C", "text-purple-500", "bg-purple-500/10"),
-        _ => ("S", "text-orange-500", "bg-orange-500/10"),
+
+    // Labels and colors for mobile vs desktop
+    let (label_full, label_short, color_class, bg_class) = match meal {
+        MealType::Breakfast => ("Desayuno", "D", "text-yellow-600", "bg-yellow-50"),
+        MealType::Lunch => ("Almuerzo", "A", "text-blue-600", "bg-blue-50"),
+        MealType::Dinner => ("Cena", "C", "text-purple-600", "bg-purple-50"),
+        _ => ("Merienda", "S", "text-orange-600", "bg-orange-50"),
     };
 
     let date_str = date.to_string();
 
     view! {
-        <div class="flex items-center gap-1 group/meal min-h-[30px]">
-            <span class=format!("text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-lg uppercase tracking-tighter shrink-0 {} {}", color_class, bg_class)>
-                {label}
-            </span>
-
-            {if let Some(e) = entry {
-                let pid = e.plan_id.clone();
-                let m = meal.clone();
-                let d = date_str.clone();
+        <div class="flex items-center gap-2 group/meal min-h-[40px]">
+            {if is_mobile {
                 view! {
-                    <div class="flex-1 flex items-center justify-between glass-light rounded-lg px-2 py-0.5 border-white/5 hover:bg-white/10 transition-all truncate">
-                        <span class="text-[9px] text-gray-300 font-black uppercase tracking-tighter truncate shrink">{pid.chars().take(8).collect::<String>()}</span>
-                        <button
-                            on:click=move |ev| {
-                                ev.stop_propagation();
-                                on_remove.run((d.clone(), m.clone()));
-                            }
-                            class="opacity-0 group-hover/meal:opacity-100 p-0.5 hover:text-red-500 transition-all"
-                        >
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
+                    <span class=format!("text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest shrink-0 {} {}", color_class, bg_class)>
+                        {label_full}
+                    </span>
                 }.into_any()
             } else {
-                let m = meal.clone();
                 view! {
-                    <button
-                        on:click=move |_| set_modal.set(Some((date, m.clone())))
-                        class="flex-1 flex items-center gap-1 text-[9px] text-gray-600 font-black uppercase tracking-[0.1em] hover:text-green-500 transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        "Asignar"
-                    </button>
-                }.into_any()
+                    <span class=format!("text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-lg uppercase tracking-tighter shrink-0 {} {}",
+                        color_class.replace("-600", "-500"),
+                        bg_class.replace("bg-", "bg-").replace("-50", "-500/10")
+                    )>
+                        {label_short}
+                    </span>
+                 }.into_any()
             }}
+
+            <div class="flex-1">
+                {if let Some(e) = entry {
+                    let pid = e.plan_id.clone();
+                    let m = meal.clone();
+                    let d = date_str.clone();
+                    view! {
+                        <div class="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2 border border-gray-100 hover:border-black transition-all group/item">
+                            <span class="text-[10px] text-black font-black uppercase tracking-tighter truncate shrink">
+                                {pid.chars().take(if is_mobile { 20 } else { 8 }).collect::<String>()}
+                            </span>
+                            <button
+                                on:click=move |ev| {
+                                    ev.stop_propagation();
+                                    on_remove.run((d.clone(), m.clone()));
+                                }
+                                class=format!("hover:text-red-500 transition-all {}", if is_mobile { "opacity-100 p-1" } else { "opacity-0 group-hover/meal:opacity-100 p-0.5" })
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    }.into_any()
+                } else {
+                    let m = meal.clone();
+                    view! {
+                        <button
+                            on:click=move |_| set_modal.set(Some((date, m.clone())))
+                            class=format!("w-full flex items-center gap-2 text-[10px] text-gray-400 font-black uppercase tracking-widest hover:text-black transition-colors py-2 px-3 border border-dashed border-gray-200 rounded-xl {}",
+                                if is_mobile { "opacity-100" } else { "opacity-0 group-hover:opacity-100" })
+                        >
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            "Asignar"
+                        </button>
+                    }.into_any()
+                }}
+            </div>
         </div>
     }
 }

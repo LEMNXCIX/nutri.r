@@ -20,7 +20,7 @@ pub fn Input(
             id=if id.is_empty() { None } else { Some(id) }
             type=type_
             class=format!(
-                "glass-light px-5 py-3.5 rounded-2xl border-white/5 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/20 transition-all font-medium text-sm w-full {}",
+                "input w-full {}",
                 class
             )
             placeholder=placeholder

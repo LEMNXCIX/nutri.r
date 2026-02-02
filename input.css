@@ -4,49 +4,123 @@
 @source "./index.html";
 
 @theme {
-    --color-brand-primary: #10b981;
-    --color-brand-secondary: #8b5cf6;
-    --color-background: #0a0a0c;
+    /* Refined Monochrome System */
+    --color-primary: #171717;
+    --color-secondary: #ffffff;
+
+    /* Grays - Neural / Warm Tint */
+    --color-gray-50: #fafafa;
+    --color-gray-100: #f4f4f5;
+    --color-gray-200: #e4e4e7;
+    --color-gray-300: #d4d4d8;
+    --color-gray-400: #a1a1aa;
+    --color-gray-500: #71717a;
+    --color-gray-600: #52525b;
+    --color-gray-700: #3f3f46;
+    --color-gray-800: #27272a;
+    --color-gray-900: #18181b;
+    --color-gray-950: #09090b;
+
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    --radius-3xl: 2rem;
 }
 
 @layer base {
-    body {
-        @apply bg-background text-gray-200 antialiased selection:bg-brand-primary/30 selection:text-white;
-        background-image:
-            radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-            radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
-        background-attachment: fixed;
+    * {
+        border-color: var(--color-gray-200);
     }
 
-    /* Custom Minimalist Scrollbar */
+    body {
+        background-color: var(--color-gray-50);
+        color: var(--color-gray-900);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Modern Scrollbar */
     ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
     }
 
     ::-webkit-scrollbar-track {
-        @apply bg-transparent;
+        background: transparent;
     }
 
     ::-webkit-scrollbar-thumb {
-        @apply bg-gray-800 rounded-full hover:bg-gray-700 transition-colors;
+        background: var(--color-gray-300);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-gray-400);
     }
 }
 
 @layer components {
-    .glass {
-        @apply bg-gray-900/40 backdrop-blur-xl border border-gray-800/50 shadow-2xl;
+
+    /* Card System */
+    .card {
+        @apply bg-white border border-gray-200 rounded-3xl transition-all duration-300;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
     }
 
-    .glass-light {
-        @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+    .card:hover {
+        @apply border-gray-300;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
     }
 
-    .premium-gradient-text {
-        @apply bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-purple-500 font-black;
+    /* Button System */
+    .btn {
+        @apply inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
     }
 
-    .card-hover {
-        @apply hover:border-brand-primary/30 hover:shadow-brand-primary/10 transition-all duration-300;
+    .btn-primary {
+        @apply bg-primary text-white hover:bg-black shadow-lg shadow-gray-900/10;
+    }
+
+    .btn-secondary {
+        @apply bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 hover:border-gray-300;
+    }
+
+    .btn-ghost {
+        @apply text-gray-600 hover:text-black hover:bg-gray-100;
+    }
+
+    /* Input System */
+    .input {
+        @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 transition-all focus:outline-none focus:border-gray-400 focus:ring-4 focus:ring-gray-100;
+    }
+
+    /* Animations */
+    .animate-in {
+        animation: enter 0.4s ease-out forwards;
+    }
+
+    @keyframes enter {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+@layer utilities {
+    .shadow-soft {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .shadow-soft-lg {
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+    }
+
+    .text-balance {
+        text-wrap: balance;
     }
 }

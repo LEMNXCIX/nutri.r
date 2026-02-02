@@ -47,13 +47,13 @@ pub fn Ingredients() -> impl IntoView {
     };
 
     view! {
-        <div class="p-4 md:p-6 max-w-5xl mx-auto">
-            <header class="mb-8">
-                <h2 class="text-3xl font-bold text-white mb-2">"Ingredientes"</h2>
-                <p class="text-gray-400">"Gestiona la frecuencia y exclusión de ingredientes en tus planes."</p>
-                <p class="text-xs text-green-400/70 mt-1 uppercase tracking-widest font-bold">
-                    "Haz clic para alternar exclusión"
-                </p>
+        <div class="p-4 md:p-6 max-w-5xl mx-auto font-sans">
+            <header class="mb-10">
+                <div class="space-y-1">
+                    <span class="text-xs font-black text-gray-400 tracking-widest uppercase">"CONFIGURACIÓN"</span>
+                    <h2 class="text-4xl font-black text-black tracking-tighter mb-2">"INGREDIENTES"</h2>
+                </div>
+                <p class="text-gray-500 font-medium max-w-2xl">"Gestiona la frecuencia y exclusión de ingredientes en tus planes. Los ingredientes excluidos no aparecerán en tus futuras generaciones."</p>
             </header>
 
             {move || {
@@ -61,9 +61,9 @@ pub fn Ingredients() -> impl IntoView {
                     view! { <div class="flex justify-center p-12"><Loading /></div> }.into_any()
                 } else if !error.get().is_empty() {
                     view! {
-                        <Card>
-                            <h3 class="text-xl font-bold text-red-400 mb-2">"Error"</h3>
-                            <p class="text-gray-300">
+                        <Card class="border-red-100 bg-red-50">
+                            <h3 class="text-lg font-bold text-red-600 mb-1">"Error"</h3>
+                            <p class="text-red-500 text-sm">
                                 {format!("Error al cargar los ingredientes: {}", error.get())}
                             </p>
                         </Card>
@@ -72,8 +72,12 @@ pub fn Ingredients() -> impl IntoView {
                     let stats = ingredients_stats.get();
                     if stats.is_empty() {
                         view! {
-                            <div class="text-center p-12 bg-gray-800/50 rounded-2xl border border-gray-700">
-                                <p class="text-gray-400">"No hay ingredientes registrados aún."</p>
+                            <div class="text-center p-16 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white border border-gray-100 mb-4 text-gray-300">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-900 mb-1">"Sin ingredientes"</h3>
+                                <p class="text-gray-400 text-sm">"No hay ingredientes registrados aún."</p>
                             </div>
                         }.into_any()
                     } else {
@@ -89,48 +93,51 @@ pub fn Ingredients() -> impl IntoView {
                                         <div
                                             on:click=move |_| toggle_exclusion(name_for_click.clone())
                                             class=move || format!(
-                                                "cursor-pointer group relative p-4 rounded-xl border transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl {}",
+                                                "cursor-pointer group relative p-5 rounded-2xl border transition-all duration-300 {}",
                                                 if is_excluded {
-                                                    "bg-red-950/20 border-red-900/40 opacity-70 hover:opacity-100"
+                                                    "bg-gray-50 border-gray-100 hover:border-gray-200"
                                                 } else {
-                                                    "bg-gray-800 border-gray-700 hover:border-green-500/50 hover:bg-gray-750"
+                                                    "bg-white border-gray-200 hover:border-black hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1"
                                                 }
                                             )
                                         >
-                                            <div class="flex flex-col gap-1">
+                                            <div class="flex flex-col gap-3">
                                                 <div class="flex justify-between items-start">
                                                     <span class=move || format!(
-                                                        "text-lg font-bold truncate pr-8 {}",
-                                                        if is_excluded { "text-red-300 line-through" } else { "text-white" }
+                                                        "text-lg font-bold capitalize truncate pr-4 {}",
+                                                        if is_excluded { "text-gray-400 line-through decoration-2 decoration-gray-300" } else { "text-gray-900" }
                                                     )>
                                                         {name.clone()}
                                                     </span>
-                                                    <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-900/50 text-xs font-mono text-green-400 border border-gray-700">
+                                                    <span class=format!("flex items-center justify-center min-w-[2rem] h-8 rounded-lg text-xs font-bold border {}",
+                                                        if is_excluded { "bg-gray-100 text-gray-400 border-gray-100" } else { "bg-gray-50 text-black border-gray-100" }
+                                                    )>
                                                         {count}
                                                     </span>
                                                 </div>
 
-                                                <div class="flex items-center gap-2 mt-2">
+                                                <div class="flex items-center justify-between mt-1">
                                                     {if is_excluded {
                                                         view! {
-                                                            <span class="text-[10px] uppercase tracking-tighter font-black px-2 py-0.5 rounded-full bg-red-900 text-red-100">
-                                                                "🚫 Excluido"
+                                                            <span class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-black px-2.5 py-1 rounded-md bg-gray-100 text-gray-400">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                                                "Excluido"
                                                             </span>
                                                         }.into_any()
                                                     } else {
                                                         view! {
-                                                            <span class="text-[10px] uppercase tracking-tighter font-black px-2 py-0.5 rounded-full bg-green-900/50 text-green-300">
-                                                                "✓ Permitido"
+                                                            <span class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-black px-2.5 py-1 rounded-md bg-white border border-gray-100 text-gray-500 group-hover:text-black group-hover:border-black/10 transition-colors">
+                                                                <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                                                "Habilitado"
                                                             </span>
                                                         }.into_any()
                                                     }}
-                                                </div>
-                                            </div>
 
-                                            <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <svg class="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                                </svg>
+                                                    // Action hint (hidden by default, shown on hover)
+                                                    <div class="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] uppercase font-bold text-gray-300">
+                                                        {if is_excluded { "Habilitar" } else { "Excluir" }}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     }
