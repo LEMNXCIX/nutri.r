@@ -427,6 +427,9 @@
   .mb-12 {
     margin-bottom: calc(var(--spacing) * 12);
   }
+  .mb-14 {
+    margin-bottom: calc(var(--spacing) * 14);
+  }
   .-ml-2 {
     margin-left: calc(var(--spacing) * -2);
   }
@@ -2115,6 +2118,11 @@
   .md\:col-span-12 {
     @media (width >= 48rem) {
       grid-column: span 12 / span 12;
+    }
+  }
+  .md\:mb-10 {
+    @media (width >= 48rem) {
+      margin-bottom: calc(var(--spacing) * 10);
     }
   }
   .md\:block {

@@ -16,7 +16,7 @@ pub fn NutritionSummary(
     let stroke_dashoffset = circumference - (percentage / 100.0) * circumference;
 
     view! {
-        <div class="card p-6 h-full flex flex-col justify-center">
+        <div class="card p-6 flex flex-col justify-center">
             <div class="flex flex-col xl:flex-row items-center gap-6 xl:gap-4">
                 // Circle Chart
                 <div class="relative w-32 h-32 shrink-0">

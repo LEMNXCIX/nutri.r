@@ -84,7 +84,7 @@ pub fn Home() -> impl IntoView {
 
     view! {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in pb-32 md:pb-8">
-             <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+             <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-14 md:mb-10">
                 <div>
                      <h2 class="text-3xl font-bold text-gray-900 tracking-tight">"Dashboard"</h2>
                      <p class="text-sm text-gray-500">"Tu resumen diario."</p>

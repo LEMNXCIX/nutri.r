@@ -17,7 +17,7 @@ pub fn WaterTracker(
     };
 
     view! {
-        <div class="card p-6 flex flex-col justify-between h-full bg-blue-50/50 hover:bg-blue-50 transition-colors border-blue-100">
+        <div class="card p-6 flex flex-col justify-between bg-blue-50/50 hover:bg-blue-50 transition-colors border-blue-100">
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <h3 class="font-bold text-gray-900 text-lg">"Hidratación"</h3>
