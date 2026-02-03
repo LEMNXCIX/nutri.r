@@ -83,6 +83,14 @@ pub struct IngredientStats {
     pub is_excluded: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct WaterRecord {
+    pub current: f32,
+    pub target: f32,
+    pub last_updated: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ShoppingItem {
     pub name: String,
@@ -170,6 +178,26 @@ pub async fn perform_sync() -> Result<String, String> {
     }
 }
 
+pub async fn pull_from_server() -> Result<String, String> {
+    match invoke("pull_from_server", JsValue::NULL).await {
+        Ok(response) => match response.as_string() {
+            Some(result) => Ok(result),
+            None => Err("Pull falló: respuesta inesperada".to_string()),
+        },
+        Err(e) => Err(format!("{:?}", e)),
+    }
+}
+
+pub async fn push_to_server() -> Result<String, String> {
+    match invoke("push_to_server", JsValue::NULL).await {
+        Ok(response) => match response.as_string() {
+            Some(result) => Ok(result),
+            None => Err("Push falló: respuesta inesperada".to_string()),
+        },
+        Err(e) => Err(format!("{:?}", e)),
+    }
+}
+
 pub async fn generate_week() -> Result<String, String> {
     match invoke("generate_week", JsValue::NULL).await {
         Ok(response) => match response.as_string() {
@@ -209,6 +237,14 @@ pub async fn get_config() -> Result<AppConfig, String> {
             Err(e) => Err(format!("Failed to parse config: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
+    }
+}
+
+pub async fn is_mobile() -> bool {
+    // Return true if tauri::is_mobile() returns true or if we are not in tauri (fallback)
+    match invoke("is_mobile", JsValue::NULL).await {
+        Ok(response) => response.as_bool().unwrap_or(false),
+        Err(_) => false,
     }
 }
 
@@ -357,7 +393,7 @@ pub async fn toggle_shopping_item(
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Default)]
 pub enum MealType {
     #[default]
     Breakfast,
@@ -741,4 +777,61 @@ pub async fn send_plan_email(plan_id: String, target_email: String) -> Result<()
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
     }
+}
+
+// Water tracking
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GetWaterArgs {
+    pub date: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateWaterArgs {
+    pub date: String,
+    pub current: f32,
+    pub target: f32,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GetWaterHistoryArgs {
+    pub start_date: String,
+    pub end_date: String,
+}
+
+pub async fn get_water_intake(date: String) -> Result<WaterRecord, String> {
+    let args = GetWaterArgs { date };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    let result = invoke("get_water_intake", args_js).await;
+    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string())
+}
+
+pub async fn update_water_intake(date: String, current: f32, target: f32) -> Result<(), String> {
+    let args = UpdateWaterArgs {
+        date,
+        current,
+        target,
+    };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    match invoke("update_water_intake", args_js).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("{:?}", e)),
+    }
+}
+
+pub async fn get_water_history(
+    start_date: String,
+    end_date: String,
+) -> Result<std::collections::HashMap<String, WaterRecord>, String> {
+    let args = GetWaterHistoryArgs {
+        start_date,
+        end_date,
+    };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    let result = invoke("get_water_history", args_js).await;
+    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string())
 }

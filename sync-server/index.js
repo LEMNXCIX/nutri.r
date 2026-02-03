@@ -47,8 +47,11 @@ const server = http.createServer((req, res) => {
                     let localTS = 0;
 
                     if (fs.existsSync(VAULT_FILE)) {
-                        const localData = JSON.parse(fs.readFileSync(VAULT_FILE, 'utf-8'));
-                        localTS = new Date(localData.last_updated || 0).getTime();
+                        const fileContent = fs.readFileSync(VAULT_FILE, 'utf-8');
+                        if (fileContent.trim()) {
+                            const localData = JSON.parse(fileContent);
+                            localTS = new Date(localData.last_updated || 0).getTime();
+                        }
                     }
 
                     const remoteTS = new Date(remoteData.last_updated || 0).getTime();
@@ -68,8 +71,9 @@ const server = http.createServer((req, res) => {
                         }));
                     }
                 } catch (err) {
+                    console.error('Server error processing request:', err);
                     res.writeHead(400, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Invalid JSON or server error' }));
+                    res.end(JSON.stringify({ error: err.message || 'Invalid JSON or server error' }));
                 }
             });
             return;

@@ -60,6 +60,7 @@ pub struct AppState {
     pub statistics_service: AppStatisticsService,
     pub config_repo: FileConfigRepository,
     pub preferences_repo: FilePreferencesRepository,
+    pub data_dir: PathBuf,
 }
 
 impl AppState {
@@ -116,6 +117,7 @@ impl AppState {
             FileCalendarRepository::new(data_dir.clone()),
             FileTagRepository::new(data_dir.clone()),
             FilePantryRepository::new(data_dir.clone()),
+            data_dir.clone(),
         );
 
         let email_service = EmailService::new(config_repo.get().unwrap_or_default());
@@ -144,6 +146,7 @@ impl AppState {
             statistics_service,
             config_repo: FileConfigRepository::new(config_path),
             preferences_repo,
+            data_dir: data_dir.clone(),
         }
     }
 }

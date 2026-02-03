@@ -39,6 +39,7 @@ pub fn run() {
             commands::get_favorite_plans,
             commands::get_plan_content,
             commands::get_config,
+            commands::is_mobile,
             commands::save_config,
             commands::list_ollama_models,
             commands::get_excluded_ingredients,
@@ -77,6 +78,11 @@ pub fn run() {
             commands::achievements::get_achievements,
             commands::email::send_plan_email,
             commands::sync::perform_sync,
+            commands::sync::pull_from_server,
+            commands::sync::push_to_server,
+            commands::water::get_water_intake,
+            commands::water::update_water_intake,
+            commands::water::get_water_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -8,6 +8,7 @@ pub fn Input(
     #[prop(into)] value: Signal<String>,
     on_input: Callback<String>,
     #[prop(optional, into)] class: String,
+    #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     let type_ = if type_.is_empty() {
         "text".to_string()
@@ -26,6 +27,7 @@ pub fn Input(
             placeholder=placeholder
             prop:value=value
             on:input=move |ev| on_input.run(event_target_value(&ev))
+            disabled=move || disabled.get()
         />
     }
 }

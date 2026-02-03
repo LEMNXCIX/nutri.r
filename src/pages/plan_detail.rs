@@ -1,4 +1,4 @@
-use crate::components::ui::{Button, Card, Loading, Modal, StarRating, TagBadge, TagSelector};
+use crate::components::ui::{Button, Card, Loading, StarRating, TagBadge, TagSelector};
 use crate::tauri_bridge::{
     add_tag_to_plan, assign_plan_to_date, calculate_nutrition, generate_variation, get_all_tags,
     get_calendar_range, get_plan_content, get_plan_metadata, remove_tag_from_plan, send_plan_email,
@@ -6,6 +6,7 @@ use crate::tauri_bridge::{
 };
 use chrono::{Datelike, Local, Month, NaiveDate};
 use leptos::logging::log;
+use leptos::portal::Portal;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::A;
@@ -221,9 +222,10 @@ pub fn PlanDetail() -> impl IntoView {
     };
 
     view! {
-        <div class="animate-in fade-in duration-500 bg-white min-h-screen font-sans text-gray-900">
-            // Full Width Background Header
-            <div class="bg-white border-b border-gray-200 pb-16 pt-8 px-4">
+        <div class="bg-white min-h-screen font-sans text-gray-900 border-none outline-none">
+            <div class="animate-in fade-in duration-500">
+                // Full Width Background Header
+                <div class="bg-white border-b border-gray-200 pb-16 pt-8 px-4">
                 <div class="max-w-5xl mx-auto">
                     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div class="space-y-4">
@@ -545,20 +547,22 @@ pub fn PlanDetail() -> impl IntoView {
             // Variation Loader Overlay
             {move || if generating_variation.get() {
                 view! {
-                    <div class="fixed inset-0 bg-white/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-center p-8">
-                        <div class="bg-white p-12 rounded-[3rem] border border-gray-200 shadow-2xl space-y-8 max-w-lg">
-                            <div class="relative">
-                                <Loading size="h-16 w-16" />
-                            </div>
-                            <div class="space-y-2">
-                                <h3 class="text-3xl font-black text-black tracking-tighter">"TRANSFORMANDO PLAN"</h3>
-                                <p class="text-gray-500 font-medium">"Nuestra IA está adaptando cada ingrediente a tu nuevo estilo de vida..."</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-2xl text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">
-                                "PROCESANDO MODELO LOCAL"
+                    <Portal>
+                        <div class="fixed inset-0 bg-white/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-center p-8">
+                            <div class="bg-white p-12 rounded-[3rem] border border-gray-200 shadow-2xl space-y-8 max-w-lg">
+                                <div class="relative">
+                                    <Loading size="h-16 w-16" />
+                                </div>
+                                <div class="space-y-2">
+                                    <h3 class="text-3xl font-black text-black tracking-tighter">"TRANSFORMANDO PLAN"</h3>
+                                    <p class="text-gray-500 font-medium">"Nuestra IA está adaptando cada ingrediente a tu nuevo estilo de vida..."</p>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-2xl text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">
+                                    "PROCESANDO MODELO LOCAL"
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </Portal>
                 }.into_any()
             } else {
                 view! { <div/> }.into_any()
@@ -604,166 +608,169 @@ pub fn PlanDetail() -> impl IntoView {
                 };
 
                 view! {
-                    <div class="fixed inset-0 bg-white/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                        <Card class="max-w-2xl w-full p-8 bg-white rounded-[2.5rem] border border-gray-200 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8">
+                    <Portal>
+                        <div class="fixed inset-0 bg-white/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                            <Card class="max-w-2xl w-full p-8 bg-white rounded-[2.5rem] border border-gray-200 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8">
 
-                            // Calendar Side
-                            <div class="flex-1">
-                                <header class="mb-6 flex items-center justify-between">
-                                    <h3 class="text-xl font-black text-black tracking-tight uppercase">
-                                        {move || format!("{} {}", Month::try_from(assign_month.get() as u8).ok().map(|m| m.name()).unwrap_or(""), assign_year.get())}
-                                    </h3>
-                                    <div class="flex items-center gap-1 bg-gray-50 rounded-lg p-1 border border-gray-100">
-                                        <button on:click=on_prev_month class="p-1 hover:bg-white rounded-md text-gray-400 hover:text-black transition-all shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg></button>
-                                        <button on:click=on_next_month class="p-1 hover:bg-white rounded-md text-gray-400 hover:text-black transition-all shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button>
+                                // Calendar Side
+                                <div class="flex-1">
+                                    <header class="mb-6 flex items-center justify-between">
+                                        <h3 class="text-xl font-black text-black tracking-tight uppercase">
+                                            {move || format!("{} {}", Month::try_from(assign_month.get() as u8).ok().map(|m| m.name()).unwrap_or(""), assign_year.get())}
+                                        </h3>
+                                        <div class="flex items-center gap-1 bg-gray-50 rounded-lg p-1 border border-gray-100">
+                                            <button on:click=on_prev_month class="p-1 hover:bg-white rounded-md text-gray-400 hover:text-black transition-all shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg></button>
+                                            <button on:click=on_next_month class="p-1 hover:bg-white rounded-md text-gray-400 hover:text-black transition-all shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button>
+                                        </div>
+                                    </header>
+
+                                    <div class="grid grid-cols-7 mb-2">
+                                         {vec!["L", "M", "M", "J", "V", "S", "D"].into_iter().map(|day| view! {
+                                            <div class="text-center text-[10px] font-bold text-gray-400 pb-2">{day}</div>
+                                        }).collect::<Vec<_>>()}
                                     </div>
-                                </header>
+                                    <div class="grid grid-cols-7 gap-1">
+                                        <Suspense fallback=move || view! { <div class="col-span-7 flex justify-center py-8"><Loading size="w-6 h-6"/></div> }>
+                                            {move || {
+                                                let entries = calendar_resource.get().unwrap_or_default();
+                                                let mut entries_map = HashMap::new();
+                                                for e in entries {
+                                                    entries_map.entry(e.date.clone()).or_insert_with(Vec::new).push(e);
+                                                }
 
-                                <div class="grid grid-cols-7 mb-2">
-                                     {vec!["L", "M", "M", "J", "V", "S", "D"].into_iter().map(|day| view! {
-                                        <div class="text-center text-[10px] font-bold text-gray-400 pb-2">{day}</div>
-                                    }).collect::<Vec<_>>()}
-                                </div>
-                                <div class="grid grid-cols-7 gap-1">
-                                    <Suspense fallback=move || view! { <div class="col-span-7 flex justify-center py-8"><Loading size="w-6 h-6"/></div> }>
-                                        {move || {
-                                            let entries = calendar_resource.get().unwrap_or_default();
-                                            let mut entries_map = HashMap::new();
-                                            for e in entries {
-                                                entries_map.entry(e.date.clone()).or_insert_with(Vec::new).push(e);
-                                            }
-
-                                            let year = assign_year.get();
-                                            let month = assign_month.get();
-                                            let first_day = NaiveDate::from_ymd_opt(year, month, 1).unwrap();
-                                            let weekday = first_day.weekday().number_from_monday();
-                                            let days_in_month = if month == 12 {
-                                                NaiveDate::from_ymd_opt(year + 1, 1, 1).unwrap().pred_opt().unwrap().day()
-                                            } else {
-                                                NaiveDate::from_ymd_opt(year, month + 1, 1).unwrap().pred_opt().unwrap().day()
-                                            };
-
-                                            let mut grid_items = Vec::new();
-                                            for _ in 1..weekday {
-                                                grid_items.push(view! { <div class="aspect-square"></div> }.into_any());
-                                            }
-
-                                            for d in 1..=days_in_month {
-                                                let date = NaiveDate::from_ymd_opt(year, month, d).unwrap();
-                                                let date_str = date.to_string();
-                                                let day_entries = entries_map.get(&date_str).cloned().unwrap_or_default();
-                                                let is_selected = selected_date_meal.get().map(|(sd, _)| sd == date).unwrap_or(false);
-                                                let is_today = date == now;
-
-                                                let has_meals = !day_entries.is_empty();
-
-                                                let on_select = move |_| {
-                                                     set_selected_date_meal.update(|v| {
-                                                        if let Some((_d, m)) = v {
-                                                            *v = Some((date.clone(), m.clone()));
-                                                        } else {
-                                                            *v = Some((date.clone(), MealType::Lunch)); // Default
-                                                        }
-                                                     });
+                                                let year = assign_year.get();
+                                                let month = assign_month.get();
+                                                let first_day = NaiveDate::from_ymd_opt(year, month, 1).unwrap();
+                                                let weekday = first_day.weekday().number_from_monday();
+                                                let days_in_month = if month == 12 {
+                                                    NaiveDate::from_ymd_opt(year + 1, 1, 1).unwrap().pred_opt().unwrap().day()
+                                                } else {
+                                                    NaiveDate::from_ymd_opt(year, month + 1, 1).unwrap().pred_opt().unwrap().day()
                                                 };
 
-                                                grid_items.push(view! {
-                                                    <button
-                                                        on:click=on_select
-                                                        class=format!("aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all border {}",
-                                                            if is_selected { "bg-black text-white border-black shadow-lg shadow-black/20 scale-105" }
-                                                            else if is_today { "bg-gray-50 text-black border-black/20" }
-                                                            else { "bg-white text-gray-500 hover:bg-gray-50 border-transparent hover:border-gray-200" }
-                                                        )
-                                                    >
-                                                        <span class="text-xs font-bold">{d}</span>
-                                                        {if has_meals {
-                                                            view! { <div class=format!("w-1 h-1 rounded-full mt-1 {}", if is_selected { "bg-white/50" } else { "bg-black/80" })></div> }.into_any()
-                                                        } else {
-                                                            ().into_any()
-                                                        }}
-                                                    </button>
-                                                }.into_any());
-                                            }
-                                            grid_items
-                                        }}
-                                    </Suspense>
+                                                let mut grid_items = Vec::new();
+                                                for _ in 1..weekday {
+                                                    grid_items.push(view! { <div class="aspect-square"></div> }.into_any());
+                                                }
+
+                                                for d in 1..=days_in_month {
+                                                    let date = NaiveDate::from_ymd_opt(year, month, d).unwrap();
+                                                    let date_str = date.to_string();
+                                                    let day_entries = entries_map.get(&date_str).cloned().unwrap_or_default();
+                                                    let is_selected = selected_date_meal.get().map(|(sd, _)| sd == date).unwrap_or(false);
+                                                    let is_today = date == now;
+
+                                                    let has_meals = !day_entries.is_empty();
+
+                                                    let on_select = move |_| {
+                                                         set_selected_date_meal.update(|v| {
+                                                            if let Some((_d, m)) = v {
+                                                                *v = Some((date.clone(), m.clone()));
+                                                            } else {
+                                                                *v = Some((date.clone(), MealType::Lunch)); // Default
+                                                            }
+                                                         });
+                                                    };
+
+                                                    grid_items.push(view! {
+                                                        <button
+                                                            on:click=on_select
+                                                            class=format!("aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all border {}",
+                                                                if is_selected { "bg-black text-white border-black shadow-lg shadow-black/20 scale-105" }
+                                                                else if is_today { "bg-gray-50 text-black border-black/20" }
+                                                                else { "bg-white text-gray-500 hover:bg-gray-50 border-transparent hover:border-gray-200" }
+                                                            )
+                                                        >
+                                                            <span class="text-xs font-bold">{d}</span>
+                                                            {if has_meals {
+                                                                view! { <div class=format!("w-1 h-1 rounded-full mt-1 {}", if is_selected { "bg-white/50" } else { "bg-black/80" })></div> }.into_any()
+                                                            } else {
+                                                                ().into_any()
+                                                            }}
+                                                        </button>
+                                                    }.into_any());
+                                                }
+                                                grid_items
+                                            }}
+                                        </Suspense>
+                                    </div>
                                 </div>
-                            </div>
 
-                            // Selection Side
-                            <div class="md:w-64 flex flex-col border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0 md:pl-8">
-                                <h4 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">"Selección"</h4>
+                                // Selection Side
+                                <div class="md:w-64 flex flex-col border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0 md:pl-8">
+                                    <h4 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">"Selección"</h4>
 
-                                {move || if let Some((date, meal)) = selected_date_meal.get() {
-                                    view! {
-                                        <div class="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4">
-                                            <div>
-                                                <div class="text-3xl font-black text-black tracking-tighter mb-1">
-                                                     {date.day()} " " {Month::try_from(date.month() as u8).ok().map(|m| m.name()).unwrap_or("")}
+                                    {move || if let Some((date, meal)) = selected_date_meal.get() {
+                                        view! {
+                                            <div class="flex-1 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4">
+                                                <div>
+                                                    <div class="text-3xl font-black text-black tracking-tighter mb-1">
+                                                         {date.day()} " " {Month::try_from(date.month() as u8).ok().map(|m| m.name()).unwrap_or("")}
+                                                    </div>
+                                                    <div class="text-xs font-mono text-gray-400">{date.year()}</div>
                                                 </div>
-                                                <div class="text-xs font-mono text-gray-400">{date.year()}</div>
-                                            </div>
 
-                                            <div class="space-y-2">
-                                                <label class="text-[10px] font-bold text-gray-400 uppercase">"Tipo de Comida"</label>
-                                                <div class="grid grid-cols-1 gap-2">
-                                                    {[MealType::Breakfast, MealType::Lunch, MealType::Dinner, MealType::Snack].into_iter().map(|m| {
-                                                        let is_active = m == meal;
-                                                        let m_clone = m.clone();
-                                                        let label = match m {
-                                                            MealType::Breakfast => "Desayuno",
-                                                            MealType::Lunch => "Almuerzo",
-                                                            MealType::Dinner => "Cena",
-                                                            MealType::Snack => "Merienda",
-                                                        };
-                                                        let icon = match m {
-                                                            MealType::Breakfast => "☀️",
-                                                            MealType::Lunch => "🥘",
-                                                            MealType::Dinner => "🌙",
-                                                            MealType::Snack => "🍎",
-                                                        };
+                                                <div class="space-y-2">
+                                                    <label class="text-[10px] font-bold text-gray-400 uppercase">"Tipo de Comida"</label>
+                                                    <div class="grid grid-cols-1 gap-2">
+                                                        {[MealType::Breakfast, MealType::Lunch, MealType::Dinner, MealType::Snack].into_iter().map(|m| {
+                                                            let is_active = m == meal;
+                                                            let m_clone = m.clone();
+                                                            let label = match m {
+                                                                MealType::Breakfast => "Desayuno",
+                                                                MealType::Lunch => "Almuerzo",
+                                                                MealType::Dinner => "Cena",
+                                                                MealType::Snack => "Merienda",
+                                                            };
+                                                            let icon = match m {
+                                                                MealType::Breakfast => "☀️",
+                                                                MealType::Lunch => "🥘",
+                                                                MealType::Dinner => "🌙",
+                                                                MealType::Snack => "🍎",
+                                                            };
 
-                                                        view! {
-                                                            <button
-                                                                on:click=move |_| set_selected_date_meal.set(Some((date.clone(), m_clone.clone())))
-                                                                class=format!("w-full text-left px-4 py-3 rounded-xl border flex items-center justify-between transition-all {}",
-                                                                    if is_active { "bg-black text-white border-black shadow-lg" }
-                                                                    else { "bg-white text-gray-500 border-gray-100 hover:border-gray-200 hover:bg-gray-50" }
-                                                                )
-                                                            >
-                                                                <span class="font-bold text-sm">{label}</span>
-                                                                <span>{icon}</span>
-                                                            </button>
-                                                        }
-                                                    }).collect::<Vec<_>>()}
+                                                            view! {
+                                                                <button
+                                                                    on:click=move |_| set_selected_date_meal.set(Some((date.clone(), m_clone.clone())))
+                                                                    class=format!("w-full text-left px-4 py-3 rounded-xl border flex items-center justify-between transition-all {}",
+                                                                        if is_active { "bg-black text-white border-black shadow-lg" }
+                                                                        else { "bg-white text-gray-500 border-gray-100 hover:border-gray-200 hover:bg-gray-50" }
+                                                                    )
+                                                                >
+                                                                    <span class="font-bold text-sm">{label}</span>
+                                                                    <span>{icon}</span>
+                                                                </button>
+                                                            }
+                                                        }).collect::<Vec<_>>()}
+                                                    </div>
+                                                </div>
+
+                                                <div class="mt-auto pt-4 flex flex-col gap-2">
+                                                    <Button on_click=Callback::new(on_confirm_assignment) class="w-full bg-black text-white hover:bg-gray-900 h-12 rounded-xl shadow-xl shadow-black/10">"Confirmar Asignación"</Button>
+                                                    <button on:click=on_close class="w-full h-10 text-xs font-bold text-gray-400 hover:text-black uppercase tracking-widest">"Cancelar"</button>
                                                 </div>
                                             </div>
-
-                                            <div class="mt-auto pt-4 flex flex-col gap-2">
-                                                <Button on_click=Callback::new(on_confirm_assignment) class="w-full bg-black text-white hover:bg-gray-900 h-12 rounded-xl shadow-xl shadow-black/10">"Confirmar Asignación"</Button>
+                                        }.into_any()
+                                    } else {
+                                        view! {
+                                            <div class="flex-1 flex flex-col items-center justify-center text-center text-gray-400 p-4 border-2 border-dashed border-gray-100 rounded-2xl">
+                                                <svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                <p class="text-sm font-medium">"Selecciona un día en el calendario"</p>
+                                            </div>
+                                            <div class="mt-auto pt-4">
                                                 <button on:click=on_close class="w-full h-10 text-xs font-bold text-gray-400 hover:text-black uppercase tracking-widest">"Cancelar"</button>
                                             </div>
-                                        </div>
-                                    }.into_any()
-                                } else {
-                                    view! {
-                                        <div class="flex-1 flex flex-col items-center justify-center text-center text-gray-400 p-4 border-2 border-dashed border-gray-100 rounded-2xl">
-                                            <svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                            <p class="text-sm font-medium">"Selecciona un día en el calendario"</p>
-                                        </div>
-                                        <div class="mt-auto pt-4">
-                                            <button on:click=on_close class="w-full h-10 text-xs font-bold text-gray-400 hover:text-black uppercase tracking-widest">"Cancelar"</button>
-                                        </div>
-                                    }.into_any()
-                                }}
-                            </div>
-                        </Card>
-                    </div>
+                                        }.into_any()
+                                    }}
+                                </div>
+                            </Card>
+                        </div>
+                    </Portal>
                 }.into_any()
             } else {
                 view! { <div/> }.into_any()
             }}
+            </div>
         </div>
     }
 }

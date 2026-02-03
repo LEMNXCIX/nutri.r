@@ -14,6 +14,7 @@ pub mod shopping;
 pub mod statistics;
 pub mod sync;
 pub mod tags;
+pub mod water;
 
 pub use calendar::*;
 pub use config::*;
@@ -28,3 +29,4 @@ pub use shopping::*;
 pub use statistics::*;
 pub use sync::*;
 pub use tags::*;
+pub use water::*;

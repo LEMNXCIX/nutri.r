@@ -1,8 +1,9 @@
 use crate::models::{
     AppConfig, CalendarEntry, ExcludedIngredients, PantryItem, PlanDetail, PlanIndex, PlanMetadata,
-    Tag,
+    Tag, WaterRecord,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AppBackup {
@@ -16,4 +17,6 @@ pub struct AppBackup {
     pub calendar: Vec<CalendarEntry>,
     pub pantry: Vec<PantryItem>,
     pub excluded_ingredients: ExcludedIngredients,
+    #[serde(default)]
+    pub water: HashMap<String, WaterRecord>,
 }

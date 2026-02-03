@@ -1,7 +1,8 @@
-use crate::components::ui::{Button, Card, Input, Loading};
+use crate::components::ui::{Button, Card, Input, Loading, Toast};
 use crate::tauri_bridge::{
-    get_config, get_excluded_ingredients, get_ui_preferences, list_ollama_models, save_config,
-    save_excluded_ingredients, save_ui_preferences, AppConfig, OllamaModel, UIPreferences,
+    get_config, get_excluded_ingredients, get_ui_preferences, is_mobile, list_ollama_models,
+    save_config, save_excluded_ingredients, save_ui_preferences, AppConfig, OllamaModel,
+    UIPreferences,
 };
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -28,6 +29,11 @@ pub fn Config() -> impl IntoView {
     let (excluded_ingredients, set_excluded_ingredients) = signal(Vec::<String>::new());
     let (new_ingredient, set_new_ingredient) = signal(String::new());
     let (preferences, set_preferences) = signal(UIPreferences::default());
+    let (is_mobile_ui, set_is_mobile_ui) = signal(false);
+
+    spawn_local(async move {
+        set_is_mobile_ui.set(is_mobile().await);
+    });
 
     spawn_local(async move {
         match get_config().await {
@@ -126,7 +132,7 @@ pub fn Config() -> impl IntoView {
         Callback::new(move |val: String| set_config.update(|c| c.sync_server_url = val));
 
     let h_sync_click = Callback::new(move |_: web_sys::MouseEvent| {
-        set_status_msg.set("Iniciando sincronización...".to_string());
+        set_status_msg.set("Iniciando sincronización..".to_string());
         spawn_local(async move {
             match crate::tauri_bridge::perform_sync().await {
                 Ok(msg) => {
@@ -139,13 +145,26 @@ pub fn Config() -> impl IntoView {
             }
         });
     });
-    let h_update_sync_url =
-        Callback::new(move |val: String| set_config.update(|c| c.sync_server_url = val));
 
-    let h_sync_click = Callback::new(move |_: web_sys::MouseEvent| {
-        set_status_msg.set("Iniciando sincronización...".to_string());
+    let h_pull_click = Callback::new(move |_: web_sys::MouseEvent| {
+        set_status_msg.set("Descargando datos del servidor...".to_string());
         spawn_local(async move {
-            match crate::tauri_bridge::perform_sync().await {
+            match crate::tauri_bridge::pull_from_server().await {
+                Ok(msg) => {
+                    set_status_msg.set(msg);
+                    if let Ok(c) = get_config().await {
+                        set_config.set(c);
+                    }
+                }
+                Err(e) => set_status_msg.set(format!("Error: {}", e)),
+            }
+        });
+    });
+
+    let h_push_click = Callback::new(move |_: web_sys::MouseEvent| {
+        set_status_msg.set("Subiendo datos al servidor...".to_string());
+        spawn_local(async move {
+            match crate::tauri_bridge::push_to_server().await {
                 Ok(msg) => {
                     set_status_msg.set(msg);
                     if let Ok(c) = get_config().await {
@@ -273,6 +292,7 @@ pub fn Config() -> impl IntoView {
                                     });
                                 }
                                 prop:value=move || preferences.get().theme
+                                disabled=move || is_mobile_ui.get()
                             >
                                 <option value="light">"Modo Claro"</option>
                                 <option value="dark">"Modo Oscuro"</option>
@@ -299,6 +319,7 @@ pub fn Config() -> impl IntoView {
                                     on_input=h_update_ollama_url
                                     placeholder="http://127.0.0.1:11434"
                                     class="bg-gray-50 border-gray-200 text-black focus:border-black"
+                                    disabled=is_mobile_ui
                                 />
                             </div>
 
@@ -309,6 +330,7 @@ pub fn Config() -> impl IntoView {
                                     class="w-full bg-gray-50 p-4 rounded-xl border border-gray-200 text-black focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all uppercase font-bold text-xs tracking-wider"
                                     on:change=move |ev| set_config.update(|c| c.ollama_model = event_target_value(&ev))
                                     prop:value=move || config.get().ollama_model
+                                    disabled=move || is_mobile_ui.get()
                                 >
                                     <option value="">Selecciona un modelo</option>
                                     {move || {
@@ -343,6 +365,7 @@ pub fn Config() -> impl IntoView {
                                 on:input=move |ev| set_config.update(|c| c.prompt_maestro = event_target_value(&ev))
                                 prop:value=move || config.get().prompt_maestro
                                 placeholder="Ej: Genera un plan nutricional semanal enfocado en..."
+                                disabled=move || is_mobile_ui.get()
                             />
                         </div>
                     </Card>
@@ -366,6 +389,7 @@ pub fn Config() -> impl IntoView {
                                     on_input=h_update_smtp_host
                                     placeholder="smtp.gmail.com"
                                     class="bg-gray-50 border-gray-200 text-black focus:border-black"
+                                    disabled=is_mobile_ui
                                 />
                             </div>
 
@@ -377,6 +401,7 @@ pub fn Config() -> impl IntoView {
                                     on_input=h_update_smtp_port
                                     placeholder="587"
                                     class="bg-gray-50 border-gray-200 text-black focus:border-black"
+                                    disabled=is_mobile_ui
                                 />
                             </div>
 
@@ -388,6 +413,7 @@ pub fn Config() -> impl IntoView {
                                     on_input=h_update_smtp_user
                                     placeholder="tu@email.com"
                                     class="bg-gray-50 border-gray-200 text-black focus:border-black"
+                                    disabled=is_mobile_ui
                                 />
                             </div>
 
@@ -400,6 +426,7 @@ pub fn Config() -> impl IntoView {
                                     on_input=h_update_smtp_pass
                                     placeholder="••••••••••••"
                                     class="bg-gray-50 border-gray-200 text-black focus:border-black"
+                                    disabled=is_mobile_ui
                                 />
                             </div>
 
@@ -411,6 +438,7 @@ pub fn Config() -> impl IntoView {
                                     on_input=h_update_smtp_to
                                     placeholder="ejemplo@email.com"
                                     class="bg-gray-50 border-gray-200 text-black focus:border-black"
+                                    disabled=is_mobile_ui
                                 />
                             </div>
                         </div>
@@ -441,6 +469,7 @@ pub fn Config() -> impl IntoView {
                                 on_input=h_update_usda_key
                                 placeholder="Introduce tu API Key..."
                                 class="bg-gray-50 border-gray-200 text-black focus:border-black"
+                                disabled=is_mobile_ui
                             />
                         </div>
                     </Card>
@@ -471,13 +500,39 @@ pub fn Config() -> impl IntoView {
                                 />
                             </div>
 
-                            <div class="flex flex-col gap-4">
-                                <Button
-                                    on_click=h_sync_click
-                                    class="w-full py-4 bg-black hover:bg-gray-900 text-white border-none rounded-xl font-black uppercase text-xs tracking-[0.2em] transition-all transform hover:scale-[1.02] shadow-lg shadow-gray-100".to_string()
-                                >
-                                    "Sincronizar Ahora (LWW)"
-                                </Button>
+                            <div class="space-y-4">
+                                <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-relaxed">
+                                    "Elige cómo sincronizar tus datos:"
+                                </p>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <Button
+                                        on_click=h_pull_click
+                                        class="flex flex-col items-center gap-2 py-4 bg-white hover:bg-gray-50 text-black border-2 border-black rounded-xl font-black uppercase text-xs tracking-wide transition-all".to_string()
+                                    >
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
+                                        "⬇ Pull"
+                                        <span class="text-[8px] font-medium normal-case tracking-normal text-gray-500">"Traer del servidor"</span>
+                                    </Button>
+
+                                    <Button
+                                        on_click=h_sync_click
+                                        class="flex flex-col items-center gap-2 py-4 bg-black hover:bg-gray-900 text-white border-none rounded-xl font-black uppercase text-xs tracking-wide transition-all shadow-lg shadow-gray-100".to_string()
+                                    >
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                        "⟳ Auto Sync"
+                                        <span class="text-[8px] font-medium normal-case tracking-normal text-gray-300">"LWW automático"</span>
+                                    </Button>
+
+                                    <Button
+                                        on_click=h_push_click
+                                        class="flex flex-col items-center gap-2 py-4 bg-white hover:bg-gray-50 text-black border-2 border-black rounded-xl font-black uppercase text-xs tracking-wide transition-all".to_string()
+                                    >
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
+                                        "⬆ Push"
+                                        <span class="text-[8px] font-medium normal-case tracking-normal text-gray-500">"Subir al servidor"</span>
+                                    </Button>
+                                </div>
 
                                 <div class="px-2 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                     <span>"Último cambio/sincro:"</span>
@@ -520,10 +575,12 @@ pub fn Config() -> impl IntoView {
                             value=new_ingredient
                             on_input=h_update_new_ing
                             class="flex-1 bg-gray-50 border-gray-200 text-black focus:border-black"
+                            disabled=is_mobile_ui
                         />
                         <Button
                             on_click=h_add_ingredient
                             class="px-8 whitespace-nowrap bg-black hover:bg-gray-900 text-white border-none rounded-xl font-bold uppercase text-xs tracking-wide".to_string()
+                            disabled=is_mobile_ui
                         >
                             "Agregar"
                         </Button>
@@ -545,6 +602,7 @@ pub fn Config() -> impl IntoView {
                                             type="button"
                                             class="text-gray-400 hover:text-red-500 transition-colors"
                                             on:click=move |_| remove_ingredient(ing_clone.clone())
+                                            disabled=move || is_mobile_ui.get()
                                         >
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
@@ -569,6 +627,7 @@ pub fn Config() -> impl IntoView {
                         <Button
                             on_click=handle_export
                             class="flex-1 bg-white hover:bg-gray-50 text-black border-2 border-black py-4 rounded-xl font-black uppercase tracking-widest text-xs".to_string()
+                            disabled=is_mobile_ui
                         >
                             "Exportar Vault (.json)"
                         </Button>
@@ -584,6 +643,8 @@ pub fn Config() -> impl IntoView {
                             <label
                                 for="import-file"
                                 class="w-full flex h-full items-center justify-center px-4 py-4 bg-black hover:bg-gray-900 text-white rounded-xl cursor-pointer transition-all font-black uppercase text-xs tracking-widest"
+                                class:opacity-50=move || is_mobile_ui.get()
+                                class:pointer-events-none=move || is_mobile_ui.get()
                             >
                                 "Importar Vault (.json)"
                             </label>
@@ -599,24 +660,19 @@ pub fn Config() -> impl IntoView {
                 </Card>
             </section>
 
-            <div class="fixed bottom-8 right-8 z-50">
-                 {move || if !status_msg.get().is_empty() {
-                    view! {
-                        <div class="bg-black text-white px-6 py-4 rounded-xl shadow-2xl animate-in slide-in-from-bottom duration-300 flex items-center gap-3">
-                            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                             <p class="text-xs font-bold uppercase tracking-wider">{status_msg.get()}</p>
-                             <button
-                                class="ml-2 text-gray-500 hover:text-white"
-                                on:click=move |_| set_status_msg.set(String::new())
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-                    }.into_any()
-                 } else {
-                    ().into_any()
-                 }}
-            </div>
+            {move || if !status_msg.get().is_empty() {
+                let msg = status_msg.get();
+                let is_err = msg.to_lowercase().contains("error") || msg.to_lowercase().contains("aviso");
+                view! {
+                    <Toast
+                        message=Signal::derive(move || status_msg.get())
+                        on_close=Callback::new(move |_| set_status_msg.set(String::new()))
+                        is_error=is_err
+                    />
+                }.into_any()
+            } else {
+                ().into_any()
+            }}
         </div>
     }
 }

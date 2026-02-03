@@ -10,6 +10,6 @@ open = false
 
 [[hooks]]
 stage = "pre_build"
-command = "./node_modules/.bin/tailwindcss.cmd"
-command_arguments = ["-i", "./input.css", "-o", "./styles.css"]
+command = "npx.cmd"
+command_arguments = ["tailwindcss", "-i", "./input.css", "-o", "./styles.css"]
 

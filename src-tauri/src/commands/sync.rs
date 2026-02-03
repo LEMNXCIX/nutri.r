@@ -111,3 +111,87 @@ pub async fn perform_sync(state: State<'_, AppState>) -> Result<String, String> 
         }
     }
 }
+
+#[tauri::command]
+pub async fn pull_from_server(state: State<'_, AppState>) -> Result<String, String> {
+    let mut config = state.config_repo.get().map_err(|e| e.to_string())?;
+
+    if config.sync_server_url.is_empty() {
+        return Err("No se ha configurado la URL del servidor de sincronización".to_string());
+    }
+
+    let server_url = format!("{}/vault", config.sync_server_url.trim_end_matches('/'));
+    let client = reqwest::Client::new();
+
+    // Obtener datos del servidor
+    let remote_response = client.get(&server_url).send().await;
+
+    match remote_response {
+        Ok(resp) if resp.status().is_success() => {
+            let remote_backup: AppBackup = resp
+                .json()
+                .await
+                .map_err(|e| format!("Error parseando backup remoto: {}", e))?;
+
+            // Forzar restauración sin importar timestamps
+            {
+                let service = state.import_export_service.lock().await;
+                service
+                    .restore_backup(remote_backup.clone())
+                    .map_err(|e| e.to_string())?;
+            }
+
+            // Actualizar last_updated local
+            config.last_updated = remote_backup.last_updated;
+            state.config_repo.save(&config).map_err(|e| e.to_string())?;
+
+            Ok("Pull completado: Datos del servidor importados".to_string())
+        }
+        Ok(resp) if resp.status() == 404 || resp.status() == 204 => {
+            Err("El servidor no tiene datos para descargar".to_string())
+        }
+        _ => Err("No se pudo conectar con el servidor de sincronización".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn push_to_server(state: State<'_, AppState>) -> Result<String, String> {
+    let mut config = state.config_repo.get().map_err(|e| e.to_string())?;
+
+    if config.sync_server_url.is_empty() {
+        return Err("No se ha configurado la URL del servidor de sincronización".to_string());
+    }
+
+    let server_url = format!("{}/vault", config.sync_server_url.trim_end_matches('/'));
+    let client = reqwest::Client::new();
+
+    // Crear backup local actual
+    let mut local_backup = {
+        let service = state.import_export_service.lock().await;
+        service.create_backup().map_err(|e| e.to_string())?
+    };
+
+    // Asegurar que tiene timestamp
+    if local_backup.last_updated.is_empty() {
+        local_backup.last_updated = Local::now().to_rfc3339();
+    }
+
+    // Forzar subida sin importar timestamps
+    let post_resp = client
+        .post(&server_url)
+        .json(&local_backup)
+        .send()
+        .await
+        .map_err(|e| format!("Error subiendo al servidor: {}", e))?;
+
+    if post_resp.status().is_success() {
+        config.last_updated = local_backup.last_updated.clone();
+        state.config_repo.save(&config).map_err(|e| e.to_string())?;
+        Ok("Push completado: Datos locales subidos al servidor".to_string())
+    } else {
+        Err(format!(
+            "El servidor rechazó el backup: {}",
+            post_resp.status()
+        ))
+    }
+}

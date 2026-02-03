@@ -6,6 +6,7 @@ pub mod modal;
 pub mod star_rating;
 pub mod tag_badge;
 pub mod tag_selector;
+pub mod toast;
 
 pub use button::Button;
 pub use card::Card;
@@ -15,3 +16,4 @@ pub use modal::Modal;
 pub use star_rating::StarRating;
 pub use tag_badge::TagBadge;
 pub use tag_selector::TagSelector;
+pub use toast::Toast;

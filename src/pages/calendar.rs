@@ -4,6 +4,7 @@ use crate::tauri_bridge::{
     MealType,
 };
 use chrono::{Datelike, Local, Month, NaiveDate};
+use leptos::portal::Portal;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use std::collections::HashMap;
@@ -254,52 +255,54 @@ pub fn Calendar() -> impl IntoView {
             // Assign Modal
             {move || if let Some((date, meal)) = show_assign_modal.get() {
                 view! {
-                    <div class="fixed inset-0 bg-white/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                        <Card class="max-w-md w-full p-6 md:p-10 bg-white rounded-3xl md:rounded-[3rem] border border-gray-200 shadow-2xl relative overflow-hidden text-center">
+                    <Portal>
+                        <div class="fixed inset-0 bg-white/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                            <Card class="max-w-md w-full p-6 md:p-10 bg-white rounded-3xl md:rounded-[3rem] border border-gray-200 shadow-2xl relative overflow-hidden text-center">
 
-                            <h3 class="text-2xl font-black text-black mb-2 tracking-tighter uppercase italic">"Asignar Plan"</h3>
-                            <p class="text-gray-500 mb-8 text-[11px] font-black uppercase tracking-widest leading-relaxed">
-                                {format!("Elige un plan para el {} de {} el {}.",
-                                    match meal {
-                                        MealType::Breakfast => "desayuno",
-                                        MealType::Lunch => "almuerzo",
-                                        MealType::Dinner => "cena",
-                                        MealType::Snack => "merienda",
-                                    },
-                                    Month::try_from(date.month() as u8).ok().map(|m| m.name()).unwrap_or(""),
-                                    date.day())}
-                            </p>
+                                <h3 class="text-2xl font-black text-black mb-2 tracking-tighter uppercase italic">"Asignar Plan"</h3>
+                                <p class="text-gray-500 mb-8 text-[11px] font-black uppercase tracking-widest leading-relaxed">
+                                    {format!("Elige un plan para el {} de {} el {}.",
+                                        match meal {
+                                            MealType::Breakfast => "desayuno",
+                                            MealType::Lunch => "almuerzo",
+                                            MealType::Dinner => "cena",
+                                            MealType::Snack => "merienda",
+                                        },
+                                        Month::try_from(date.month() as u8).ok().map(|m| m.name()).unwrap_or(""),
+                                        date.day())}
+                                </p>
 
-                            <div class="max-h-[350px] overflow-y-auto space-y-3 mb-8 pr-4 custom-scrollbar">
-                                {move || plans.get().map(|list| {
-                                    if list.is_empty() {
-                                        return view! { <div class="text-center py-12 text-gray-400 font-bold uppercase tracking-widest text-[10px]">"No tienes planes guardados"</div> }.into_any()
-                                    }
-                                    list.into_iter().map(|plan| {
-                                        let pid = plan.id.clone();
-                                        view! {
-                                            <button
-                                                on:click=move |_| on_assign(pid.clone())
-                                                class="w-full text-left p-4 rounded-2xl bg-gray-50 hover:bg-black hover:text-white border border-gray-100 transition-all group active:scale-95"
-                                            >
-                                                <div class="font-black text-gray-900 group-hover:text-white text-xs tracking-widest uppercase mb-1">{plan.id.chars().take(12).collect::<String>()}</div>
-                                                <div class="text-[10px] text-gray-500 group-hover:text-gray-300 font-black uppercase tracking-tighter">{plan.fecha.clone()}</div>
-                                            </button>
+                                <div class="max-h-[350px] overflow-y-auto space-y-3 mb-8 pr-4 custom-scrollbar">
+                                    {move || plans.get().map(|list| {
+                                        if list.is_empty() {
+                                            return view! { <div class="text-center py-12 text-gray-400 font-bold uppercase tracking-widest text-[10px]">"No tienes planes guardados"</div> }.into_any()
                                         }
-                                    }).collect::<Vec<_>>().into_any()
-                                }).unwrap_or_else(|| ().into_any())}
-                            </div>
+                                        list.into_iter().map(|plan| {
+                                            let pid = plan.id.clone();
+                                            view! {
+                                                <button
+                                                    on:click=move |_| on_assign(pid.clone())
+                                                    class="w-full text-left p-4 rounded-2xl bg-gray-50 hover:bg-black hover:text-white border border-gray-100 transition-all group active:scale-95"
+                                                >
+                                                    <div class="font-black text-gray-900 group-hover:text-white text-xs tracking-widest uppercase mb-1">{plan.id.chars().take(12).collect::<String>()}</div>
+                                                    <div class="text-[10px] text-gray-500 group-hover:text-gray-300 font-black uppercase tracking-tighter">{plan.fecha.clone()}</div>
+                                                </button>
+                                            }
+                                        }).collect::<Vec<_>>().into_any()
+                                    }).unwrap_or_else(|| ().into_any())}
+                                </div>
 
-                            <div class="flex flex-col gap-3">
-                                <Button
-                                    on_click=Callback::new(move |_| set_show_assign_modal.set(None))
-                                    class="w-full bg-white hover:bg-gray-50 text-gray-900 border border-gray-200".to_string()
-                                >
-                                    "Cerrar"
-                                </Button>
-                            </div>
-                        </Card>
-                    </div>
+                                <div class="flex flex-col gap-3">
+                                    <Button
+                                        on_click=Callback::new(move |_| set_show_assign_modal.set(None))
+                                        class="w-full bg-white hover:bg-gray-50 text-gray-900 border border-gray-200".to_string()
+                                    >
+                                        "Cerrar"
+                                    </Button>
+                                </div>
+                            </Card>
+                        </div>
+                    </Portal>
                 }.into_any()
             } else {
                 ().into_any()

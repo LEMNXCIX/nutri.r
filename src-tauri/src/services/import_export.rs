@@ -1,9 +1,13 @@
 use crate::models::AppBackup;
+use crate::models::WaterRecord;
 use crate::repositories::{
     CalendarRepository, ConfigRepository, IngredientRepository, MetadataRepository,
     PantryRepository, PlanRepository, TagRepository,
 };
 use crate::utils::error::AppResult;
+use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
 
 pub struct ImportExportService<
     P: PlanRepository,
@@ -21,6 +25,7 @@ pub struct ImportExportService<
     calendar_repo: CL,
     tag_repo: T,
     pantry_repo: PY,
+    data_dir: PathBuf,
 }
 
 impl<
@@ -41,6 +46,7 @@ impl<
         calendar_repo: CL,
         tag_repo: T,
         pantry_repo: PY,
+        data_dir: PathBuf,
     ) -> Self {
         Self {
             plan_repo,
@@ -50,6 +56,7 @@ impl<
             calendar_repo,
             tag_repo,
             pantry_repo,
+            data_dir,
         }
     }
 
@@ -83,6 +90,17 @@ impl<
             config.last_updated.clone()
         };
 
+        // Read water data
+        let water_path = self.data_dir.join("water.json");
+        let water: HashMap<String, WaterRecord> = if water_path.exists() {
+            fs::read_to_string(&water_path)
+                .ok()
+                .and_then(|content| serde_json::from_str(&content).ok())
+                .unwrap_or_default()
+        } else {
+            HashMap::new()
+        };
+
         Ok(AppBackup {
             version: "1.0.0".to_string(),
             last_updated,
@@ -94,6 +112,7 @@ impl<
             calendar,
             pantry,
             excluded_ingredients,
+            water,
         })
     }
 
@@ -117,6 +136,12 @@ impl<
         self.pantry_repo.save_all(backup.pantry)?;
         self.ingredient_repo
             .save_excluded(&backup.excluded_ingredients)?;
+
+        // Restore water data directly to file
+        let water_path = self.data_dir.join("water.json");
+        if let Ok(content) = serde_json::to_string_pretty(&backup.water) {
+            let _ = fs::write(water_path, content);
+        }
 
         Ok(())
     }

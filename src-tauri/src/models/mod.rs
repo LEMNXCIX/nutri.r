@@ -13,6 +13,7 @@ pub mod search;
 pub mod shopping;
 pub mod statistics;
 pub mod tag;
+pub mod water;
 
 // Re-export commonly used types
 pub use achievement::Achievement;
@@ -32,3 +33,4 @@ pub use search::SearchFilters;
 pub use shopping::{ShoppingItem, ShoppingList};
 pub use statistics::{IngredientTrend, MonthlyData, Statistics};
 pub use tag::Tag;
+pub use water::WaterRecord;

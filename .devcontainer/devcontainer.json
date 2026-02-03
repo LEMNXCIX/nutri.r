@@ -1,0 +1,26 @@
+{
+    "name": "Nutri-R Android Dev",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "rust-analyzer.checkOnSave.command": "clippy"
+            },
+            "extensions": [
+                "rust-lang.rust-analyzer",
+                "tamasfe.even-better-toml",
+                "serayuzgur.crates",
+                "tauri-apps.tauri-vscode"
+            ]
+        }
+    },
+    "remoteUser": "vscode",
+    "forwardPorts": [
+        1420,
+        3000
+    ],
+    "postCreateCommand": "npm install"
+}
