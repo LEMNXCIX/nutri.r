@@ -168,76 +168,139 @@ extern "C" {
     async fn invoke(cmd: &str, args: JsValue) -> Result<JsValue, JsValue>;
 }
 
+fn emit_toast(message: &str, is_error: bool) {
+    if let Some(window) = web_sys::window() {
+        if let Ok(event) = web_sys::CustomEvent::new_with_event_init_dict("toast-notification", &{
+            let mut init = web_sys::CustomEventInit::new();
+            let detail = js_sys::Object::new();
+            let _ = js_sys::Reflect::set(
+                &detail,
+                &JsValue::from_str("message"),
+                &JsValue::from_str(message),
+            );
+            let _ = js_sys::Reflect::set(
+                &detail,
+                &JsValue::from_str("is_error"),
+                &JsValue::from_bool(is_error),
+            );
+            init.detail(&detail);
+            init.bubbles(true);
+            init
+        }) {
+            let _ = window.dispatch_event(&event);
+        }
+    }
+}
+
+fn notify<T>(result: Result<T, String>, success_msg: Option<&str>) -> Result<T, String> {
+    match &result {
+        Ok(_) => {
+            if let Some(msg) = success_msg {
+                emit_toast(msg, false);
+            }
+        }
+        Err(e) => {
+            emit_toast(e, true);
+        }
+    }
+    result
+}
+
 pub async fn perform_sync() -> Result<String, String> {
-    match invoke("perform_sync", JsValue::NULL).await {
+    let res = match invoke("perform_sync", JsValue::NULL).await {
         Ok(response) => match response.as_string() {
             Some(result) => Ok(result),
             None => Err("Sincronización falló: respuesta inesperada".to_string()),
         },
         Err(e) => Err(format!("{:?}", e)),
+    };
+    if let Ok(ref s) = res {
+        emit_toast(s, false);
     }
+    if let Err(ref e) = res {
+        emit_toast(e, true);
+    }
+    res
 }
 
 pub async fn pull_from_server() -> Result<String, String> {
-    match invoke("pull_from_server", JsValue::NULL).await {
+    let res = match invoke("pull_from_server", JsValue::NULL).await {
         Ok(response) => match response.as_string() {
             Some(result) => Ok(result),
             None => Err("Pull falló: respuesta inesperada".to_string()),
         },
         Err(e) => Err(format!("{:?}", e)),
+    };
+    if let Ok(ref s) = res {
+        emit_toast(s, false);
     }
+    if let Err(ref e) = res {
+        emit_toast(e, true);
+    }
+    res
 }
 
 pub async fn push_to_server() -> Result<String, String> {
-    match invoke("push_to_server", JsValue::NULL).await {
+    let res = match invoke("push_to_server", JsValue::NULL).await {
         Ok(response) => match response.as_string() {
             Some(result) => Ok(result),
             None => Err("Push falló: respuesta inesperada".to_string()),
         },
         Err(e) => Err(format!("{:?}", e)),
+    };
+    if let Ok(ref s) = res {
+        emit_toast(s, false);
     }
+    if let Err(ref e) = res {
+        emit_toast(e, true);
+    }
+    res
 }
 
 pub async fn generate_week() -> Result<String, String> {
-    match invoke("generate_week", JsValue::NULL).await {
+    let res = match invoke("generate_week", JsValue::NULL).await {
         Ok(response) => match response.as_string() {
             Some(result) => Ok(result),
             None => Err("Failed to generate week: response not a string".to_string()),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Semana generada con éxito"))
 }
 
 pub async fn get_index() -> Result<Vec<PlanIndex>, String> {
-    match invoke("get_index", JsValue::NULL).await {
+    let res = match invoke("get_index", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(index) => Ok(index),
             Err(e) => Err(format!("Failed to parse index: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn get_plan_content(id: &str) -> Result<String, String> {
     let args = IdArgs { id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("get_plan_content", args_js).await {
+    let res = match invoke("get_plan_content", args_js).await {
         Ok(response) => match response.as_string() {
             Some(content) => Ok(content),
             None => Err("Failed to get plan content: response not a string".to_string()),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn get_config() -> Result<AppConfig, String> {
-    match invoke("get_config", JsValue::NULL).await {
+    let res = match invoke("get_config", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(config) => Ok(config),
             Err(e) => Err(format!("Failed to parse config: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn is_mobile() -> bool {
@@ -251,129 +314,142 @@ pub async fn is_mobile() -> bool {
 pub async fn save_config(config: AppConfig) -> Result<(), String> {
     let args = SaveConfigArgs { config };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("save_config", args_js).await {
+    let res = match invoke("save_config", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Configuración guardada"))
 }
 
 pub async fn list_ollama_models() -> Result<Vec<OllamaModel>, String> {
-    match invoke("list_ollama_models", JsValue::NULL).await {
+    let res = match invoke("list_ollama_models", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(models) => Ok(models),
             Err(e) => Err(format!("Failed to parse models: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn get_excluded_ingredients() -> Result<Vec<String>, String> {
-    match invoke("get_excluded_ingredients", JsValue::NULL).await {
+    let res = match invoke("get_excluded_ingredients", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(ingredients) => Ok(ingredients),
             Err(e) => Err(format!("Failed to parse excluded ingredients: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn get_ingredient_stats() -> Result<Vec<IngredientStats>, String> {
-    match invoke("get_ingredient_stats", JsValue::NULL).await {
+    let res = match invoke("get_ingredient_stats", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(stats) => Ok(stats),
             Err(e) => Err(format!("Failed to parse stats: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn toggle_ingredient_exclusion(ingredient: String) -> Result<Vec<String>, String> {
     let args = ToggleExclusionArgs { ingredient };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("toggle_ingredient_exclusion", args_js).await {
+    let res = match invoke("toggle_ingredient_exclusion", args_js).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(ingredients) => Ok(ingredients),
             Err(e) => Err(format!("Failed to parse ingredients: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Exclusión actualizada"))
 }
 
 pub async fn save_excluded_ingredients(ingredients: Vec<String>) -> Result<(), String> {
     let args = SaveExcludedArgs { ingredients };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("save_excluded_ingredients", args_js).await {
+    let res = match invoke("save_excluded_ingredients", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Ingredientes guardados"))
 }
 
 pub async fn toggle_favorite(plan_id: &str) -> Result<bool, String> {
     let args = PlanIdArgs { plan_id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("toggle_favorite", args_js).await {
+    let res = match invoke("toggle_favorite", args_js).await {
         Ok(response) => match response.as_bool() {
             Some(fav) => Ok(fav),
             None => Err("Failed to toggle favorite: response not a bool".to_string()),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Favoritos actualizado"))
 }
 
 pub async fn get_plan_metadata(plan_id: &str) -> Result<PlanMetadata, String> {
     let args = PlanIdArgs { plan_id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("get_plan_metadata", args_js).await {
+    let res = match invoke("get_plan_metadata", args_js).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(metadata) => Ok(metadata),
             Err(e) => Err(format!("Failed to parse metadata: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn get_favorite_plans() -> Result<Vec<PlanIndex>, String> {
-    match invoke("get_favorite_plans", JsValue::NULL).await {
+    let res = match invoke("get_favorite_plans", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(plans) => Ok(plans),
             Err(e) => Err(format!("Failed to parse favorite plans: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn set_plan_rating(plan_id: &str, rating: u8) -> Result<(), String> {
     let args = SetRatingArgs { plan_id, rating };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("set_plan_rating", args_js).await {
+    let res = match invoke("set_plan_rating", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Calificación guardada"))
 }
 
 pub async fn set_plan_note(plan_id: &str, note: String) -> Result<(), String> {
     let args = SetNoteArgs { plan_id, note };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("set_plan_note", args_js).await {
+    let res = match invoke("set_plan_note", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Nota guardada"))
 }
 
 pub async fn generate_shopping_list(plan_id: &str) -> Result<ShoppingList, String> {
     let args = PlanIdArgs { plan_id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    let result = invoke("generate_shopping_list", args_js).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("generate_shopping_list", args_js).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, Some("Lista de compras generada"))
 }
 
 pub async fn get_shopping_list(plan_id: &str) -> Result<Option<ShoppingList>, String> {
     let args = PlanIdArgs { plan_id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    let result = invoke("get_shopping_list", args_js).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("get_shopping_list", args_js).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, None)
 }
 
 pub async fn toggle_shopping_item(
@@ -387,10 +463,11 @@ pub async fn toggle_shopping_item(
         checked,
     };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("toggle_shopping_item", args_js).await {
+    let res = match invoke("toggle_shopping_item", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Item actualizado"))
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Default)]
@@ -443,10 +520,11 @@ pub async fn assign_plan_to_date(
         plan_id,
     };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("assign_plan_to_date", args_js).await {
+    let res = match invoke("assign_plan_to_date", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Plan asignado"))
 }
 
 pub async fn get_calendar_range(
@@ -458,18 +536,20 @@ pub async fn get_calendar_range(
         end_date,
     };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    let result = invoke("get_calendar_range", args_js).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("get_calendar_range", args_js).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, None)
 }
 
 pub async fn remove_calendar_entry(date: String, meal_type: MealType) -> Result<(), String> {
     let args = RemoveEntryArgs { date, meal_type };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("remove_calendar_entry", args_js).await {
+    let res = match invoke("remove_calendar_entry", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Entrada eliminada"))
 }
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "camelCase")]
@@ -497,23 +577,25 @@ pub struct IngredientTrend {
 }
 
 pub async fn get_statistics() -> Result<Statistics, String> {
-    match invoke("get_statistics", JsValue::NULL).await {
+    let res = match invoke("get_statistics", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(stats) => Ok(stats),
             Err(e) => Err(format!("Failed to parse statistics: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 pub async fn get_ingredient_trends() -> Result<Vec<IngredientTrend>, String> {
-    match invoke("get_ingredient_trends", JsValue::NULL).await {
+    let res = match invoke("get_ingredient_trends", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
             Ok(trends) => Ok(trends),
             Err(e) => Err(format!("Failed to parse trends: {}", e)),
         },
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, None)
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
@@ -539,9 +621,10 @@ pub struct PlanNutrition {
 pub async fn calculate_nutrition(plan_id: &str) -> Result<PlanNutrition, String> {
     let args = PlanIdArgs { plan_id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    let result = invoke("calculate_nutrition", args_js).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("calculate_nutrition", args_js).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, None)
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
@@ -563,9 +646,10 @@ struct VariationArgs<'a> {
 pub async fn generate_variation(plan_id: &str, variation: VariationType) -> Result<String, String> {
     let args = VariationArgs { plan_id, variation };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    let result = invoke("generate_variation", args_js).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("generate_variation", args_js).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, Some("Variación generada"))
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
@@ -586,9 +670,10 @@ struct SearchArgs {
 pub async fn search_plans(filters: SearchFilters) -> Result<Vec<PlanIndex>, String> {
     let args = SearchArgs { filters };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    let result = invoke("search_plans", args_js).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("search_plans", args_js).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, None)
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -614,35 +699,39 @@ struct PlanTagArgs {
 }
 
 pub async fn get_all_tags() -> Result<Vec<Tag>, String> {
-    let result = invoke("get_all_tags", JsValue::NULL).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("get_all_tags", JsValue::NULL).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, None)
 }
 
 pub async fn create_tag(name: String, color: String) -> Result<Tag, String> {
     let args = CreateTagArgs { name, color };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    let result = invoke("create_tag", args_js).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("create_tag", args_js).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, Some("Etiqueta creada"))
 }
 
 pub async fn add_tag_to_plan(plan_id: String, tag_id: String) -> Result<(), String> {
     let args = PlanTagArgs { plan_id, tag_id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("add_tag_to_plan", args_js).await {
+    let res = match invoke("add_tag_to_plan", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Etiqueta agregada"))
 }
 
 pub async fn remove_tag_from_plan(plan_id: String, tag_id: String) -> Result<(), String> {
     let args = PlanTagArgs { plan_id, tag_id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("remove_tag_from_plan", args_js).await {
+    let res = match invoke("remove_tag_from_plan", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Etiqueta desplazada"))
 }
 
 // Pantry
@@ -690,73 +779,83 @@ struct SavePreferencesArgs {
 }
 
 pub async fn get_pantry_items() -> Result<Vec<PantryItem>, String> {
-    let result = invoke("get_pantry_items", JsValue::NULL).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("get_pantry_items", JsValue::NULL).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, None)
 }
 
 pub async fn add_pantry_item(item: PantryItem) -> Result<(), String> {
     let args = PantryItemArgs { item };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("add_pantry_item", args_js).await {
+    let res = match invoke("add_pantry_item", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Item agregado"))
 }
 
 pub async fn update_pantry_item(item: PantryItem) -> Result<(), String> {
     let args = PantryItemArgs { item };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("update_pantry_item", args_js).await {
+    let res = match invoke("update_pantry_item", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Item actualizado"))
 }
 
 pub async fn delete_pantry_item(id: String) -> Result<(), String> {
     let args = IdArgs { id: &id };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("delete_pantry_item", args_js).await {
+    let res = match invoke("delete_pantry_item", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Item eliminado"))
 }
 
 pub async fn export_data() -> Result<AppBackup, String> {
-    match invoke("export_data", JsValue::NULL).await {
+    let res = match invoke("export_data", JsValue::NULL).await {
         Ok(res) => serde_wasm_bindgen::from_value(res).map_err(|e| e.to_string()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    // Export usually triggers a browser download or similar, so success message is good.
+    notify(res, Some("Datos preparados para exportar"))
 }
 
 pub async fn import_data(backup: AppBackup) -> Result<(), String> {
     let args = ImportDataArgs { backup };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("import_data", args_js).await {
+    let res = match invoke("import_data", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Datos importados exitosamente"))
 }
 
 pub async fn get_ui_preferences() -> Result<UIPreferences, String> {
-    let result = invoke("get_ui_preferences", JsValue::NULL).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("get_ui_preferences", JsValue::NULL).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, None)
 }
 
 pub async fn save_ui_preferences(preferences: UIPreferences) -> Result<(), String> {
     let args = SavePreferencesArgs { preferences };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
-    match invoke("save_ui_preferences", args_js).await {
+    let res = match invoke("save_ui_preferences", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Preferencias guardadas"))
 }
 
 pub async fn get_achievements() -> Result<Vec<Achievement>, String> {
-    let result = invoke("get_achievements", JsValue::NULL).await;
-    serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
-        .map_err(|e| e.to_string())
+    let invoke_res = invoke("get_achievements", JsValue::NULL).await;
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| format!("{:?}", e))?)
+        .map_err(|e| e.to_string());
+    notify(res, None)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -773,10 +872,11 @@ pub async fn send_plan_email(plan_id: String, target_email: String) -> Result<()
     };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
 
-    match invoke("send_plan_email", args_js).await {
+    let res = match invoke("send_plan_email", args_js).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("{:?}", e)),
-    }
+    };
+    notify(res, Some("Email enviado"))
 }
 
 // Water tracking

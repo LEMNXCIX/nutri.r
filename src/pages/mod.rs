@@ -3,6 +3,7 @@ pub mod calendar;
 pub mod config;
 pub mod dashboard;
 pub mod favorites;
+pub mod history;
 pub mod home;
 pub mod ingredients;
 pub mod pantry;

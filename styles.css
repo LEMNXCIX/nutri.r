@@ -455,6 +455,9 @@
   .block {
     display: block;
   }
+  .contents {
+    display: contents;
+  }
   .flex {
     display: flex;
   }
@@ -1071,6 +1074,12 @@
   .fill-none {
     fill: none;
   }
+  .stroke-current {
+    stroke: currentcolor;
+  }
+  .stroke-2 {
+    stroke-width: 2;
+  }
   .p-0\.5 {
     padding: calc(var(--spacing) * 0.5);
   }
@@ -1413,6 +1422,9 @@
   }
   .capitalize {
     text-transform: capitalize;
+  }
+  .lowercase {
+    text-transform: lowercase;
   }
   .normal-case {
     text-transform: none;
