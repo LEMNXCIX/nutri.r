@@ -10,6 +10,7 @@ pub trait MetadataRepository {
     fn get_all(&self) -> AppResult<Vec<PlanMetadata>>;
 }
 
+#[derive(Clone)]
 pub struct FileMetadataRepository {
     data_dir: PathBuf,
 }

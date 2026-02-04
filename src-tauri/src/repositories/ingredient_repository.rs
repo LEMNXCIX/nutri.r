@@ -10,6 +10,7 @@ pub trait IngredientRepository {
 }
 
 /// File-based implementation of IngredientRepository
+#[derive(Clone)]
 pub struct FileIngredientRepository {
     excluded_path: PathBuf,
 }

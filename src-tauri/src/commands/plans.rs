@@ -6,7 +6,11 @@ use tokio::sync::MutexGuard;
 #[tauri::command]
 pub async fn generate_week(state: State<'_, AppState>) -> Result<String, String> {
     let service = state.plan_service.lock().await;
-    service.generate_plan().await.map_err(|e| e.to_string())
+    let res = service.generate_plan().await.map_err(|e| e.to_string());
+    if res.is_ok() {
+        state.trigger_sync().await;
+    }
+    res
 }
 
 #[tauri::command]
@@ -65,10 +69,14 @@ pub async fn generate_variation(
     variation: VariationType,
 ) -> Result<String, String> {
     let service = state.plan_service.lock().await;
-    service
+    let res = service
         .generate_variation(&plan_id, variation)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string());
+    if res.is_ok() {
+        state.trigger_sync().await;
+    }
+    res
 }
 
 #[tauri::command]

@@ -15,6 +15,7 @@ pub trait PlanRepository {
 }
 
 /// File-based implementation of PlanRepository
+#[derive(Clone)]
 pub struct FilePlanRepository {
     data_dir: PathBuf,
 }

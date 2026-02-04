@@ -4,3 +4,4 @@
 styles.css
 node_modules
 /sync-server/vault.json
+/sync-server/data/vault.json

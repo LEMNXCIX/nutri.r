@@ -29,6 +29,32 @@ pub fn run() {
             }
 
             let app_state = AppState::new(data_dir);
+            let state_for_loop = app_state.clone();
+            let app_handle = app.handle().clone();
+
+            // Background sync loop
+            tauri::async_runtime::spawn(async move {
+                let state = state_for_loop;
+                let app = app_handle;
+
+                loop {
+                    // Wait for either a trigger or a timeout (5 minutes)
+                    let timeout = tokio::time::sleep(tokio::time::Duration::from_secs(300));
+                    let trigger = state.sync_trigger.notified();
+
+                    tokio::select! {
+                        _ = timeout => {
+                            let _ = crate::commands::sync::perform_sync_internal(&app, &state).await;
+                        }
+                        _ = trigger => {
+                            // Debounce: wait a bit after the first change to batch multiple changes
+                            tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
+                            let _ = crate::commands::sync::perform_sync_internal(&app, &state).await;
+                        }
+                    }
+                }
+            });
+
             app.manage(app_state);
 
             Ok(())
@@ -71,13 +97,14 @@ pub fn run() {
             commands::pantry::add_pantry_item,
             commands::pantry::update_pantry_item,
             commands::pantry::delete_pantry_item,
-            commands::import_export::export_data,
-            commands::import_export::import_data,
+            commands::export_data,
+            commands::import_data,
             commands::preferences::get_ui_preferences,
             commands::preferences::save_ui_preferences,
             commands::achievements::get_achievements,
             commands::email::send_plan_email,
             commands::sync::perform_sync,
+            commands::sync::get_sync_status,
             commands::sync::pull_from_server,
             commands::sync::push_to_server,
             commands::water::get_water_intake,

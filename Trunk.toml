@@ -2,7 +2,7 @@
 target = "./index.html"
 
 [watch]
-ignore = ["./src-tauri"]
+ignore = ["./src-tauri", "./sync-server"]
 
 [serve]
 port = 1420
@@ -10,6 +10,6 @@ open = false
 
 [[hooks]]
 stage = "pre_build"
-command = "npx"
-command_arguments = ["tailwindcss", "-i", "./input.css", "-o", "./styles.css"]
+command = "node"
+command_arguments = ["build-css.js"]
 

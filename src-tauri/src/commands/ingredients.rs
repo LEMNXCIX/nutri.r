@@ -24,7 +24,9 @@ pub async fn save_excluded_ingredients(
     let service = state.ingredient_service.lock().await;
     service
         .save_excluded(ingredients)
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    state.trigger_sync().await;
+    Ok(())
 }
 
 #[tauri::command]
@@ -33,7 +35,11 @@ pub async fn toggle_ingredient_exclusion(
     ingredient: String,
 ) -> Result<Vec<String>, String> {
     let service = state.ingredient_service.lock().await;
-    service
+    let res = service
         .toggle_exclusion(&ingredient)
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string());
+    if res.is_ok() {
+        state.trigger_sync().await;
+    }
+    res
 }

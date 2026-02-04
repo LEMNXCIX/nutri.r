@@ -8,6 +8,7 @@ pub trait TagRepository: Send + Sync {
     fn save_all(&self, tags: Vec<Tag>) -> AppResult<()>;
 }
 
+#[derive(Clone)]
 pub struct FileTagRepository {
     path: PathBuf,
 }

@@ -9,6 +9,7 @@ pub trait AchievementRepository {
     fn unlock(&self, id: &str) -> AppResult<()>;
 }
 
+#[derive(Clone)]
 pub struct FileAchievementRepository {
     file_path: PathBuf,
 }

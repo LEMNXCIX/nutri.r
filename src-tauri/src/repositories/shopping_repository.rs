@@ -10,6 +10,7 @@ pub trait ShoppingListRepository {
     fn update_item(&self, plan_id: &str, item_name: &str, checked: bool) -> AppResult<()>;
 }
 
+#[derive(Clone)]
 pub struct FileShoppingListRepository {
     data_dir: PathBuf,
 }

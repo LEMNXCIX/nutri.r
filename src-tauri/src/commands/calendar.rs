@@ -14,7 +14,9 @@ pub async fn assign_plan_to_date(
     let service: MutexGuard<'_, AppCalendarService> = state.calendar_service.lock().await;
     service
         .assign_plan(date, meal_type, plan_id)
-        .map_err(|e: AppError| e.to_string())
+        .map_err(|e: AppError| e.to_string())?;
+    state.trigger_sync().await;
+    Ok(())
 }
 
 #[tauri::command]
@@ -38,5 +40,7 @@ pub async fn remove_calendar_entry(
     let service: MutexGuard<'_, AppCalendarService> = state.calendar_service.lock().await;
     service
         .remove_entry(&date, meal_type)
-        .map_err(|e: AppError| e.to_string())
+        .map_err(|e: AppError| e.to_string())?;
+    state.trigger_sync().await;
+    Ok(())
 }

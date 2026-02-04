@@ -1,3 +1,4 @@
+use crate::components::ui::SyncStatus;
 use leptos::prelude::*;
 use leptos_router::components::A;
 
@@ -31,6 +32,7 @@ pub fn Navbar() -> impl IntoView {
 
                 // System Actions
                 <div class="flex items-center gap-2">
+                    <SyncStatus />
                     <A href="/achievements" attr:class="p-2.5 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-black transition-all" attr:title="Logros">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />

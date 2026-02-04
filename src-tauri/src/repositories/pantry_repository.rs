@@ -8,6 +8,7 @@ pub trait PantryRepository: Send + Sync {
     fn save_all(&self, items: Vec<PantryItem>) -> AppResult<()>;
 }
 
+#[derive(Clone)]
 pub struct FilePantryRepository {
     path: PathBuf,
 }

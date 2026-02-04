@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const VAULT_FILE = path.join(__dirname, 'vault.json');
+const VAULT_FILE = path.join(__dirname, 'data', 'vault.json');
 const PORT = 3000;
 
 const server = http.createServer((req, res) => {

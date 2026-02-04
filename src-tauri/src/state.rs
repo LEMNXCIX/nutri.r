@@ -8,9 +8,10 @@ use crate::services::{
     MetadataService, NutritionService, PantryService, PlanService, SearchService,
     ShoppingListService, StatisticsService, TagService,
 };
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Notify};
 
 // Type aliases for our concrete implementations
 pub type AppPlanService =
@@ -44,6 +45,15 @@ pub type AppAchievementService = AchievementService<
     FileMetadataRepository,
 >;
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum SyncStatus {
+    Idle,
+    Syncing,
+    Success,
+    Error(String),
+}
+
+#[derive(Clone)]
 pub struct AppState {
     pub plan_service: Arc<Mutex<AppPlanService>>,
     pub ingredient_service: Arc<Mutex<AppIngredientService>>,
@@ -57,10 +67,13 @@ pub struct AppState {
     pub import_export_service: Arc<Mutex<AppImportExportService>>,
     pub email_service: Arc<Mutex<EmailService>>,
     pub achievement_service: Arc<Mutex<AppAchievementService>>,
-    pub statistics_service: AppStatisticsService,
-    pub config_repo: FileConfigRepository,
-    pub preferences_repo: FilePreferencesRepository,
+    pub statistics_service: Arc<AppStatisticsService>,
+    pub config_repo: Arc<FileConfigRepository>,
+    pub preferences_repo: Arc<FilePreferencesRepository>,
     pub data_dir: PathBuf,
+    pub sync_trigger: Arc<Notify>,
+    pub last_sync_status: Arc<Mutex<SyncStatus>>,
+    pub last_modified: Arc<Mutex<Option<String>>>,
 }
 
 impl AppState {
@@ -143,10 +156,19 @@ impl AppState {
             import_export_service: Arc::new(Mutex::new(import_export_service)),
             email_service: Arc::new(Mutex::new(email_service)),
             achievement_service: Arc::new(Mutex::new(achievement_service)),
-            statistics_service,
-            config_repo: FileConfigRepository::new(config_path),
-            preferences_repo,
+            statistics_service: Arc::new(statistics_service),
+            config_repo: Arc::new(config_repo),
+            preferences_repo: Arc::new(preferences_repo),
             data_dir: data_dir.clone(),
+            sync_trigger: Arc::new(Notify::new()),
+            last_sync_status: Arc::new(Mutex::new(SyncStatus::Idle)),
+            last_modified: Arc::new(Mutex::new(None)),
         }
+    }
+
+    pub async fn trigger_sync(&self) {
+        let mut last_mod = self.last_modified.lock().await;
+        *last_mod = Some(chrono::Utc::now().to_rfc3339());
+        self.sync_trigger.notify_one();
     }
 }

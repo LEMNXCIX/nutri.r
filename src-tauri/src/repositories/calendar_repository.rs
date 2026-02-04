@@ -11,6 +11,7 @@ pub trait CalendarRepository {
     fn save_all(&self, entries: Vec<CalendarEntry>) -> AppResult<()>;
 }
 
+#[derive(Clone)]
 pub struct FileCalendarRepository {
     data_dir: PathBuf,
 }

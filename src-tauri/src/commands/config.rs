@@ -10,7 +10,9 @@ pub async fn get_config(state: State<'_, AppState>) -> Result<AppConfig, String>
 
 #[tauri::command]
 pub async fn save_config(state: State<'_, AppState>, config: AppConfig) -> Result<(), String> {
-    state.config_repo.save(&config).map_err(|e| e.to_string())
+    state.config_repo.save(&config).map_err(|e| e.to_string())?;
+    state.trigger_sync().await;
+    Ok(())
 }
 #[tauri::command]
 pub fn is_mobile() -> bool {

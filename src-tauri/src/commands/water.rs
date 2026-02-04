@@ -42,11 +42,11 @@ pub fn get_water_intake(date: String, state: State<AppState>) -> WaterRecord {
 }
 
 #[tauri::command]
-pub fn update_water_intake(
+pub async fn update_water_intake(
     date: String,
     current: f32,
     target: f32,
-    state: State<AppState>,
+    state: State<'_, AppState>,
 ) -> Result<(), String> {
     let mut data = load_water_data(&state);
     data.insert(
@@ -57,7 +57,9 @@ pub fn update_water_intake(
             last_updated: chrono::Utc::now().to_rfc3339(),
         },
     );
-    save_water_data(&state, &data)
+    save_water_data(&state, &data)?;
+    state.trigger_sync().await;
+    Ok(())
 }
 
 #[tauri::command]

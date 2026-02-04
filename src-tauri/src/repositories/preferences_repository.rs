@@ -8,6 +8,7 @@ pub trait PreferencesRepository {
     fn save(&self, preferences: &UIPreferences) -> AppResult<()>;
 }
 
+#[derive(Clone)]
 pub struct FilePreferencesRepository {
     file_path: PathBuf,
 }

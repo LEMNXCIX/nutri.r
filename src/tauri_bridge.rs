@@ -91,6 +91,15 @@ pub struct WaterRecord {
     pub last_updated: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "PascalCase")]
+pub enum SyncStatus {
+    Idle,
+    Syncing,
+    Success,
+    Error(String),
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ShoppingItem {
     pub name: String,
@@ -934,4 +943,9 @@ pub async fn get_water_history(
     let result = invoke("get_water_history", args_js).await;
     serde_wasm_bindgen::from_value(result.map_err(|e| format!("{:?}", e))?)
         .map_err(|e| e.to_string())
+}
+
+pub async fn get_sync_status() -> Result<SyncStatus, String> {
+    let res = invoke("get_sync_status", JsValue::NULL).await;
+    serde_wasm_bindgen::from_value(res.map_err(|e| format!("{:?}", e))?).map_err(|e| e.to_string())
 }

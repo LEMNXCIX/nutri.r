@@ -11,9 +11,13 @@ pub async fn get_ui_preferences(state: State<'_, AppState>) -> Result<UIPreferen
 
 #[tauri::command]
 pub async fn save_ui_preferences(
-    state: State<'_, AppState>,
     preferences: UIPreferences,
+    state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let repo = &state.preferences_repo;
-    repo.save(&preferences).map_err(|e| e.to_string())
+    state
+        .preferences_repo
+        .save(&preferences)
+        .map_err(|e| e.to_string())?;
+    state.trigger_sync().await;
+    Ok(())
 }
