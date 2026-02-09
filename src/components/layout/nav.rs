@@ -5,7 +5,7 @@ use leptos_router::components::A;
 #[component]
 pub fn Navbar() -> impl IntoView {
     view! {
-        <header class="sticky top-0 z-[100] bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <header class="sticky top-0 z-[100] bg-white/80 backdrop-blur-md border-b border-gray-200 pt-safe">
             <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
                 // Branding
                 <A href="/" attr:class="flex items-center gap-3 group">
