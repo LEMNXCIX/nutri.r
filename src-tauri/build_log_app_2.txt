@@ -1,0 +1,39 @@
+    Checking nutri-app v0.1.0 (C:\Users\emele\Repositories\nutri-r\src-tauri\nutri-app)
+error: OUT_DIR env var is not set, do you have a build script?
+   --> nutri-app\src\lib.rs:105:14
+    |
+105 |         .run(tauri::generate_context!())
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this error originates in the macro `tauri::generate_context` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition name: `mobile`
+ --> nutri-app\src\lib.rs:6:12
+  |
+6 | #[cfg_attr(mobile, tauri::mobile_entry_point)]
+  |            ^^^^^^
+  |
+  = help: expected names are: `docsrs`, `feature`, and `test` and 31 more
+  = help: consider using a Cargo feature instead
+  = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+           [lints.rust]
+           unexpected_cfgs = { level = "warn", check-cfg = ['cfg(mobile)'] }
+  = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(mobile)");` to the top of the `build.rs`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: unexpected `cfg` condition name: `mobile`
+  --> nutri-app\src\commands\config.rs:19:10
+   |
+19 |     cfg!(mobile)
+   |          ^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(mobile)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(mobile)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: `nutri-app` (lib) generated 2 warnings
+error: could not compile `nutri-app` (lib) due to 1 previous error; 2 warnings emitted

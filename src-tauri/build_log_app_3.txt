@@ -1,0 +1,2 @@
+   Compiling nutri-app v0.1.0 (C:\Users\emele\Repositories\nutri-r\src-tauri\nutri-app)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.61s

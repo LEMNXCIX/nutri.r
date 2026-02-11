@@ -1,0 +1,758 @@
+    Checking icu_normalizer v2.1.1
+    Checking tokio v1.49.0
+    Checking softbuffer v0.4.8
+    Checking idna_adapter v1.2.1
+    Checking idna v1.1.0
+    Checking url v2.5.8
+    Checking urlpattern v0.3.0
+    Checking tao v0.34.5
+    Checking tauri-utils v2.8.2
+    Checking tokio-util v0.7.18
+    Checking tokio-native-tls v0.3.1
+    Checking tokio-rustls v0.26.4
+    Checking lettre v0.11.19
+    Checking h2 v0.3.27
+    Checking tauri-runtime v2.10.0
+    Checking hyper v0.14.32
+    Checking tauri-runtime-wry v2.10.0
+    Checking tauri v2.10.2
+    Checking hyper-tls v0.5.0
+    Checking reqwest v0.11.27
+    Checking nutri-core v0.1.0 (C:\Users\emele\Repositories\nutri-r\src-tauri\nutri-core)
+    Checking tauri-plugin-opener v2.5.3
+    Checking nutri-app v0.1.0 (C:\Users\emele\Repositories\nutri-r\src-tauri\nutri-app)
+error[E0428]: the name `commands` is defined multiple times
+ --> nutri-app\src\lib.rs:2:1
+  |
+1 | pub mod commands;
+  | ----------------- previous definition of the module `commands` here
+2 | pub mod commands;
+  | ^^^^^^^^^^^^^^^^^ `commands` redefined here
+  |
+  = note: `commands` must be defined only once in the type namespace of this module
+
+error[E0428]: the name `__cmd__get_achievements` is defined multiple times
+ --> nutri-app\src\commands\achievements.rs:5:1
+  |
+5 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__get_achievements` redefined here
+  | previous definition of the macro `__cmd__get_achievements` here
+  |
+  = note: `__cmd__get_achievements` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__assign_plan_to_date` is defined multiple times
+ --> nutri-app\src\commands\calendar.rs:7:1
+  |
+7 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__assign_plan_to_date` redefined here
+  | previous definition of the macro `__cmd__assign_plan_to_date` here
+  |
+  = note: `__cmd__assign_plan_to_date` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_calendar_range` is defined multiple times
+  --> nutri-app\src\commands\calendar.rs:22:1
+   |
+22 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_calendar_range` redefined here
+   | previous definition of the macro `__cmd__get_calendar_range` here
+   |
+   = note: `__cmd__get_calendar_range` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__remove_calendar_entry` is defined multiple times
+  --> nutri-app\src\commands\calendar.rs:34:1
+   |
+34 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__remove_calendar_entry` redefined here
+   | previous definition of the macro `__cmd__remove_calendar_entry` here
+   |
+   = note: `__cmd__remove_calendar_entry` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_config` is defined multiple times
+ --> nutri-app\src\commands\config.rs:6:1
+  |
+6 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__get_config` redefined here
+  | previous definition of the macro `__cmd__get_config` here
+  |
+  = note: `__cmd__get_config` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__save_config` is defined multiple times
+  --> nutri-app\src\commands\config.rs:11:1
+   |
+11 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__save_config` redefined here
+   | previous definition of the macro `__cmd__save_config` here
+   |
+   = note: `__cmd__save_config` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__is_mobile` is defined multiple times
+  --> nutri-app\src\commands\config.rs:17:1
+   |
+17 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__is_mobile` redefined here
+   | previous definition of the macro `__cmd__is_mobile` here
+   |
+   = note: `__cmd__is_mobile` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__send_plan_email` is defined multiple times
+ --> nutri-app\src\commands\email.rs:4:1
+  |
+4 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__send_plan_email` redefined here
+  | previous definition of the macro `__cmd__send_plan_email` here
+  |
+  = note: `__cmd__send_plan_email` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__export_data` is defined multiple times
+ --> nutri-app\src\commands\import_export.rs:5:1
+  |
+5 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__export_data` redefined here
+  | previous definition of the macro `__cmd__export_data` here
+  |
+  = note: `__cmd__export_data` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__import_data` is defined multiple times
+  --> nutri-app\src\commands\import_export.rs:11:1
+   |
+11 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__import_data` redefined here
+   | previous definition of the macro `__cmd__import_data` here
+   |
+   = note: `__cmd__import_data` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_ingredient_stats` is defined multiple times
+ --> nutri-app\src\commands\ingredients.rs:5:1
+  |
+5 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__get_ingredient_stats` redefined here
+  | previous definition of the macro `__cmd__get_ingredient_stats` here
+  |
+  = note: `__cmd__get_ingredient_stats` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_excluded_ingredients` is defined multiple times
+  --> nutri-app\src\commands\ingredients.rs:13:1
+   |
+13 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_excluded_ingredients` redefined here
+   | previous definition of the macro `__cmd__get_excluded_ingredients` here
+   |
+   = note: `__cmd__get_excluded_ingredients` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__save_excluded_ingredients` is defined multiple times
+  --> nutri-app\src\commands\ingredients.rs:19:1
+   |
+19 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__save_excluded_ingredients` redefined here
+   | previous definition of the macro `__cmd__save_excluded_ingredients` here
+   |
+   = note: `__cmd__save_excluded_ingredients` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__toggle_ingredient_exclusion` is defined multiple times
+  --> nutri-app\src\commands\ingredients.rs:32:1
+   |
+32 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__toggle_ingredient_exclusion` redefined here
+   | previous definition of the macro `__cmd__toggle_ingredient_exclusion` here
+   |
+   = note: `__cmd__toggle_ingredient_exclusion` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__toggle_favorite` is defined multiple times
+ --> nutri-app\src\commands\metadata.rs:7:1
+  |
+7 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__toggle_favorite` redefined here
+  | previous definition of the macro `__cmd__toggle_favorite` here
+  |
+  = note: `__cmd__toggle_favorite` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__set_plan_rating` is defined multiple times
+  --> nutri-app\src\commands\metadata.rs:19:1
+   |
+19 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__set_plan_rating` redefined here
+   | previous definition of the macro `__cmd__set_plan_rating` here
+   |
+   = note: `__cmd__set_plan_rating` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__set_plan_note` is defined multiple times
+  --> nutri-app\src\commands\metadata.rs:33:1
+   |
+33 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__set_plan_note` redefined here
+   | previous definition of the macro `__cmd__set_plan_note` here
+   |
+   = note: `__cmd__set_plan_note` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_plan_metadata` is defined multiple times
+  --> nutri-app\src\commands\metadata.rs:47:1
+   |
+47 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_plan_metadata` redefined here
+   | previous definition of the macro `__cmd__get_plan_metadata` here
+   |
+   = note: `__cmd__get_plan_metadata` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_favorites` is defined multiple times
+  --> nutri-app\src\commands\metadata.rs:58:1
+   |
+58 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_favorites` redefined here
+   | previous definition of the macro `__cmd__get_favorites` here
+   |
+   = note: `__cmd__get_favorites` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__calculate_nutrition` is defined multiple times
+ --> nutri-app\src\commands\nutrition.rs:6:1
+  |
+6 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__calculate_nutrition` redefined here
+  | previous definition of the macro `__cmd__calculate_nutrition` here
+  |
+  = note: `__cmd__calculate_nutrition` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__list_ollama_models` is defined multiple times
+ --> nutri-app\src\commands\ollama.rs:7:1
+  |
+7 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__list_ollama_models` redefined here
+  | previous definition of the macro `__cmd__list_ollama_models` here
+  |
+  = note: `__cmd__list_ollama_models` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_pantry_items` is defined multiple times
+ --> nutri-app\src\commands\pantry.rs:5:1
+  |
+5 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__get_pantry_items` redefined here
+  | previous definition of the macro `__cmd__get_pantry_items` here
+  |
+  = note: `__cmd__get_pantry_items` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__add_pantry_item` is defined multiple times
+  --> nutri-app\src\commands\pantry.rs:11:1
+   |
+11 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__add_pantry_item` redefined here
+   | previous definition of the macro `__cmd__add_pantry_item` here
+   |
+   = note: `__cmd__add_pantry_item` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__update_pantry_item` is defined multiple times
+  --> nutri-app\src\commands\pantry.rs:19:1
+   |
+19 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__update_pantry_item` redefined here
+   | previous definition of the macro `__cmd__update_pantry_item` here
+   |
+   = note: `__cmd__update_pantry_item` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__delete_pantry_item` is defined multiple times
+  --> nutri-app\src\commands\pantry.rs:30:1
+   |
+30 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__delete_pantry_item` redefined here
+   | previous definition of the macro `__cmd__delete_pantry_item` here
+   |
+   = note: `__cmd__delete_pantry_item` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__generate_week` is defined multiple times
+ --> nutri-app\src\commands\plans.rs:6:1
+  |
+6 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__generate_week` redefined here
+  | previous definition of the macro `__cmd__generate_week` here
+  |
+  = note: `__cmd__generate_week` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_index` is defined multiple times
+  --> nutri-app\src\commands\plans.rs:16:1
+   |
+16 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_index` redefined here
+   | previous definition of the macro `__cmd__get_index` here
+   |
+   = note: `__cmd__get_index` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_favorite_plans` is defined multiple times
+  --> nutri-app\src\commands\plans.rs:36:1
+   |
+36 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_favorite_plans` redefined here
+   | previous definition of the macro `__cmd__get_favorite_plans` here
+   |
+   = note: `__cmd__get_favorite_plans` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_plan_content` is defined multiple times
+  --> nutri-app\src\commands\plans.rs:59:1
+   |
+59 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_plan_content` redefined here
+   | previous definition of the macro `__cmd__get_plan_content` here
+   |
+   = note: `__cmd__get_plan_content` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__generate_variation` is defined multiple times
+  --> nutri-app\src\commands\plans.rs:65:1
+   |
+65 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__generate_variation` redefined here
+   | previous definition of the macro `__cmd__generate_variation` here
+   |
+   = note: `__cmd__generate_variation` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__search_plans` is defined multiple times
+  --> nutri-app\src\commands\plans.rs:82:1
+   |
+82 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__search_plans` redefined here
+   | previous definition of the macro `__cmd__search_plans` here
+   |
+   = note: `__cmd__search_plans` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_ui_preferences` is defined multiple times
+ --> nutri-app\src\commands\preferences.rs:6:1
+  |
+6 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__get_ui_preferences` redefined here
+  | previous definition of the macro `__cmd__get_ui_preferences` here
+  |
+  = note: `__cmd__get_ui_preferences` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__save_ui_preferences` is defined multiple times
+  --> nutri-app\src\commands\preferences.rs:12:1
+   |
+12 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__save_ui_preferences` redefined here
+   | previous definition of the macro `__cmd__save_ui_preferences` here
+   |
+   = note: `__cmd__save_ui_preferences` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__generate_shopping_list` is defined multiple times
+ --> nutri-app\src\commands\shopping.rs:7:1
+  |
+7 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__generate_shopping_list` redefined here
+  | previous definition of the macro `__cmd__generate_shopping_list` here
+  |
+  = note: `__cmd__generate_shopping_list` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_shopping_list` is defined multiple times
+  --> nutri-app\src\commands\shopping.rs:19:1
+   |
+19 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_shopping_list` redefined here
+   | previous definition of the macro `__cmd__get_shopping_list` here
+   |
+   = note: `__cmd__get_shopping_list` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__toggle_shopping_item` is defined multiple times
+  --> nutri-app\src\commands\shopping.rs:30:1
+   |
+30 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__toggle_shopping_item` redefined here
+   | previous definition of the macro `__cmd__toggle_shopping_item` here
+   |
+   = note: `__cmd__toggle_shopping_item` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_statistics` is defined multiple times
+ --> nutri-app\src\commands\statistics.rs:6:1
+  |
+6 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__get_statistics` redefined here
+  | previous definition of the macro `__cmd__get_statistics` here
+  |
+  = note: `__cmd__get_statistics` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_ingredient_trends` is defined multiple times
+  --> nutri-app\src\commands\statistics.rs:11:1
+   |
+11 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_ingredient_trends` redefined here
+   | previous definition of the macro `__cmd__get_ingredient_trends` here
+   |
+   = note: `__cmd__get_ingredient_trends` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_sync_status` is defined multiple times
+  --> nutri-app\src\commands\sync.rs:19:1
+   |
+19 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_sync_status` redefined here
+   | previous definition of the macro `__cmd__get_sync_status` here
+   |
+   = note: `__cmd__get_sync_status` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__perform_sync` is defined multiple times
+  --> nutri-app\src\commands\sync.rs:25:1
+   |
+25 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__perform_sync` redefined here
+   | previous definition of the macro `__cmd__perform_sync` here
+   |
+   = note: `__cmd__perform_sync` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__pull_from_server` is defined multiple times
+   --> nutri-app\src\commands\sync.rs:158:1
+    |
+158 | #[tauri::command]
+    | ^^^^^^^^^^^^^^^^^
+    | |
+    | `__cmd__pull_from_server` redefined here
+    | previous definition of the macro `__cmd__pull_from_server` here
+    |
+    = note: `__cmd__pull_from_server` must be defined only once in the macro namespace of this module
+    = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__push_to_server` is defined multiple times
+   --> nutri-app\src\commands\sync.rs:200:1
+    |
+200 | #[tauri::command]
+    | ^^^^^^^^^^^^^^^^^
+    | |
+    | `__cmd__push_to_server` redefined here
+    | previous definition of the macro `__cmd__push_to_server` here
+    |
+    = note: `__cmd__push_to_server` must be defined only once in the macro namespace of this module
+    = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_all_tags` is defined multiple times
+ --> nutri-app\src\commands\tags.rs:5:1
+  |
+5 | #[tauri::command]
+  | ^^^^^^^^^^^^^^^^^
+  | |
+  | `__cmd__get_all_tags` redefined here
+  | previous definition of the macro `__cmd__get_all_tags` here
+  |
+  = note: `__cmd__get_all_tags` must be defined only once in the macro namespace of this module
+  = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__create_tag` is defined multiple times
+  --> nutri-app\src\commands\tags.rs:11:1
+   |
+11 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__create_tag` redefined here
+   | previous definition of the macro `__cmd__create_tag` here
+   |
+   = note: `__cmd__create_tag` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__delete_tag` is defined multiple times
+  --> nutri-app\src\commands\tags.rs:25:1
+   |
+25 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__delete_tag` redefined here
+   | previous definition of the macro `__cmd__delete_tag` here
+   |
+   = note: `__cmd__delete_tag` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__add_tag_to_plan` is defined multiple times
+  --> nutri-app\src\commands\tags.rs:33:1
+   |
+33 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__add_tag_to_plan` redefined here
+   | previous definition of the macro `__cmd__add_tag_to_plan` here
+   |
+   = note: `__cmd__add_tag_to_plan` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__remove_tag_from_plan` is defined multiple times
+  --> nutri-app\src\commands\tags.rs:47:1
+   |
+47 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__remove_tag_from_plan` redefined here
+   | previous definition of the macro `__cmd__remove_tag_from_plan` here
+   |
+   = note: `__cmd__remove_tag_from_plan` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_water_intake` is defined multiple times
+  --> nutri-app\src\commands\water.rs:34:1
+   |
+34 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_water_intake` redefined here
+   | previous definition of the macro `__cmd__get_water_intake` here
+   |
+   = note: `__cmd__get_water_intake` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__update_water_intake` is defined multiple times
+  --> nutri-app\src\commands\water.rs:44:1
+   |
+44 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__update_water_intake` redefined here
+   | previous definition of the macro `__cmd__update_water_intake` here
+   |
+   = note: `__cmd__update_water_intake` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0428]: the name `__cmd__get_water_history` is defined multiple times
+  --> nutri-app\src\commands\water.rs:65:1
+   |
+65 | #[tauri::command]
+   | ^^^^^^^^^^^^^^^^^
+   | |
+   | `__cmd__get_water_history` redefined here
+   | previous definition of the macro `__cmd__get_water_history` here
+   |
+   = note: `__cmd__get_water_history` must be defined only once in the macro namespace of this module
+   = note: this error originates in the attribute macro `tauri::command` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: unable to read Tauri config file at C:\Users\emele\Repositories\nutri-r\src-tauri\nutri-app\tauri.conf.json because entity not found
+   --> nutri-app\src\lib.rs:106:14
+    |
+106 |         .run(tauri::generate_context!())
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this error originates in the macro `tauri::generate_context` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unexpected `cfg` condition name: `mobile`
+ --> nutri-app\src\lib.rs:7:12
+  |
+7 | #[cfg_attr(mobile, tauri::mobile_entry_point)]
+  |            ^^^^^^
+  |
+  = help: expected names are: `docsrs`, `feature`, and `test` and 31 more
+  = help: consider using a Cargo feature instead
+  = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+           [lints.rust]
+           unexpected_cfgs = { level = "warn", check-cfg = ['cfg(mobile)'] }
+  = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(mobile)");` to the top of the `build.rs`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: unexpected `cfg` condition name: `mobile`
+  --> nutri-app\src\commands\config.rs:19:10
+   |
+19 |     cfg!(mobile)
+   |          ^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(mobile)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(mobile)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unused import: `calendar::*`
+  --> nutri-app\src\commands\mod.rs:19:9
+   |
+19 | pub use calendar::*;
+   |         ^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `config::*`
+  --> nutri-app\src\commands\mod.rs:20:9
+   |
+20 | pub use config::*;
+   |         ^^^^^^^^^
+
+warning: unused import: `import_export::*`
+  --> nutri-app\src\commands\mod.rs:21:9
+   |
+21 | pub use import_export::*;
+   |         ^^^^^^^^^^^^^^^^
+
+warning: unused import: `ingredients::*`
+  --> nutri-app\src\commands\mod.rs:22:9
+   |
+22 | pub use ingredients::*;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `metadata::*`
+  --> nutri-app\src\commands\mod.rs:23:9
+   |
+23 | pub use metadata::*;
+   |         ^^^^^^^^^^^
+
+warning: unused import: `nutrition::*`
+  --> nutri-app\src\commands\mod.rs:24:9
+   |
+24 | pub use nutrition::*;
+   |         ^^^^^^^^^^^^
+
+warning: unused import: `ollama::*`
+  --> nutri-app\src\commands\mod.rs:25:9
+   |
+25 | pub use ollama::*;
+   |         ^^^^^^^^^
+
+warning: unused import: `pantry::*`
+  --> nutri-app\src\commands\mod.rs:26:9
+   |
+26 | pub use pantry::*;
+   |         ^^^^^^^^^
+
+warning: unused import: `plans::*`
+  --> nutri-app\src\commands\mod.rs:27:9
+   |
+27 | pub use plans::*;
+   |         ^^^^^^^^
+
+warning: unused import: `shopping::*`
+  --> nutri-app\src\commands\mod.rs:28:9
+   |
+28 | pub use shopping::*;
+   |         ^^^^^^^^^^^
+
+warning: unused import: `statistics::*`
+  --> nutri-app\src\commands\mod.rs:29:9
+   |
+29 | pub use statistics::*;
+   |         ^^^^^^^^^^^^^
+
+warning: unused import: `sync::*`
+  --> nutri-app\src\commands\mod.rs:30:9
+   |
+30 | pub use sync::*;
+   |         ^^^^^^^
+
+warning: unused import: `tags::*`
+  --> nutri-app\src\commands\mod.rs:31:9
+   |
+31 | pub use tags::*;
+   |         ^^^^^^^
+
+warning: unused import: `water::*`
+  --> nutri-app\src\commands\mod.rs:32:9
+   |
+32 | pub use water::*;
+   |         ^^^^^^^^
+
+For more information about this error, try `rustc --explain E0428`.
+warning: `nutri-app` (lib) generated 16 warnings
+error: could not compile `nutri-app` (lib) due to 52 previous errors; 16 warnings emitted
