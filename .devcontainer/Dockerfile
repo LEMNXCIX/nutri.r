@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Instalar Node.js y JDK
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs openjdk-17-jdk-headless wget unzip \
+    && apt-get install -y nodejs openjdk-17-jdk-headless wget unzip socat iproute2 procps \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Configuración de Android SDK

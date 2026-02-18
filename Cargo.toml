@@ -24,7 +24,13 @@ markdown = "1.0.0"
 chrono = { version = "0.4", features = ["serde", "wasmbind"] }
 
 [workspace]
-members = ["src-tauri"]
+members = [
+    ".",
+    "src-tauri/nutri-core",
+    "src-tauri/nutri-app",
+    "src-tauri/nutri-server",
+]
+resolver = "2"
 
 [profile.dev]
 debug = 0

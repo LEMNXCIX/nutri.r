@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "nutri-core",
-    "nutri-app",
-    "nutri-server",
-]
-resolver = "2"
