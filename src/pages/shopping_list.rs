@@ -44,14 +44,14 @@ pub fn ShoppingList() -> impl IntoView {
     };
 
     view! {
-        <div class="bg-[#FAFAFA] min-h-screen font-sans text-[#171717] pb-32">
-            <header class="bg-white border-b border-gray-100 pb-10 pt-12 px-4 shadow-sm relative overflow-hidden">
+        <div class="w-full font-sans pb-32">
+            <div class="bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 pb-10 pt-12 px-4 shadow-sm relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 -mr-32 -mt-32 rounded-full blur-3xl"></div>
-                
+
                 <div class="max-w-4xl mx-auto relative z-10">
                     <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
                         <div class="space-y-6">
-                             <A href={move || format!("/plan/{}", plan_id())} attr:class="inline-flex items-center text-[10px] font-black text-gray-400 hover:text-black tracking-[0.2em] transition-all group uppercase">
+                             <A href={move || format!("/plan/{}", plan_id())} attr:class="inline-flex items-center text-[10px] font-black text-gray-400 dark:text-neutral-500 hover:text-black dark:hover:text-white tracking-[0.2em] transition-all group uppercase">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 group-hover:-translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                                 </svg>
@@ -62,7 +62,7 @@ pub fn ShoppingList() -> impl IntoView {
                                     <span class="h-px w-8 bg-[#D4AF37]"></span>
                                     <span class="text-[10px] font-black text-[#D4AF37] tracking-[0.3em] uppercase">"Gestión de Insumos"</span>
                                 </div>
-                                <h2 class="text-4xl md:text-5xl font-black text-black tracking-tighter leading-none">
+                                <h2 class="text-4xl md:text-5xl font-black text-black dark:text-white tracking-tighter leading-none">
                                     "LISTA DE COMPRAS"
                                 </h2>
                              </div>
@@ -96,12 +96,12 @@ pub fn ShoppingList() -> impl IntoView {
                                 view! {
                                     <div class="mt-12 space-y-3">
                                         <div class="flex justify-between items-end px-1">
-                                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">"Progreso de Compra"</span>
-                                            <span class="text-xs font-black text-black">{checked} " / " {total}</span>
+                                            <span class="text-[9px] font-black text-gray-400 dark:text-neutral-500 uppercase tracking-widest">"Progreso de Compra"</span>
+                                            <span class="text-xs font-black text-black dark:text-white">{checked} " / " {total}</span>
                                         </div>
-                                        <div class="h-2 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100">
-                                            <div 
-                                                class="h-full bg-black rounded-full transition-all duration-700 ease-out"
+                                        <div class="h-2 w-full bg-gray-50 dark:bg-neutral-800 rounded-full overflow-hidden border border-gray-100 dark:border-neutral-700">
+                                            <div
+                                                class="h-full bg-black dark:bg-white rounded-full transition-all duration-700 ease-out"
                                                 style=format!("width: {}%", pct)
                                             ></div>
                                         </div>
@@ -111,13 +111,13 @@ pub fn ShoppingList() -> impl IntoView {
                         }}
                     </Suspense>
                 </div>
-            </header>
+            </div>
 
             <div class="max-w-4xl mx-auto px-4 mt-12">
-                <Suspense fallback=move || view! { 
+                <Suspense fallback=move || view! {
                     <div class="space-y-6">
-                        <div class="h-32 bg-white rounded-3xl animate-pulse"></div>
-                        <div class="h-32 bg-white rounded-3xl animate-pulse"></div>
+                        <div class="h-32 bg-white dark:bg-neutral-900 rounded-3xl animate-pulse"></div>
+                        <div class="h-32 bg-white dark:bg-neutral-900 rounded-3xl animate-pulse"></div>
                     </div>
                 }>
                     {move || {
@@ -138,7 +138,7 @@ pub fn ShoppingList() -> impl IntoView {
                                                             let name = item.name.clone();
                                                             let (checked, set_checked) = signal(item.checked);
                                                             view! {
-                                                                <label class="flex items-center gap-5 p-6 md:p-8 hover:bg-gray-50 transition-all group cursor-pointer active:scale-[0.99]">
+                                                                <label class="flex items-center gap-5 p-6 md:p-8 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all group cursor-pointer active:scale-[0.99]">
                                                                     // Custom Tactical Checkbox
                                                                     <div class="relative flex items-center justify-center shrink-0">
                                                                         <input
@@ -152,8 +152,8 @@ pub fn ShoppingList() -> impl IntoView {
                                                                             class="peer absolute opacity-0 w-full h-full cursor-pointer z-10"
                                                                         />
                                                                         <div class=move || format!("w-8 h-8 rounded-xl border-2 transition-all flex items-center justify-center {}",
-                                                                            if checked.get() { "bg-black border-black shadow-lg" } 
-                                                                            else { "bg-white border-gray-200 group-hover:border-[#D4AF37]" }
+                                                                            if checked.get() { "bg-black dark:bg-white border-black dark:border-white shadow-lg" }
+                                                                            else { "bg-white dark:bg-neutral-800 border-gray-200 dark:border-neutral-600 group-hover:border-[#D4AF37]" }
                                                                         )>
                                                                             <svg class=move || format!("w-4 h-4 transition-all {}", if checked.get() { "text-[#D4AF37] scale-100" } else { "text-transparent scale-50" }) fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4">
                                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -163,14 +163,14 @@ pub fn ShoppingList() -> impl IntoView {
 
                                                                     <div class="flex-1 min-w-0">
                                                                         <div class="flex flex-wrap items-baseline gap-2">
-                                                                            <span class=move || format!("text-base md:text-lg transition-all duration-500 {}", 
-                                                                                if checked.get() { "text-gray-300 line-through italic" } else { "text-black font-black tracking-tight" }
+                                                                            <span class=move || format!("text-base md:text-lg transition-all duration-500 {}",
+                                                                                if checked.get() { "text-gray-300 dark:text-neutral-600 line-through italic" } else { "text-black dark:text-white font-black tracking-tight" }
                                                                             )>
                                                                                 {item.name.clone()}
                                                                             </span>
                                                                             {item.quantity.map(|q| view! {
                                                                                 <span class=move || format!("text-[10px] font-black px-2.5 py-1 rounded-lg transition-all {}",
-                                                                                    if checked.get() { "bg-gray-50 text-gray-300" } else { "bg-gray-100 text-gray-500" }
+                                                                                    if checked.get() { "bg-gray-50 dark:bg-neutral-800 text-gray-300 dark:text-neutral-600" } else { "bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400" }
                                                                                 )>
                                                                                     {q}
                                                                                 </span>
@@ -189,15 +189,15 @@ pub fn ShoppingList() -> impl IntoView {
                             }
                             Some(Ok(None)) => {
                                 view! {
-                                    <div class="text-center py-32 px-8 bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-black/5">
-                                        <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8 text-gray-300">
+                                    <div class="text-center py-32 px-8 bg-white dark:bg-neutral-900 rounded-[3rem] border border-gray-100 dark:border-neutral-800 shadow-xl shadow-black/5">
+                                        <div class="w-24 h-24 bg-gray-50 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-8 text-gray-300 dark:text-neutral-600">
                                             <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                             </svg>
                                         </div>
-                                        <h3 class="text-2xl font-black text-black tracking-tighter mb-4">"SIN LISTA GENERADA"</h3>
-                                        <p class="text-gray-500 text-sm max-w-xs mx-auto mb-10 leading-relaxed font-medium">"Extraeremos todos los ingredientes de tu plan semanal automáticamente por ti."</p>
-                                        <Button on_click=Callback::new(on_generate) class="bg-black hover:bg-[#D4AF37] text-white px-10 py-5 rounded-[1.5rem] font-black text-[11px] tracking-[0.2em] uppercase shadow-2xl shadow-black/20">
+                                        <h3 class="text-2xl font-black text-black dark:text-white tracking-tighter mb-4">"SIN LISTA GENERADA"</h3>
+                                        <p class="text-gray-500 dark:text-neutral-400 text-sm max-w-xs mx-auto mb-10 leading-relaxed font-medium">"Extraeremos todos los ingredientes de tu plan semanal automáticamente por ti."</p>
+                                        <Button on_click=Callback::new(on_generate) class="bg-black dark:bg-white hover:bg-[#D4AF37] text-white dark:text-black px-10 py-5 rounded-[1.5rem] font-black text-[11px] tracking-[0.2em] uppercase shadow-2xl shadow-black/20">
                                             "GENERAR LISTA AHORA"
                                         </Button>
                                     </div>

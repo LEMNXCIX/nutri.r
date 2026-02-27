@@ -97,7 +97,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Router>
-            <div class="min-h-screen bg-white text-neutral-950 dark:bg-neutral-950 dark:text-white selection:bg-accent selection:text-neutral-950">
+            <div class="min-h-screen bg-white text-neutral-950 dark:bg-background-dark dark:text-white selection:bg-accent selection:text-neutral-950">
                 <Navbar />
                 <main class="w-full pb-32 md:pb-0">
                     <Routes fallback=|| "Not Found">

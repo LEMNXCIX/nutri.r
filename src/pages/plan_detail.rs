@@ -205,7 +205,7 @@ pub fn PlanDetail() -> impl IntoView {
     };
 
     view! {
-        <div class="bg-white min-h-screen font-sans text-neutral-950 pb-32">
+        <div class="w-full font-sans pb-32">
             // -- HEADER SECTION --
             <header class="relative h-[60vh] w-full overflow-hidden">
                 <img
@@ -253,16 +253,16 @@ pub fn PlanDetail() -> impl IntoView {
             </header>
 
             // -- NUTRITION SECTION --
-            <section class="bg-white px-6 py-8">
-                <Suspense fallback=move || view! { <div class="animate-pulse h-20 bg-neutral-100 mb-4"></div> }>
+            <section class="bg-white dark:bg-background-dark px-6 py-8">
+                <Suspense fallback=move || view! { <div class="animate-pulse h-20 bg-neutral-100 dark:bg-neutral-900 mb-4"></div> }>
                     {move || {
                         let res = nutrition_resource.get();
                         let nutrition = res.and_then(|r| r.ok());
 
                         view! {
                             <div class="flex flex-col space-y-4">
-                                <div class="flex justify-between items-center pb-4 border-b border-neutral-100">
-                                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400">"Total Calories"</span>
+                                <div class="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Total Calories"</span>
                                     {match nutrition.as_ref() {
                                         Some(n) => view! { <span class="text-2xl font-light tracking-tighter">{format!("{} kcal", n.total_calories as i32)}</span> }.into_any(),
                                         None => view! { <span class="text-2xl font-light tracking-tighter text-neutral-200">"-- kcal"</span> }.into_any(),
@@ -270,7 +270,7 @@ pub fn PlanDetail() -> impl IntoView {
                                 </div>
                                 <div class="grid grid-cols-3 gap-8 py-2">
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Protein"</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Protein"</span>
                                         <div class="flex items-baseline gap-1">
                                             {match nutrition.as_ref() {
                                                 Some(n) => view! { <span class="text-2xl font-medium tracking-tighter">{n.total_protein as i32}</span> }.into_any(),
@@ -280,7 +280,7 @@ pub fn PlanDetail() -> impl IntoView {
                                         </div>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Carbs"</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Carbs"</span>
                                         <div class="flex items-baseline gap-1">
                                             {match nutrition.as_ref() {
                                                 Some(n) => view! { <span class="text-2xl font-medium tracking-tighter">{n.total_carbs as i32}</span> }.into_any(),
@@ -290,7 +290,7 @@ pub fn PlanDetail() -> impl IntoView {
                                         </div>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Fats"</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Fats"</span>
                                         <div class="flex items-baseline gap-1">
                                             {match nutrition.as_ref() {
                                                 Some(n) => view! { <span class="text-2xl font-medium tracking-tighter">{n.total_fat as i32}</span> }.into_any(),
@@ -300,7 +300,7 @@ pub fn PlanDetail() -> impl IntoView {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="hairline-divider"></div>
+                                <div class="hairline-divider dark:bg-neutral-800"></div>
                             </div>
                         }
                     }}
@@ -331,14 +331,14 @@ pub fn PlanDetail() -> impl IntoView {
                                             {sp.dias.into_iter().map(|day| view! {
                                                 <div class="space-y-6">
                                                     <div class="flex items-center gap-4">
-                                                        <span class="text-sm font-black uppercase tracking-widest">{day.dia}</span>
-                                                        <div class="hairline-divider flex-1"></div>
+                                                        <span class="text-sm font-black uppercase tracking-widest dark:text-white">{day.dia}</span>
+                                                        <div class="hairline-divider dark:bg-neutral-800 flex-1"></div>
                                                     </div>
                                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                                         {day.comidas.into_iter().map(|meal| view! {
                                                             <div class="flex flex-col gap-1">
-                                                                <span class="text-sm font-medium">{meal.nombre}</span>
-                                                                <span class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">
+                                                                <span class="text-sm font-medium dark:text-white">{meal.nombre}</span>
+                                                                <span class="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">
                                                                     {format!("{} / {}", meal.tipo, meal.ingredientes.join(", "))}
                                                                 </span>
                                                             </div>
@@ -367,19 +367,19 @@ pub fn PlanDetail() -> impl IntoView {
                 <div class="flex flex-col space-y-6">
                     <div>
                         <div class="flex justify-between items-end mb-2">
-                            <span class="text-[10px] font-bold uppercase tracking-widest">"Fiber Integrity"</span>
-                            <span class="text-[10px] font-bold tabular-nums">"12g"</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest dark:text-neutral-300">"Fiber Integrity"</span>
+                            <span class="text-[10px] font-bold tabular-nums dark:text-neutral-300">"12g"</span>
                         </div>
-                        <div class="w-full h-[1px] bg-neutral-100 relative">
-                            <div class="absolute top-0 left-0 h-full bg-neutral-950" style="width: 45%;"></div>
+                        <div class="w-full h-[1px] bg-neutral-100 dark:bg-neutral-700 relative">
+                            <div class="absolute top-0 left-0 h-full bg-neutral-950 dark:bg-white" style="width: 45%;"></div>
                         </div>
                     </div>
                     <div>
                         <div class="flex justify-between items-end mb-2">
-                            <span class="text-[10px] font-bold uppercase tracking-widest">"Sodium Index"</span>
-                            <span class="text-[10px] font-bold tabular-nums">"480mg"</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest dark:text-neutral-300">"Sodium Index"</span>
+                            <span class="text-[10px] font-bold tabular-nums dark:text-neutral-300">"480mg"</span>
                         </div>
-                        <div class="w-full h-[1px] bg-neutral-100 relative">
+                        <div class="w-full h-[1px] bg-neutral-100 dark:bg-neutral-700 relative">
                             <div class="absolute top-0 left-0 h-full bg-accent" style="width: 20%;"></div>
                         </div>
                     </div>
@@ -387,7 +387,7 @@ pub fn PlanDetail() -> impl IntoView {
             </section>
 
             // -- FOOTER ACTIONS --
-            <footer class="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-lg border-t border-neutral-100 z-50">
+            <footer class="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-neutral-100 dark:border-neutral-800 z-50">
                 <button
                     on:click=move |_| set_show_assign_modal.set(true)
                     class="w-full bg-accent py-5 flex items-center justify-center gap-3 active:scale-[0.98] transition-transform text-neutral-950"
@@ -401,7 +401,7 @@ pub fn PlanDetail() -> impl IntoView {
             {move || if generating_variation.get() {
                 view! {
                     <Portal>
-                        <div class="fixed inset-0 bg-white/95 z-[1000] flex flex-col items-center justify-center animate-in fade-in">
+                        <div class="fixed inset-0 bg-white/95 dark:bg-background-dark/95 z-[1000] flex flex-col items-center justify-center animate-in fade-in">
                             <Loading />
                         </div>
                     </Portal>
@@ -411,14 +411,14 @@ pub fn PlanDetail() -> impl IntoView {
             {move || if show_assign_modal.get() {
                 view! {
                     <Portal>
-                        <div class="fixed inset-0 bg-white z-[500] p-6 flex flex-col pt-24 animate-in fade-in">
-                            <button on:click=move |_| set_show_assign_modal.set(false) class="absolute top-6 left-6 w-10 h-10 bg-neutral-100 flex items-center justify-center rounded-full">
+                        <div class="fixed inset-0 bg-white dark:bg-background-dark z-[500] p-6 flex flex-col pt-24 animate-in fade-in">
+                            <button on:click=move |_| set_show_assign_modal.set(false) class="absolute top-6 left-6 w-10 h-10 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center rounded-full">
                                 <span class="material-symbols-outlined">"close"</span>
                             </button>
-                            <h2 class="text-4xl font-black uppercase tracking-tighter mb-12">"Assign to Week"</h2>
+                            <h2 class="text-4xl font-black uppercase tracking-tighter mb-12 dark:text-white">"Assign to Week"</h2>
                             <div class="flex flex-col gap-4">
                                 {vec!["Next Monday", "Next Tuesday", "Manual Select"].into_iter().map(|label| view! {
-                                    <button class="w-full p-6 brutalist-border text-left uppercase font-bold text-sm hover:bg-accent transition-colors">
+                                    <button class="w-full p-6 brutalist-border dark:border-neutral-700 dark:text-white text-left uppercase font-bold text-sm hover:bg-accent dark:hover:bg-accent transition-colors">
                                         {label}
                                     </button>
                                 }).collect::<Vec<_>>()}

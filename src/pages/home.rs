@@ -124,10 +124,10 @@ pub fn Home() -> impl IntoView {
     });
 
     view! {
-        <div class="bg-white min-h-screen font-sans text-neutral-950 pb-32 selection:bg-accent selection:text-neutral-950">
+        <div class="w-full font-sans pb-32">
             // -- TITLE SECTION --
             <section class="px-6 pt-8 pb-10">
-                <h1 class="text-6xl font-extrabold uppercase leading-[0.9] tracking-tighter mb-4 text-header">
+                <h1 class="text-6xl font-extrabold uppercase leading-[0.9] tracking-tighter mb-4 text-header dark:text-white">
                     "Daily" <br/> "Metrics"
                 </h1>
                 <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
@@ -199,21 +199,21 @@ pub fn Home() -> impl IntoView {
                 <div>
                     <div class="flex justify-between items-end mb-3">
                         <div class="flex flex-col gap-1">
-                            <span class="text-[10px] font-bold uppercase tracking-widest">"Hydration Index"</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-neutral-300">"Hydration Index"</span>
                             <div class="flex items-center gap-2 mt-1">
-                                <button on:click=move |_| on_remove_water.run(()) class="text-neutral-300 hover:text-neutral-950">
+                                <button on:click=move |_| on_remove_water.run(()) class="text-neutral-300 hover:text-neutral-950 dark:text-neutral-500 dark:hover:text-white">
                                     <span class="material-symbols-outlined !text-sm">"remove"</span>
                                 </button>
-                                <span class="text-xs font-medium tabular-nums">{move || format!("{:.1} / {:.1} L", water_current.get(), water_target.get())}</span>
-                                <button on:click=move |_| on_add_water.run(()) class="text-neutral-300 hover:text-neutral-950">
+                                <span class="text-xs font-medium tabular-nums text-neutral-950 dark:text-white">{move || format!("{:.1} / {:.1} L", water_current.get(), water_target.get())}</span>
+                                <button on:click=move |_| on_add_water.run(()) class="text-neutral-300 hover:text-neutral-950 dark:text-neutral-500 dark:hover:text-white">
                                     <span class="material-symbols-outlined !text-sm">"add"</span>
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div class="relative w-full h-[2px] bg-neutral-100">
+                    <div class="relative w-full h-[2px] bg-neutral-100 dark:bg-neutral-800">
                         <div 
-                            class="absolute top-0 left-0 h-full bg-neutral-950 transition-all duration-700" 
+                            class="absolute top-0 left-0 h-full bg-neutral-950 dark:bg-white transition-all duration-700" 
                             style:width=move || format!("{}%", (water_current.get() / water_target.get() * 100.0).min(100.0))
                         ></div>
                     </div>
@@ -221,10 +221,10 @@ pub fn Home() -> impl IntoView {
 
                 <div>
                     <div class="flex justify-between items-end mb-3">
-                        <span class="text-[10px] font-bold uppercase tracking-widest">"Micronutrient Diversity"</span>
-                        <span class="text-xs font-medium tabular-nums">"84%"</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-neutral-300">"Micronutrient Diversity"</span>
+                        <span class="text-xs font-medium tabular-nums text-neutral-950 dark:text-white">"84%"</span>
                     </div>
-                    <div class="relative w-full h-[2px] bg-neutral-100">
+                    <div class="relative w-full h-[2px] bg-neutral-100 dark:bg-neutral-800">
                         <div class="absolute top-0 left-0 h-full bg-accent" style="width: 84%;"></div>
                     </div>
                 </div>
@@ -236,25 +236,25 @@ pub fn Home() -> impl IntoView {
                     let meals = meal_details.get();
                     if meals.is_empty() {
                         view! {
-                            <div class="p-12 border border-neutral-100 flex flex-col items-center justify-center gap-4 text-center">
-                                <span class="material-symbols-outlined text-neutral-200 !text-4xl">"fastfood"</span>
-                                <p class="text-[10px] font-bold uppercase tracking-widest text-neutral-400">"No Meals Scheduled"</p>
-                                <A href="/calendar" attr:class="mt-4 px-6 py-3 bg-neutral-950 text-accent text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-neutral-950 transition-all">"Assign Plan"</A>
+                            <div class="p-12 border border-neutral-100 dark:border-neutral-800 flex flex-col items-center justify-center gap-4 text-center">
+                                <span class="material-symbols-outlined text-neutral-200 dark:text-neutral-700 !text-4xl">"fastfood"</span>
+                                <p class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"No Meals Scheduled"</p>
+                                <A href="/calendar" attr:class="mt-4 px-6 py-3 bg-neutral-950 dark:bg-white text-accent text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-neutral-950 transition-all">"Assign Plan"</A>
                             </div>
                         }.into_any()
                     } else {
                         meals.into_iter().map(|(title, id, cal)| {
                             view! {
-                                <A href=format!("/plan/{}", id) attr:class="block relative group aspect-[4/5] overflow-hidden bg-neutral-100">
+                                <A href=format!("/plan/{}", id) attr:class="block relative group aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                                     <img 
                                         alt=title.clone()
                                         class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
                                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuLIs4J3BB-Asz5cdNOorESMj1X3AVHQ_CyacDzU2zpMKJ4AmCCVsAedD5NzL-tBYxXv2eygd4hFNASqgdKD0gQnv78equgwci1mxJTvwA2XoV8I5GKSnShEzhTNk-Sfq7lK0QTcqEUsgGCWjJnyFLnU1YJVwoIJEK5Hfo3fFegV_Qf78T58vwbdtEQOflSZsT_ZYtWI8zXgmyhEojqt3UqYpvZwNrIO1VYttV3E3A3lfStG6x_jIYbQxMszgc2jS4Z_ticQKZ8Mha"
                                     />
-                                    <div class="absolute inset-0 bg-neutral-950/10"></div>
+                                    <div class="absolute inset-0 bg-neutral-950/10 dark:bg-black/30"></div>
                                     <div class="absolute top-6 left-6">
-                                        <div class="bg-white px-3 py-1.5 inline-block">
-                                            <p class="text-[10px] font-bold uppercase tracking-[0.2em]">"Next Planned Intake"</p>
+                                        <div class="bg-white dark:bg-neutral-900 px-3 py-1.5 inline-block">
+                                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-950 dark:text-white">"Next Planned Intake"</p>
                                         </div>
                                     </div>
                                     <div class="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-neutral-950/60 to-transparent">
@@ -271,8 +271,8 @@ pub fn Home() -> impl IntoView {
             // -- MY ARCHIVE --
             <section class="px-6 pb-12">
                 <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400">"My Archive"</h2>
-                    <button class="bg-neutral-950 text-white p-2 flex items-center justify-center">
+                    <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">"My Archive"</h2>
+                    <button class="bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 p-2 flex items-center justify-center">
                         <span class="material-symbols-outlined !text-sm">"add"</span>
                     </button>
                 </div>
@@ -281,12 +281,12 @@ pub fn Home() -> impl IntoView {
                    <button 
                         on:click=on_generate
                         disabled=move || generating.get()
-                        class="w-full py-4 brutalist-border bg-white hover:bg-neutral-50 flex items-center justify-center gap-3 transition-all group disabled:opacity-50"
+                        class="w-full py-4 brutalist-border bg-white dark:bg-background-dark hover:bg-neutral-50 dark:hover:bg-neutral-900 flex items-center justify-center gap-3 transition-all group disabled:opacity-50"
                     >
-                        <span class="text-[10px] font-bold uppercase tracking-widest">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-white">
                             {move || if generating.get() { "Optimizing..." } else { "Generate Week Plan" }}
                         </span>
-                        <span class="material-symbols-outlined !text-lg text-neutral-300 group-hover:text-neutral-950 transition-colors">"auto_awesome"</span>
+                        <span class="material-symbols-outlined !text-lg text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">"auto_awesome"</span>
                    </button>
                 </div>
 
@@ -294,7 +294,7 @@ pub fn Home() -> impl IntoView {
                     if generating.get() {
                         view! {
                             <Portal>
-                                <div class="fixed inset-0 bg-white/95 z-[1000] flex flex-col items-center justify-center animate-in fade-in">
+                                <div class="fixed inset-0 bg-white/95 dark:bg-background-dark/95 z-[1000] flex flex-col items-center justify-center animate-in fade-in">
                                     <Loading />
                                 </div>
                             </Portal>
@@ -305,21 +305,21 @@ pub fn Home() -> impl IntoView {
                 }}
 
                 <div class="space-y-4">
-                    <Suspense fallback=move || view! { <div class="animate-pulse h-12 bg-neutral-50 mb-4"></div> }>
+                    <Suspense fallback=move || view! { <div class="animate-pulse h-12 bg-neutral-50 dark:bg-neutral-900 mb-4"></div> }>
                         {move || plans_resource.get().map(|plans| {
                             plans.into_iter().take(5).map(|plan| {
                                 let pid = plan.id.clone();
                                 let date = plan.fecha.clone();
                                 view! {
-                                    <A href=format!("/plan/{}", pid) attr:class="flex items-center justify-between py-6 border-b border-neutral-100 group">
+                                    <A href=format!("/plan/{}", pid) attr:class="flex items-center justify-between py-6 border-b border-neutral-100 dark:border-neutral-800 group">
                                         <div class="flex items-center gap-6">
-                                            <span class="text-xs font-black text-neutral-950">"P"</span>
+                                            <span class="text-xs font-black text-neutral-950 dark:text-white">"P"</span>
                                             <div class="flex flex-col gap-1">
-                                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 group-hover:text-accent transition-colors">{pid.chars().take(12).collect::<String>()}</span>
-                                                <span class="text-[8px] font-bold uppercase tracking-widest text-neutral-400">{date.clone()}</span>
+                                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-white group-hover:text-accent dark:group-hover:text-accent transition-colors">{pid.chars().take(12).collect::<String>()}</span>
+                                                <span class="text-[8px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">{date.clone()}</span>
                                             </div>
                                         </div>
-                                        <span class="material-symbols-outlined text-neutral-200 group-hover:text-neutral-950 transition-colors">"arrow_forward"</span>
+                                        <span class="material-symbols-outlined text-neutral-200 dark:text-neutral-700 group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">"arrow_forward"</span>
                                     </A>
                                 }
                             }).collect_view()

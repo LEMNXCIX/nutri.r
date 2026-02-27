@@ -56,13 +56,13 @@ pub fn Ingredients() -> impl IntoView {
     };
 
     view! {
-        <div class="bg-white min-h-screen font-sans text-neutral-950 pb-32 animate-in fade-in duration-500">
+        <div class="w-full font-sans pb-32 animate-in fade-in duration-500">
             // -- HEADER --
-            <header class="flex items-center justify-between px-6 py-8 sticky top-0 bg-white z-40 border-b border-neutral-100">
+            <header class="flex items-center justify-between px-6 py-8 sticky top-0 bg-white dark:bg-background-dark z-40 border-b border-neutral-100 dark:border-neutral-800">
                 <A href="/" attr:class="flex items-center gap-4">
                     <span class="material-symbols-outlined">"arrow_back"</span>
                 </A>
-                <div class="text-[10px] font-bold tracking-[0.2em] uppercase">"Library / Ingredients"</div>
+                <div class="text-[10px] font-bold tracking-[0.2em] uppercase dark:text-neutral-300">"Library / Ingredients"</div>
                 <div class="w-8 h-8 flex items-center justify-center">
                     <span class="material-symbols-outlined">"filter_list"</span>
                 </div>
@@ -70,12 +70,12 @@ pub fn Ingredients() -> impl IntoView {
 
             // -- SEARCH & TITLE --
             <section class="px-6 py-10">
-                <h1 class="text-5xl font-extrabold uppercase leading-[0.9] tracking-tighter mb-8">
+                <h1 class="text-5xl font-extrabold uppercase leading-[0.9] tracking-tighter mb-8 dark:text-white">
                     "Select" <br/> "Ingredients"
                 </h1>
                 <div class="relative">
                     <input
-                        class="w-full border border-black px-4 py-4 text-xs font-bold tracking-widest uppercase placeholder:text-neutral-300 focus:ring-0 focus:border-black outline-none rounded-none"
+                        class="w-full border border-black dark:border-neutral-700 bg-white dark:bg-neutral-900 text-black dark:text-white px-4 py-4 text-xs font-bold tracking-widest uppercase placeholder:text-neutral-300 dark:placeholder:text-neutral-600 focus:ring-0 focus:border-black dark:focus:border-neutral-500 outline-none rounded-none"
                         placeholder="SEARCH DATABASE..."
                         type="text"
                         on:input=move |ev| set_search_query.set(event_target_value(&ev))
@@ -90,10 +90,10 @@ pub fn Ingredients() -> impl IntoView {
             // -- CATEGORIES --
             <section class="px-6 mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 <div class="flex gap-6">
-                    <span class="text-[10px] font-bold uppercase tracking-widest border-b-2 border-black pb-1">"All"</span>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 pb-1">"Proteins"</span>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 pb-1">"Produce"</span>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 pb-1">"Grains"</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest border-b-2 border-black dark:border-white pb-1">"All"</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 pb-1">"Proteins"</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 pb-1">"Produce"</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 pb-1">"Grains"</span>
                 </div>
             </section>
 
@@ -106,12 +106,12 @@ pub fn Ingredients() -> impl IntoView {
                         }
 
                         if !error.get().is_empty() {
-                            return view! { <div class="p-6 brutalist-border bg-red-50 text-red-500 uppercase font-bold text-[10px]">{error.get()}</div> }.into_any();
+                            return view! { <div class="p-6 brutalist-border bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 uppercase font-bold text-[10px]">{error.get()}</div> }.into_any();
                         }
 
                         let stats = filtered_ingredients();
                         if stats.is_empty() {
-                            return view! { <div class="py-20 text-center text-neutral-400 uppercase tracking-widest text-[10px]">"No matching items"</div> }.into_any();
+                            return view! { <div class="py-20 text-center text-neutral-400 dark:text-neutral-500 uppercase tracking-widest text-[10px]">"No matching items"</div> }.into_any();
                         }
 
                         stats.into_iter().map(|stat| {
@@ -123,31 +123,31 @@ pub fn Ingredients() -> impl IntoView {
                                 <div class=move || format!("flex items-center justify-between transition-opacity {}", if is_excluded { "opacity-40" } else { "" })>
                                     <div class="flex flex-col gap-1">
                                         <div class="flex items-center gap-2">
-                                            <h3 class=move || format!("text-2xl font-light tracking-tighter uppercase {}", if is_excluded { "strikethrough" } else { "" })>
+                                            <h3 class=move || format!("text-2xl font-light tracking-tighter uppercase dark:text-white {}", if is_excluded { "strikethrough" } else { "" })>
                                                 {name.clone()}
                                             </h3>
                                             {if is_excluded {
-                                                view! { <span class="text-[8px] px-1 border border-neutral-400 font-bold uppercase tracking-tighter">"Restricted"</span> }.into_any()
+                                                view! { <span class="text-[8px] px-1 border border-neutral-400 dark:border-neutral-600 font-bold uppercase tracking-tighter dark:text-neutral-400">"Restricted"</span> }.into_any()
                                             } else {
                                                 ().into_any()
                                             }}
                                         </div>
-                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
                                             {if is_excluded { "Disabled" } else { "Active Entry" }} " / Count: " {stat.count}
                                         </span>
                                     </div>
                                     <div class="flex items-center gap-8">
                                         <button
                                             on:click=move |_| toggle_exclusion(name_for_click.clone())
-                                            class=move || format!("p-2 transition-colors {}", if is_excluded { "bg-neutral-100" } else { "bg-accent" })
+                                            class=move || format!("p-2 transition-colors {}", if is_excluded { "bg-neutral-100 dark:bg-neutral-800" } else { "bg-accent" })
                                         >
-                                            <span class="material-symbols-outlined text-neutral-950">
+                                            <span class="material-symbols-outlined text-neutral-950 dark:text-white">
                                                 {if is_excluded { "lock" } else { "add" }}
                                             </span>
                                         </button>
                                     </div>
                                 </div>
-                                <div class="hairline-divider"></div>
+                                <div class="hairline-divider dark:bg-neutral-800"></div>
                             }
                         }).collect::<Vec<_>>().into_any()
                     }}
@@ -155,10 +155,10 @@ pub fn Ingredients() -> impl IntoView {
             </section>
 
             // -- FOOTER SELECTION STATUS --
-            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-100 px-6 py-8 flex justify-between items-center z-50">
+            <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-neutral-100 dark:border-neutral-800 px-6 py-8 flex justify-between items-center z-50">
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400">"Database Status"</span>
-                    <span class="text-lg font-light tracking-tighter uppercase">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Database Status"</span>
+                    <span class="text-lg font-light tracking-tighter uppercase dark:text-white">
                         {move || {
                             let total = ingredients_stats.get().len();
                             let active = ingredients_stats.get().iter().filter(|s| !s.is_excluded).count();
@@ -166,7 +166,7 @@ pub fn Ingredients() -> impl IntoView {
                         }}
                     </span>
                 </div>
-                <A href="/" attr:class="bg-neutral-950 text-white px-8 py-3 text-[10px] font-bold uppercase tracking-[0.2em]">
+                <A href="/" attr:class="bg-neutral-950 dark:bg-white text-white dark:text-black px-8 py-3 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors">
                     "Review Plans"
                 </A>
             </div>

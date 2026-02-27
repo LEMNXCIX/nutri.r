@@ -43,11 +43,11 @@ pub fn SyncStatus() -> impl IntoView {
     });
 
     view! {
-        <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-gray-50 border border-gray-100 shadow-sm transition-all duration-300 hover:bg-white hover:shadow-md">
+        <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 shadow-sm transition-all duration-300 hover:bg-white dark:hover:bg-neutral-800 hover:shadow-md">
             {move || match status.get() {
                 Status::Idle => view! {
-                    <div class="w-2 h-2 rounded-full bg-gray-300"></div>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">"Ready"</span>
+                    <div class="w-2 h-2 rounded-full bg-gray-300 dark:bg-neutral-600"></div>
+                    <span class="text-[10px] font-bold text-gray-400 dark:text-neutral-500 uppercase tracking-widest leading-none">"Ready"</span>
                 }.into_any(),
                 Status::Syncing => view! {
                     <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>

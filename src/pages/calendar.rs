@@ -84,21 +84,21 @@ pub fn Calendar() -> impl IntoView {
     };
 
     view! {
-        <div class="bg-white min-h-screen font-sans text-black flex flex-col pb-32">
+        <div class="bg-white dark:bg-background-dark min-h-screen font-sans text-black dark:text-white flex flex-col pb-32">
             // Spacer for notch/status bar area
-            <div class="h-12 w-full bg-white"></div>
+            <div class="h-12 w-full bg-white dark:bg-background-dark"></div>
 
-            <header class="px-6 py-6 border-b border-hairline">
+            <header class="px-6 py-6 border-b border-hairline dark:border-neutral-800">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-2">
                         <div class="w-8 h-[2px] bg-primary"></div>
-                        <span class="text-[10px] font-black tracking-[0.3em] text-zinc-400 uppercase">"System v3.0"</span>
+                        <span class="text-[10px] font-black tracking-[0.3em] text-zinc-400 dark:text-zinc-500 uppercase">"System v3.0"</span>
                     </div>
                     <div class="flex space-x-4">
-                        <button on:click=on_prev_month class="text-black active:scale-90 transition-transform">
+                        <button on:click=on_prev_month class="text-black dark:text-white active:scale-90 transition-transform">
                             <span class="material-symbols-outlined text-xl">"chevron_left"</span>
                         </button>
-                        <button on:click=on_next_month class="text-black active:scale-90 transition-transform">
+                        <button on:click=on_next_month class="text-black dark:text-white active:scale-90 transition-transform">
                             <span class="material-symbols-outlined text-xl">"chevron_right"</span>
                         </button>
                     </div>
@@ -126,13 +126,13 @@ pub fn Calendar() -> impl IntoView {
             </header>
 
             <main class="flex-1">
-                <div class="grid grid-cols-7 border-b border-hairline bg-zinc-50">
+                <div class="grid grid-cols-7 border-b border-hairline dark:border-neutral-800 bg-zinc-50 dark:bg-neutral-900">
                     {vec!["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].into_iter().map(|day| view! {
-                        <div class="py-3 text-center text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{day}</div>
+                        <div class="py-3 text-center text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{day}</div>
                     }).collect_view()}
                 </div>
 
-                <div class="grid grid-cols-7 bg-white">
+                <div class="grid grid-cols-7 bg-white dark:bg-background-dark">
                     <Suspense fallback=move || view! { <div class="col-span-7 py-20 flex justify-center"><Loading /></div> }>
                         {move || {
                             let entries = calendar_resource.get().unwrap_or_default();
@@ -155,7 +155,7 @@ pub fn Calendar() -> impl IntoView {
                             let mut grid_items = Vec::new();
                             // Empty cells at the start
                             for _ in 1..weekday {
-                                grid_items.push(view! { <div class="aspect-square hairline-border opacity-30 bg-zinc-50"></div> }.into_any());
+                                grid_items.push(view! { <div class="aspect-square hairline-border dark:border-neutral-800 opacity-30 bg-zinc-50 dark:bg-neutral-900"></div> }.into_any());
                             }
 
                             // Day cells
@@ -172,8 +172,8 @@ pub fn Calendar() -> impl IntoView {
                                 grid_items.push(view! {
                                     <div
                                         on:click=move |_| nav(&format!("/calendar/{}", date_str_clone), Default::default())
-                                        class=format!("aspect-square hairline-border p-3 flex flex-col justify-between relative cursor-pointer hover:bg-zinc-50 transition-colors {}",
-                                            if is_today { "bg-primary/[0.03]" } else { "" }
+                                        class=format!("aspect-square hairline-border dark:border-neutral-800 p-3 flex flex-col justify-between relative cursor-pointer hover:bg-zinc-50 dark:hover:bg-neutral-800 transition-colors {}",
+                                            if is_today { "bg-primary/[0.03] dark:bg-primary/[0.05]" } else { "" }
                                         )
                                     >
                                         {if is_today {
@@ -182,7 +182,7 @@ pub fn Calendar() -> impl IntoView {
                                             ().into_any()
                                         }}
 
-                                        <span class=format!("text-xs font-black {}", if is_today { "text-black" } else { "text-zinc-500" })>
+                                        <span class=format!("text-xs font-black {}", if is_today { "text-black dark:text-white" } else { "text-zinc-500 dark:text-zinc-600" })>
                                             {format!("{:02}", d_clone)}
                                         </span>
 
@@ -199,7 +199,7 @@ pub fn Calendar() -> impl IntoView {
                             let total_cells = weekday - 1 + days_in_month;
                             let remaining = if total_cells % 7 == 0 { 0 } else { 7 - (total_cells % 7) };
                             for _ in 0..remaining {
-                                grid_items.push(view! { <div class="aspect-square hairline-border bg-zinc-50"></div> }.into_any());
+                                grid_items.push(view! { <div class="aspect-square hairline-border dark:border-neutral-800 bg-zinc-50 dark:bg-neutral-900"></div> }.into_any());
                             }
 
                             grid_items
@@ -207,10 +207,10 @@ pub fn Calendar() -> impl IntoView {
                     </Suspense>
                 </div>
 
-                <div class="p-6 flex items-center space-x-6 border-b border-hairline">
+                <div class="p-6 flex items-center space-x-6 border-b border-hairline dark:border-neutral-800">
                     <div class="flex items-center space-x-2">
                         <div class="w-2 h-2 rounded-full bg-primary"></div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">"Assigned"</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">"Assigned"</span>
                     </div>
                 </div>
 
@@ -222,10 +222,10 @@ pub fn Calendar() -> impl IntoView {
                  let on_assign = on_assign.clone();
                 view! {
                     <Portal>
-                        <div class="fixed inset-0 bg-white/90 backdrop-blur-2xl z-[500] flex items-center justify-center p-4 animate-in fade-in duration-500">
-                            <div class="max-w-md w-full p-10 bg-white border border-hairline shadow-2xl relative overflow-hidden text-center">
+                        <div class="fixed inset-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-2xl z-[500] flex items-center justify-center p-4 animate-in fade-in duration-500">
+                            <div class="max-w-md w-full p-10 bg-white dark:bg-neutral-900 border border-hairline dark:border-neutral-800 shadow-2xl relative overflow-hidden text-center">
                                 <div class="absolute top-0 left-0 w-full h-2 bg-primary"></div>
-                                <h3 class="text-3xl font-black text-black mb-2 tracking-tighter uppercase italic">"Select Blueprint"</h3>
+                                <h3 class="text-3xl font-black text-black dark:text-white mb-2 tracking-tighter uppercase italic">"Select Blueprint"</h3>
                                 <div class="max-h-[400px] overflow-y-auto space-y-3 mb-10 pr-2">
                                     {move || plans.get().map(|list| {
                                         let on_assign = on_assign.clone();
@@ -235,7 +235,7 @@ pub fn Calendar() -> impl IntoView {
                                             view! {
                                                 <button
                                                     on:click=move |_| on_assign(pid.clone())
-                                                    class="w-full text-left p-6 bg-zinc-50 hover:bg-primary hover:text-black border border-hairline transition-all flex items-center justify-between"
+                                                    class="w-full text-left p-6 bg-zinc-50 dark:bg-neutral-800 hover:bg-primary dark:hover:bg-primary text-black dark:text-white hover:text-black dark:hover:text-black border border-hairline dark:border-neutral-700 transition-all flex items-center justify-between"
                                                 >
                                                     <span class="font-black text-xs uppercase tracking-widest">{plan.id.chars().take(12).collect::<String>()}</span>
                                                     <span class="material-symbols-outlined">"add"</span>
@@ -244,7 +244,7 @@ pub fn Calendar() -> impl IntoView {
                                         }).collect_view()
                                     })}
                                 </div>
-                                <button on:click=move |_| set_show_assign_modal.set(None) class="text-[10px] font-black uppercase tracking-widest text-zinc-400">"Dismiss"</button>
+                                <button on:click=move |_| set_show_assign_modal.set(None) class="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 hover:text-black dark:hover:text-white transition-colors">"Dismiss"</button>
                             </div>
                         </div>
                     </Portal>
@@ -259,7 +259,7 @@ fn render_dot(entries: &[CalendarEntry], meal: MealType) -> impl IntoView {
     let color = match entry {
         Some(_) => "bg-primary", // Simplification: if exists, it's green (completed) or zinc-400 (planned)
         // In a real app we'd check a 'completed' field. For now let's assume if it exists it's green.
-        None => "bg-zinc-200",
+        None => "bg-zinc-200 dark:bg-zinc-700",
     };
 
     view! {

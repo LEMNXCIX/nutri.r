@@ -108,19 +108,19 @@ pub fn Pantry() -> impl IntoView {
     });
 
     view! {
-        <div class="bg-white min-h-screen font-sans text-neutral-950 pb-32 selection:bg-accent selection:text-neutral-950">
+        <div class="w-full font-sans pb-32">
             // Header - Brutalist & Bold
-            <header class="bg-white border-b brutalist-border py-12 px-6 mb-12">
+            <header class="bg-white dark:bg-neutral-900 border-b brutalist-border dark:border-neutral-800 py-12 px-6 mb-12">
                 <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-8">
                     <div class="space-y-4">
                         <div class="flex items-center gap-3">
                             <span class="h-[1px] w-8 bg-accent"></span>
-                            <span class="text-[10px] font-black text-neutral-400 tracking-[0.4em] uppercase">"Stock Mastery"</span>
+                            <span class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 tracking-[0.4em] uppercase">"Stock Mastery"</span>
                         </div>
-                        <h2 class="text-6xl md:text-8xl font-black text-neutral-950 tracking-tighter leading-[0.8] uppercase">
+                        <h2 class="text-6xl md:text-8xl font-black text-neutral-950 dark:text-white tracking-tighter leading-[0.8] uppercase">
                             "Despensa"
                         </h2>
-                        <div class="hairline-divider w-12 mt-6"></div>
+                        <div class="hairline-divider dark:bg-neutral-700 w-12 mt-6"></div>
                     </div>
 
                     <button
@@ -145,32 +145,32 @@ pub fn Pantry() -> impl IntoView {
                 {move || if show_add_form.get() {
                     view! {
                         <div class="mb-24 animate-in fade-in slide-in-from-top-4 duration-500">
-                            <div class="p-10 bg-white brutalist-border shadow-brutalist relative overflow-hidden">
+                            <div class="p-10 bg-white dark:bg-neutral-900 brutalist-border dark:border-neutral-700 shadow-brutalist relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-full h-1 bg-accent"></div>
 
-                                <h3 class="text-[10px] font-black text-neutral-400 uppercase tracking-[0.3em] mb-12 flex items-center gap-3">
+                                <h3 class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.3em] mb-12 flex items-center gap-3">
                                     <span class="material-symbols-outlined !text-[18px]">"inventory_2"</span>
                                     {move || if item_to_edit.get().is_some() { "MODIFICAR REGISTRO" } else { "ALTA DE INSUMO" }}
                                 </h3>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                                     <div class="space-y-4">
-                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 pl-1">"Identificador"</label>
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 pl-1">"Identificador"</label>
                                         <Input
                                             placeholder="Arroz, Pollo, Leche..."
                                             value=new_item_name
                                             on_input=h_update_name
-                                            class="bg-white brutalist-border focus:border-accent p-4 font-bold text-sm uppercase"
+                                            class="bg-white dark:bg-neutral-800 dark:text-white dark:border-neutral-700 brutalist-border focus:border-accent p-4 font-bold text-sm uppercase"
                                         />
                                     </div>
 
                                     <div class="space-y-4">
-                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 pl-1">"Escala y Unidad"</label>
-                                        <div class="flex gap-0 brutalist-border bg-white">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 pl-1">"Escala y Unidad"</label>
+                                        <div class="flex gap-0 brutalist-border dark:border-neutral-700 bg-white dark:bg-neutral-800">
                                             <input
                                                 type="number"
                                                 step="0.1"
-                                                class="w-24 bg-white px-4 py-4 text-neutral-950 outline-none border-r border-neutral-950 font-black text-sm"
+                                                class="w-24 bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white px-4 py-4 outline-none border-r border-neutral-950 dark:border-neutral-600 font-black text-sm"
                                                 on:input=move |ev| {
                                                     if let Ok(val) = event_target_value(&ev).parse::<f32>() {
                                                         set_new_item_qty.set(val);
@@ -179,7 +179,7 @@ pub fn Pantry() -> impl IntoView {
                                                 prop:value=new_item_qty
                                             />
                                             <select
-                                                class="flex-1 bg-transparent px-4 py-4 text-neutral-950 outline-none font-black text-[10px] uppercase tracking-widest cursor-pointer"
+                                                class="flex-1 bg-transparent dark:text-white px-4 py-4 text-neutral-950 outline-none font-black text-[10px] uppercase tracking-widest cursor-pointer"
                                                 on:change=move |ev| set_new_item_unit.set(event_target_value(&ev))
                                                 prop:value=new_item_unit
                                             >
@@ -192,9 +192,9 @@ pub fn Pantry() -> impl IntoView {
                                     </div>
 
                                     <div class="space-y-4">
-                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 pl-1">"Clasificación"</label>
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 pl-1">"Clasificación"</label>
                                         <select
-                                            class="w-full bg-white px-5 py-4 brutalist-border focus:border-accent text-neutral-950 outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
+                                            class="w-full bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white px-5 py-4 brutalist-border dark:border-neutral-700 focus:border-accent text-neutral-950 outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
                                             on:change=move |ev| set_new_item_cat.set(event_target_value(&ev))
                                             prop:value=new_item_cat
                                         >
@@ -206,10 +206,10 @@ pub fn Pantry() -> impl IntoView {
                                     </div>
 
                                     <div class="space-y-4">
-                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 pl-1">"Vencimiento"</label>
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 pl-1">"Vencimiento"</label>
                                         <input
                                             type="date"
-                                            class="w-full bg-white px-5 py-4 brutalist-border focus:border-accent text-neutral-950 outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
+                                            class="w-full bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white px-5 py-4 brutalist-border dark:border-neutral-700 focus:border-accent outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
                                             on:input=move |ev| set_new_item_exp.set(event_target_value(&ev))
                                             prop:value=new_item_exp
                                         />
@@ -217,7 +217,7 @@ pub fn Pantry() -> impl IntoView {
                                 </div>
 
                                 <div class="mt-12 flex justify-end">
-                                    <button on:click=move |_| on_add_item(()) class="px-12 py-5 brutalist-border bg-neutral-950 text-white hover:bg-accent hover:text-neutral-950 transition-all text-[11px] font-black tracking-[0.3em] uppercase">
+                                    <button on:click=move |_| on_add_item(()) class="px-12 py-5 brutalist-border bg-neutral-950 dark:bg-white text-white dark:text-black hover:bg-accent dark:hover:bg-accent hover:text-neutral-950 transition-all text-[11px] font-black tracking-[0.3em] uppercase">
                                         {move || if item_to_edit.get().is_some() { "ACTUALIZAR" } else { "GUARDAR" }}
                                     </button>
                                 </div>
@@ -237,15 +237,15 @@ pub fn Pantry() -> impl IntoView {
                         let items = pantry_resource.get().unwrap_or_default();
                         if items.is_empty() {
                             view! {
-                                <div class="bg-white brutalist-border py-32 px-12 text-center shadow-brutalist flex flex-col items-center gap-8 max-w-2xl mx-auto">
-                                    <div class="w-24 h-24 brutalist-border bg-neutral-50 flex items-center justify-center text-neutral-200">
+                                <div class="bg-white dark:bg-neutral-900 brutalist-border dark:border-neutral-700 py-32 px-12 text-center shadow-brutalist flex flex-col items-center gap-8 max-w-2xl mx-auto">
+                                    <div class="w-24 h-24 brutalist-border dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-neutral-200 dark:text-neutral-600">
                                         <span class="material-symbols-outlined !text-[48px]">"inventory_2"</span>
                                     </div>
                                     <div class="space-y-4">
-                                        <h3 class="text-4xl font-black text-neutral-950 tracking-tighter uppercase">"Inventario Vacío"</h3>
-                                        <p class="text-neutral-400 font-bold text-[10px] max-w-xs mx-auto uppercase tracking-[0.4em] leading-relaxed">"Registra tus primeros insumos para que la IA pueda considerarlos en tus planes."</p>
+                                        <h3 class="text-4xl font-black text-neutral-950 dark:text-white tracking-tighter uppercase">"Inventario Vacío"</h3>
+                                        <p class="text-neutral-400 dark:text-neutral-500 font-bold text-[10px] max-w-xs mx-auto uppercase tracking-[0.4em] leading-relaxed">"Registra tus primeros insumos para que la IA pueda considerarlos en tus planes."</p>
                                     </div>
-                                    <button on:click=move |_| set_show_add_form.set(true) class="bg-neutral-950 text-white px-12 py-5 brutalist-border font-black text-[11px] tracking-widest uppercase hover:bg-accent hover:text-neutral-950 transition-colors">"AGREGAR AHORA"</button>
+                                    <button on:click=move |_| set_show_add_form.set(true) class="bg-neutral-950 dark:bg-white text-white dark:text-black px-12 py-5 brutalist-border font-black text-[11px] tracking-widest uppercase hover:bg-accent dark:hover:bg-accent hover:text-neutral-950 transition-colors">"AGREGAR AHORA"</button>
                                 </div>
                             }.into_any()
                         } else {

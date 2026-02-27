@@ -48,7 +48,7 @@ pub fn PantryItemCard(
     let id_qty = item.id.clone();
 
     view! {
-        <div class="bg-white p-8 brutalist-border flex flex-col justify-between h-full group relative overflow-hidden transition-all hover:bg-neutral-50 shadow-brutalist">
+        <div class="bg-white dark:bg-neutral-900 p-8 brutalist-border dark:border-neutral-700 flex flex-col justify-between h-full group relative overflow-hidden transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-brutalist">
             // Actions - High Contrast
             <div class="absolute top-4 right-4 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all z-20">
                 <button
@@ -59,7 +59,7 @@ pub fn PantryItemCard(
                             on_edit.run(item.clone());
                         }
                     }
-                    class="w-10 h-10 brutalist-border bg-white text-neutral-950 flex items-center justify-center hover:bg-accent transition-colors"
+                    class="w-10 h-10 brutalist-border dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white flex items-center justify-center hover:bg-accent transition-colors"
                 >
                     <span class="material-symbols-outlined !text-[18px]">"edit"</span>
                 </button>
@@ -71,7 +71,7 @@ pub fn PantryItemCard(
                             on_delete.run(id.clone());
                         }
                     }
-                    class="w-10 h-10 brutalist-border bg-white text-neutral-950 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
+                    class="w-10 h-10 brutalist-border dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
                 >
                     <span class="material-symbols-outlined !text-[18px]">"delete"</span>
                 </button>
@@ -79,26 +79,26 @@ pub fn PantryItemCard(
 
             <div class="space-y-6 relative z-10">
                 <div class="space-y-1">
-                    <span class="text-[9px] font-black text-neutral-400 uppercase tracking-[0.4em]">{item.category.clone()}</span>
-                    <h3 class="text-xl font-black text-neutral-950 tracking-tighter leading-none pr-12 group-hover:text-accent transition-colors uppercase">{item.name.clone()}</h3>
+                    <span class="text-[9px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.4em]">{item.category.clone()}</span>
+                    <h3 class="text-xl font-black text-neutral-950 dark:text-white tracking-tighter leading-none pr-12 group-hover:text-accent transition-colors uppercase">{item.name.clone()}</h3>
                 </div>
 
                 // Quantity Controls
-                <div class="brutalist-border bg-white p-1 flex items-center justify-between">
+                <div class="brutalist-border dark:border-neutral-700 bg-white dark:bg-neutral-800 p-1 flex items-center justify-between">
                     <button
                         on:click={
                             let id = id_qty.clone();
                             let qty = item.quantity;
                             move |_| on_update_qty.run((id.clone(), (qty - 0.5).max(0.0)))
                         }
-                        class="w-12 h-12 flex items-center justify-center bg-white text-neutral-400 hover:text-neutral-950 transition-colors font-black text-xl"
+                        class="w-12 h-12 flex items-center justify-center bg-white dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-neutral-950 dark:hover:text-white transition-colors font-black text-xl"
                     >
                         <span class="material-symbols-outlined">"remove"</span>
                     </button>
 
                     <div class="flex flex-col items-center">
-                        <span class="text-3xl font-black text-neutral-950 tracking-tighter tabular-nums leading-none">{item.quantity}</span>
-                        <span class="text-[8px] font-black text-neutral-400 uppercase tracking-widest mt-1">{item.unit.clone()}</span>
+                        <span class="text-3xl font-black text-neutral-950 dark:text-white tracking-tighter tabular-nums leading-none">{item.quantity}</span>
+                        <span class="text-[8px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mt-1">{item.unit.clone()}</span>
                     </div>
 
                     <button

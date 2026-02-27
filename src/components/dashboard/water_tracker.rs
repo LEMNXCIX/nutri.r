@@ -15,26 +15,26 @@ pub fn WaterTracker(
     };
 
     view! {
-        <div class="bg-white p-6 brutalist-border flex flex-col justify-between group relative overflow-hidden">
+        <div class="bg-white dark:bg-neutral-900 p-6 brutalist-border dark:border-neutral-700 flex flex-col justify-between group relative overflow-hidden">
             <header class="flex justify-between items-start mb-8 relative z-10">
                 <div class="space-y-1">
-                    <span class="text-[9px] font-black text-neutral-400 uppercase tracking-[0.4em]">"Hydration"</span>
-                    <h3 class="font-black text-neutral-950 text-xl tracking-tighter uppercase">"Water Logger"</h3>
+                    <span class="text-[9px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.4em]">"Hydration"</span>
+                    <h3 class="font-black text-neutral-950 dark:text-white text-xl tracking-tighter uppercase">"Water Logger"</h3>
                 </div>
-                <div class="flex items-center gap-2 bg-neutral-950 px-2 py-1">
+                <div class="flex items-center gap-2 bg-neutral-950 dark:bg-neutral-700 px-2 py-1">
                     <span class="text-[10px] font-black text-accent uppercase tracking-widest">{target} "L"</span>
                 </div>
             </header>
 
             <div class="flex items-center justify-between mb-8 relative z-10">
                 <div class="flex items-baseline gap-1">
-                    <span class="text-5xl font-black text-neutral-950 tracking-tighter tabular-nums">{move || format!("{:.1}", current.get())}</span>
-                    <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">"LT"</span>
+                    <span class="text-5xl font-black text-neutral-950 dark:text-white tracking-tighter tabular-nums">{move || format!("{:.1}", current.get())}</span>
+                    <span class="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">"LT"</span>
                 </div>
                 <div class="flex gap-2">
                     <button
                         on:click=move |_| on_remove.run(())
-                        class="w-10 h-10 brutalist-border bg-white text-neutral-950 hover:bg-neutral-50 flex items-center justify-center transition-transform active:scale-95"
+                        class="w-10 h-10 brutalist-border dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-700 flex items-center justify-center transition-transform active:scale-95"
                     >
                         <span class="material-symbols-outlined !text-[20px]">"remove"</span>
                     </button>
@@ -54,7 +54,7 @@ pub fn WaterTracker(
                         <div class="flex-1 h-full relative">
                             <div class=move || format!(
                                 "absolute inset-0 transition-all duration-500 {}",
-                                if i < filled_bars() { "bg-accent" } else { "bg-neutral-100" }
+                                if i < filled_bars() { "bg-accent" } else { "bg-neutral-100 dark:bg-neutral-700" }
                             )></div>
                         </div>
                     }

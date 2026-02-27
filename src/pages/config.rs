@@ -79,7 +79,7 @@ pub fn Config() -> impl IntoView {
                         }
                     }
                 }
-            },
+            }
             Err(e) => log::warn!("No se pudieron cargar las preferencias: {}", e),
         }
     });
@@ -140,7 +140,8 @@ pub fn Config() -> impl IntoView {
         Callback::new(move |val: String| set_config.update(|c| c.smtp_user = val));
     let _h_update_smtp_pass =
         Callback::new(move |val: String| set_config.update(|c| c.smtp_password = val));
-    let _h_update_smtp_to = Callback::new(move |val: String| set_config.update(|c| c.smtp_to = val));
+    let _h_update_smtp_to =
+        Callback::new(move |val: String| set_config.update(|c| c.smtp_to = val));
     let _h_update_usda_key =
         Callback::new(move |val: String| set_config.update(|c| c.usda_api_key = val));
     let _h_update_sync_url =
@@ -259,7 +260,7 @@ pub fn Config() -> impl IntoView {
     view! {
         <div class="pb-32">
             <main class="px-6 pt-10">
-                <h1 class="text-7xl font-extrabold uppercase leading-[0.85] tracking-tighter mb-12">
+                <h1 class="text-7xl font-extrabold uppercase leading-[0.85] tracking-tighter mb-12 dark:text-white">
                     "AJUSTES"
                 </h1>
 
@@ -268,9 +269,9 @@ pub fn Config() -> impl IntoView {
                     <ConfigSection title="Apariencia" icon="palette">
                         <div class="flex flex-col gap-4">
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Tema Visual del Sistema"</label>
+                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Tema Visual del Sistema"</label>
                                 <select
-                                    class="w-full"
+                                    class="w-full bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                     on:change=move |ev| {
                                         let val = event_target_value(&ev);
                                         spawn_local(async move {
@@ -299,8 +300,9 @@ pub fn Config() -> impl IntoView {
                     <ConfigSection title="Inteligencia Local" icon="memory">
                         <div class="grid grid-cols-1 gap-6">
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Endpoint del Servidor"</label>
+                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Endpoint del Servidor"</label>
                                 <input
+                                    class="bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                     type="text"
                                     placeholder="http://localhost:11434"
                                     prop:value=move || config.get().ollama_url
@@ -308,9 +310,9 @@ pub fn Config() -> impl IntoView {
                                 />
                             </div>
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Modelo de Lenguaje"</label>
+                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Modelo de Lenguaje"</label>
                                 <select
-                                    class="w-full"
+                                    class="w-full bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                     on:change=move |ev| set_config.update(|c| c.ollama_model = event_target_value(&ev))
                                     prop:value=move || config.get().ollama_model
                                 >
@@ -332,18 +334,18 @@ pub fn Config() -> impl IntoView {
                     <ConfigSection title="Prompt Maestro" icon="edit_note">
                         <div class="space-y-6">
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Arquitectura del Plan"</label>
+                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Arquitectura del Plan"</label>
                                 <textarea
-                                    class="w-full h-32 text-[11px] leading-relaxed"
+                                    class="w-full h-32 text-[11px] leading-relaxed bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                     placeholder="El plan debe ser práctico, variado (especialmente en fuentes de proteína para aprovechar disponibilidad local), eficiente (máximo 2-3 horas de preparación el domingo) y minimizar el tiempo diario (5-10 minutos de recalentado/montaje)."
                                     on:input=move |ev| set_config.update(|c| c.prompt_maestro = event_target_value(&ev))
                                     prop:value=move || config.get().prompt_maestro
                                 />
                             </div>
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Comida por Defecto"</label>
+                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Comida por Defecto"</label>
                                 <select
-                                    class="w-full"
+                                    class="w-full bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                     on:change=move |ev| {
                                         let val = event_target_value(&ev);
                                         let meal = match val.as_str() {
@@ -376,11 +378,11 @@ pub fn Config() -> impl IntoView {
                     <ConfigSection title="Automatización" icon="schedule">
                         <div class="space-y-6">
                             <div class="flex items-center justify-between py-2">
-                                <span class="text-[11px] font-bold uppercase tracking-wider">"Generación Automática"</span>
+                                <span class="text-[11px] font-bold uppercase tracking-wider dark:text-white">"Generación Automática"</span>
                                 <button
                                     type="button"
                                     on:click=move |_| set_config.update(|c| c.auto_generate_plan = !c.auto_generate_plan)
-                                    class="w-12 h-6 bg-black relative flex items-center px-1"
+                                    class="w-12 h-6 bg-black dark:bg-neutral-700 relative flex items-center px-1"
                                 >
                                     <div class=move || format!("w-4 h-4 transition-all {}",
                                         if config.get().auto_generate_plan { "bg-accent translate-x-6" } else { "bg-neutral-600 translate-x-0" }
@@ -388,15 +390,15 @@ pub fn Config() -> impl IntoView {
                                 </button>
                             </div>
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Frecuencia (Cron)"</label>
+                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Frecuencia (Cron)"</label>
                                 <div class="flex">
                                     <input
-                                        class="flex-grow"
+                                        class="flex-grow bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                         type="text"
                                         prop:value=move || config.get().cron_expression
                                         on:input=move |ev| set_config.update(|c| c.cron_expression = event_target_value(&ev))
                                     />
-                                    <div class="bg-black text-white px-3 flex items-center text-[10px] font-bold">
+                                    <div class="bg-black dark:bg-neutral-700 text-white px-3 flex items-center text-[10px] font-bold">
                                         {move || {
                                             let cron = config.get().cron_expression;
                                             if cron.contains("MON") { "LUNES" }
@@ -413,8 +415,9 @@ pub fn Config() -> impl IntoView {
                     <ConfigSection title="Sincronización" icon="sync">
                         <div class="space-y-6">
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">"Endpoint de Sincronía"</label>
+                                <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Endpoint de Sincronía"</label>
                                 <input
+                                    class="bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                     type="text"
                                     placeholder="http://localhost:3000/"
                                     prop:value=move || config.get().sync_server_url
@@ -439,13 +442,14 @@ pub fn Config() -> impl IntoView {
                                 </div>
                                 <div class="grid grid-cols-2 gap-2">
                                     <input
-                                        class="col-span-2"
+                                        class="col-span-2 bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                         type="text"
                                         placeholder="smtp.gmail.com"
                                         prop:value=move || config.get().smtp_host
                                         on:input=move |ev| set_config.update(|c| c.smtp_host = event_target_value(&ev))
                                     />
                                     <input
+                                        class="bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                         type="text"
                                         placeholder="587"
                                         prop:value=move || config.get().smtp_port.to_string()
@@ -456,20 +460,21 @@ pub fn Config() -> impl IntoView {
                                         }
                                     />
                                     <input
+                                        class="bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                         type="password"
                                         placeholder="**********"
                                         prop:value=move || config.get().smtp_password
                                         on:input=move |ev| set_config.update(|c| c.smtp_password = event_target_value(&ev))
                                     />
                                     <input
-                                        class="col-span-2"
+                                        class="col-span-2 bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                         type="text"
                                         placeholder="user@mail.com"
                                         prop:value=move || config.get().smtp_user
                                         on:input=move |ev| set_config.update(|c| c.smtp_user = event_target_value(&ev))
                                     />
                                     <input
-                                        class="col-span-2"
+                                        class="col-span-2 bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                         type="text"
                                         placeholder="target@mail.com"
                                         prop:value=move || config.get().smtp_to
@@ -484,11 +489,12 @@ pub fn Config() -> impl IntoView {
                                 </div>
                                 <div class="flex flex-col gap-4">
                                     <input
+                                        class="bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                         type="password"
                                         prop:value=move || config.get().usda_api_key
                                         on:input=move |ev| set_config.update(|c| c.usda_api_key = event_target_value(&ev))
                                     />
-                                    <a href="https://fdc.nal.usda.gov/api-guide.html" target="_blank" class="text-[9px] font-bold uppercase underline text-left tracking-widest">
+                                    <a href="https://fdc.nal.usda.gov/api-guide.html" target="_blank" class="text-[9px] font-bold uppercase underline text-left tracking-widest dark:text-neutral-400 dark:hover:text-white transition-colors">
                                         "Obtener API KEY —"
                                     </a>
                                 </div>
@@ -502,7 +508,7 @@ pub fn Config() -> impl IntoView {
                         <div class="space-y-4">
                             <div class="flex gap-2">
                                 <input
-                                    class="flex-grow"
+                                    class="flex-grow bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                     placeholder="Ingresa ingrediente..."
                                     type="text"
                                     prop:value=new_ingredient
@@ -517,7 +523,7 @@ pub fn Config() -> impl IntoView {
                                 <button
                                     type="button"
                                     on:click=move |_| add_ingredient(())
-                                    class="bg-black text-white px-4 text-[10px] font-bold uppercase"
+                                    class="bg-black dark:bg-neutral-800 text-white px-4 text-[10px] font-bold uppercase"
                                 >
                                     "Añadir"
                                 </button>
@@ -528,11 +534,11 @@ pub fn Config() -> impl IntoView {
                                     ingredients.into_iter().map(|ingredient| {
                                         let ing = ingredient.clone();
                                         view! {
-                                            <div class="border border-black px-2 py-1 flex items-center gap-2">
-                                                <span class="text-[10px] font-bold uppercase">{ing.clone()}</span>
+                                            <div class="border border-black dark:border-neutral-700 px-2 py-1 flex items-center gap-2">
+                                                <span class="text-[10px] font-bold uppercase dark:text-white">{ing.clone()}</span>
                                                 <button
                                                     type="button"
-                                                    class="material-symbols-outlined text-xs hover:text-red-500"
+                                                    class="material-symbols-outlined text-xs dark:text-neutral-400 hover:text-red-500 dark:hover:text-red-400"
                                                     on:click={let ing = ing.clone(); move |_| remove_ingredient(ing.clone())}
                                                 >
                                                     "close"
@@ -548,20 +554,20 @@ pub fn Config() -> impl IntoView {
                     // Data Vault Section
                     <section class="mb-20">
                         <div class="section-header">
-                            <span class="material-symbols-outlined">"database"</span>
-                            <h2 class="section-title">"Data Vault"</h2>
+                            <span class="material-symbols-outlined dark:text-white">"database"</span>
+                            <h2 class="section-title dark:text-white">"Data Vault"</h2>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <button
                                 type="button"
                                 on:click=move |e| handle_export.run(e)
-                                class="border border-black py-4 text-[10px] font-bold uppercase tracking-widest active:bg-neutral-50"
+                                class="border border-black dark:border-neutral-700 dark:text-white py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-50 dark:hover:bg-neutral-900 active:bg-neutral-100 dark:active:bg-neutral-800 transition-colors"
                             >
                                 "Exportar .JSON"
                             </button>
                             <label
                                 for="import-file"
-                                class="bg-black text-white py-4 text-[10px] font-bold uppercase tracking-widest text-center cursor-pointer active:bg-neutral-800"
+                                class="bg-black dark:bg-white text-white dark:text-black py-4 text-[10px] font-bold uppercase tracking-widest text-center cursor-pointer hover:bg-neutral-900 dark:hover:bg-neutral-100 active:bg-neutral-800 dark:active:bg-neutral-200 transition-colors"
                             >
                                 "Importar .JSON"
                                 <input type="file" id="import-file" class="hidden" on:change=handle_import accept=".json" />
@@ -571,7 +577,7 @@ pub fn Config() -> impl IntoView {
 
                     <button
                         type="submit"
-                        class="w-full bg-black text-white py-6 mb-12 flex items-center justify-center gap-4 hover:bg-neutral-900 active:scale-[0.98] transition-transform"
+                        class="w-full bg-black dark:bg-white text-white dark:text-black py-6 mb-12 flex items-center justify-center gap-4 hover:bg-neutral-900 dark:hover:bg-neutral-100 active:scale-[0.98] transition-transform"
                     >
                         <span class="text-xs font-bold uppercase tracking-[0.3em]">"Persistir Cambios Globales"</span>
                         <span class="material-symbols-outlined text-accent">"bolt"</span>
@@ -606,11 +612,11 @@ fn ConfigSection(title: &'static str, icon: &'static str, children: Children) ->
     view! {
         <section class="mb-10">
             <div class="section-header">
-                <span class="material-symbols-outlined">{icon}</span>
-                <h2 class="section-title">{title}</h2>
+                <span class="material-symbols-outlined dark:text-neutral-300">{icon}</span>
+                <h2 class="section-title dark:text-white">{title}</h2>
             </div>
             {children()}
-            <div class="hairline-divider mt-10"></div>
+            <div class="hairline-divider mt-10 dark:bg-neutral-800"></div>
         </section>
     }
 }
@@ -623,9 +629,9 @@ fn SyncButton(
     #[prop(default = false)] primary: bool,
 ) -> impl IntoView {
     let base_class = if primary {
-        "bg-black text-white p-4 flex flex-col items-center gap-1 active:bg-neutral-800"
+        "bg-black dark:bg-white text-white dark:text-black p-4 flex flex-col items-center gap-1 active:bg-neutral-800 dark:active:bg-neutral-200 transition-colors"
     } else {
-        "border border-black p-4 flex flex-col items-center gap-1 group active:bg-neutral-50"
+        "border border-black dark:border-neutral-700 dark:text-white p-4 flex flex-col items-center gap-1 group active:bg-neutral-50 dark:active:bg-neutral-900 transition-colors"
     };
 
     let icon_class = if primary {

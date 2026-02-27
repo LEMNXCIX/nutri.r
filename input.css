@@ -3,12 +3,16 @@
 @source "./src/**/*.rs";
 @source "./index.html";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --color-primary: #0df259;
     --color-accent: #0df259;
     --color-hairline: #E5E7EB;
     --color-hairline-dark: #27272A;
     --color-neutral-950: #0a0a0a;
+    --color-background-dark: #0A0A0A;
+    --color-background-light: #FFFFFF;
 
     --font-sans: "Inter", "sans-serif";
 }
@@ -18,13 +22,24 @@
         border-color: #f3f4f6;
     }
 
+    html {
+        background-color: #FFFFFF;
+        color-scheme: light;
+    }
+
+    html.dark {
+        background-color: #0A0A0A;
+        color-scheme: dark;
+    }
+
     body {
         @apply bg-white text-neutral-950 font-sans antialiased;
         min-height: max(884px, 100dvh);
     }
 
     .dark body {
-        @apply bg-neutral-950 text-white;
+        background-color: #0A0A0A;
+        @apply text-white;
     }
 
     .dark .hairline-divider {

@@ -8,11 +8,11 @@ pub fn Dashboard() -> impl IntoView {
     let trends_resource = LocalResource::new(move || async move { get_ingredient_trends().await });
 
     view! {
-        <div class="bg-[#FAFAFA] min-h-screen font-sans text-[#171717] pb-32 selection:bg-[#D4AF37]/30 animate-in fade-in duration-700">
+        <div class="w-full font-sans pb-32 animate-in fade-in duration-700">
             // Header - Editorial Style
-            <header class="bg-white border-b border-gray-100 pb-20 pt-16 px-4 shadow-sm relative overflow-hidden mb-12">
+            <header class="bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 pb-20 pt-16 px-4 shadow-sm relative overflow-hidden mb-12">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 -mr-32 -mt-32 rounded-full blur-3xl"></div>
-                
+
                 <div class="max-w-5xl mx-auto relative z-10">
                     <div class="space-y-6">
                          <div class="space-y-2">
@@ -20,7 +20,7 @@ pub fn Dashboard() -> impl IntoView {
                                 <span class="h-px w-8 bg-[#D4AF37]"></span>
                                 <span class="text-[10px] font-black text-[#D4AF37] tracking-[0.3em] uppercase">"Data Insights"</span>
                             </div>
-                            <h2 class="text-5xl md:text-6xl font-black text-black tracking-tighter leading-none uppercase">
+                            <h2 class="text-5xl md:text-6xl font-black text-black dark:text-white tracking-tighter leading-none uppercase">
                                 "ANALYTICS"
                             </h2>
                             <p class="text-gray-500 font-medium max-w-lg mt-4 text-sm leading-relaxed uppercase tracking-widest text-[10px]">
@@ -34,9 +34,9 @@ pub fn Dashboard() -> impl IntoView {
             <div class="max-w-5xl mx-auto px-4 space-y-12">
                 // KPIs Section
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <Suspense fallback=move || view! { 
+                    <Suspense fallback=move || view! {
                         <div class="contents">
-                            {(0..4).map(|_| view! { <div class="h-32 bg-white rounded-[2rem] animate-pulse"></div> }).collect_view()}
+                            {(0..4).map(|_| view! { <div class="h-32 bg-white dark:bg-neutral-900 rounded-[2rem] animate-pulse"></div> }).collect_view()}
                         </div>
                     }>
                         {move || {
@@ -64,7 +64,7 @@ pub fn Dashboard() -> impl IntoView {
                                         icon="🌿"
                                     />
                                 }.into_any(),
-                                _ => view! { <div class="col-span-full py-12 bg-white rounded-[2rem] text-center text-gray-400 text-[10px] font-black uppercase tracking-widest">"Sin estadísticas disponibles"</div> }.into_any()
+                                _ => view! { <div class="col-span-full py-12 bg-white dark:bg-neutral-900 rounded-[2rem] text-center text-gray-400 text-[10px] font-black uppercase tracking-widest">"Sin estadísticas disponibles"</div> }.into_any()
                             };
                             content
                         }}
@@ -79,7 +79,7 @@ pub fn Dashboard() -> impl IntoView {
                             <span class="w-1.5 h-1.5 bg-[#D4AF37] rounded-full"></span>
                             "Top Ingredientes"
                         </h3>
-                        <Card class="p-8 bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-black/5 min-h-[400px]">
+                        <Card class="p-8 bg-white dark:bg-neutral-900 rounded-[2.5rem] border border-gray-100 dark:border-neutral-800 shadow-xl shadow-black/5 min-h-[400px]">
                             <div class="space-y-8">
                                 <Suspense fallback=move || view! { <Loading /> }>
                                     {move || {
@@ -97,11 +97,11 @@ pub fn Dashboard() -> impl IntoView {
                                                                 view! {
                                                                     <div class="group">
                                                                         <div class="flex justify-between items-end mb-2 px-1">
-                                                                            <span class="font-black text-[10px] text-black uppercase tracking-widest">{t.name}</span>
+                                                                            <span class="font-black text-[10px] text-black dark:text-white uppercase tracking-widest">{t.name}</span>
                                                                             <span class="text-[10px] font-black text-[#D4AF37]">{t.count}</span>
                                                                         </div>
-                                                                        <div class="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
-                                                                            <div class="h-full bg-black rounded-full transition-all duration-1000 ease-out group-hover:bg-[#D4AF37]" style:width=width></div>
+                                                                        <div class="h-1.5 w-full bg-gray-50 dark:bg-neutral-800 rounded-full overflow-hidden">
+                                                                            <div class="h-full bg-black dark:bg-white rounded-full transition-all duration-1000 ease-out group-hover:bg-[#D4AF37] dark:group-hover:bg-[#D4AF37]" style:width=width></div>
                                                                         </div>
                                                                     </div>
                                                                 }
@@ -122,12 +122,12 @@ pub fn Dashboard() -> impl IntoView {
                     // Distribution Section
                     <section class="space-y-6">
                         <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] px-2 flex items-center gap-3">
-                            <span class="w-1.5 h-1.5 bg-black rounded-full"></span>
+                            <span class="w-1.5 h-1.5 bg-black dark:bg-white rounded-full"></span>
                             "Distribución Diaria"
                         </h3>
-                        <Card class="p-8 bg-black text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden group border-none min-h-[400px]">
+                        <Card class="p-8 bg-black dark:bg-neutral-900 text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden group border-none min-h-[400px]">
                             <div class="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/10 -mr-16 -mt-16 rounded-full blur-2xl"></div>
-                            
+
                             <div class="space-y-8 relative z-10">
                                 <Suspense fallback=move || view! { <Loading /> }>
                                     {move || {
@@ -178,29 +178,28 @@ pub fn Dashboard() -> impl IntoView {
 
 #[component]
 fn MetricCard(
-    label: &'static str, 
-    value: String, 
+    label: &'static str,
+    value: String,
     icon: &'static str,
-    #[prop(default = false)] is_gold: bool
+    #[prop(default = false)] is_gold: bool,
 ) -> impl IntoView {
     view! {
-        <Card class=format!("p-8 rounded-[2rem] bg-white border border-gray-100 shadow-xl shadow-black/5 group hover:shadow-2xl transition-all duration-500 {}", 
+        <Card class=format!("p-8 rounded-[2rem] bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 shadow-xl shadow-black/5 group hover:shadow-2xl transition-all duration-500 {}",
             if is_gold { "border-b-4 border-b-[#D4AF37]" } else { "" }
         )>
             <div class="flex flex-col gap-4">
                 <div class="flex items-center justify-between">
-                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest group-hover:text-black transition-colors">
+                    <span class="text-[9px] font-black text-gray-400 dark:text-neutral-500 uppercase tracking-widest group-hover:text-black dark:group-hover:text-white transition-colors">
                         {label}
                     </span>
                     <span class=format!("text-lg grayscale group-hover:grayscale-0 transition-all {}", if is_gold { "text-[#D4AF37] grayscale-0" } else { "" })>
                         {icon}
                     </span>
                 </div>
-                <div class="text-4xl font-black text-black tracking-tighter leading-none group-hover:scale-105 origin-left transition-transform duration-500">
+                <div class="text-4xl font-black text-black dark:text-white tracking-tighter leading-none group-hover:scale-105 origin-left transition-transform duration-500">
                     {value}
                 </div>
             </div>
         </Card>
     }
 }
-
