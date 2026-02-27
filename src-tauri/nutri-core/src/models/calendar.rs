@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub enum MealType {
     Breakfast,
+    #[default]
     Lunch,
     Dinner,
     Snack,

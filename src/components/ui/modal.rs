@@ -6,17 +6,15 @@ pub fn Modal(
     children: Children,
 ) -> impl IntoView {
     view! {
-        <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div class="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full relative border border-gray-700">
+        <div class="fixed inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-[500] p-6">
+            <div class="bg-white brutalist-border shadow-brutalist max-w-lg w-full relative">
                 <button
-                    class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors"
+                    class="absolute top-4 right-4 text-neutral-400 hover:text-neutral-950 transition-colors"
                     on:click=on_close
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <span class="material-symbols-outlined !text-[24px]">"close"</span>
                 </button>
-                <div class="p-6">
+                <div class="p-8">
                     {children()}
                 </div>
             </div>

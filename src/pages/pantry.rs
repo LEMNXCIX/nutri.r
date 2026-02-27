@@ -1,5 +1,5 @@
 use crate::components::features::PantryItemCard;
-use crate::components::ui::{Button, Card, Input, Loading};
+use crate::components::ui::Input;
 use crate::tauri_bridge::{
     add_pantry_item, delete_pantry_item, get_pantry_items, update_pantry_item, PantryItem,
 };
@@ -108,150 +108,165 @@ pub fn Pantry() -> impl IntoView {
     });
 
     view! {
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in pb-32 md:pb-8">
-            <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-900 tracking-tight mb-2">
-                        "Tu Despensa"
-                    </h2>
-                    <p class="text-gray-500 text-sm">
-                        "Gestiona tus existencias para optimizar la generación de planes."
-                    </p>
-                </div>
+        <div class="bg-white min-h-screen font-sans text-neutral-950 pb-32 selection:bg-accent selection:text-neutral-950">
+            // Header - Brutalist & Bold
+            <header class="bg-white border-b brutalist-border py-12 px-6 mb-12">
+                <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-8">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <span class="h-[1px] w-8 bg-accent"></span>
+                            <span class="text-[10px] font-black text-neutral-400 tracking-[0.4em] uppercase">"Stock Mastery"</span>
+                        </div>
+                        <h2 class="text-6xl md:text-8xl font-black text-neutral-950 tracking-tighter leading-[0.8] uppercase">
+                            "Despensa"
+                        </h2>
+                        <div class="hairline-divider w-12 mt-6"></div>
+                    </div>
 
-                <Button
-                    on_click=Callback::new(move |_| {
-                        if show_add_form.get() {
-                            set_show_add_form.set(false);
-                            set_item_to_edit.set(None);
-                            set_new_item_name.set(String::new());
-                        } else {
-                            set_show_add_form.set(true);
+                    <button
+                        on:click=move |_| {
+                            if show_add_form.get() {
+                                set_show_add_form.set(false);
+                                set_item_to_edit.set(None);
+                                set_new_item_name.set(String::new());
+                            } else {
+                                set_show_add_form.set(true);
+                            }
                         }
-                    })
-                    class=format!("px-6 py-2.5 rounded-xl shadow-soft transition-all active:scale-95 text-sm font-bold {}", if show_add_form.get() { "bg-red-50 text-red-600 border border-red-100" } else { "bg-black text-white hover:bg-gray-800" })
-                >
-                    {move || if show_add_form.get() { "CANCELAR" } else { "NUEVO INGREDIENTE" }}
-                </Button>
+                        class=format!("px-10 py-5 brutalist-border transition-all active:scale-95 text-[11px] font-black tracking-widest uppercase {}",
+                            if show_add_form.get() { "bg-white text-red-500 hover:bg-neutral-50" } else { "bg-neutral-950 text-white hover:bg-accent hover:text-neutral-950" })
+                    >
+                        {move || if show_add_form.get() { "CANCELAR" } else { "NUEVO INGREDIENTE" }}
+                    </button>
+                </div>
             </header>
 
-            {move || if show_add_form.get() {
-                view! {
-                    <div class="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <Card class="p-6 bg-white border border-gray-200 rounded-3xl shadow-soft-xl relative overflow-hidden">
-                            <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                </div>
-                                {move || if item_to_edit.get().is_some() { "Editar Ingrediente" } else { "Agregar a Despensa" }}
-                            </h3>
+            <div class="max-w-7xl mx-auto px-6">
+                {move || if show_add_form.get() {
+                    view! {
+                        <div class="mb-24 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div class="p-10 bg-white brutalist-border shadow-brutalist relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-full h-1 bg-accent"></div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div class="space-y-2">
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 pl-1">"Nombre"</label>
-                                    <Input
-                                        placeholder="Arroz, Pollo, Leche..."
-                                        value=new_item_name
-                                        on_input=h_update_name
-                                    />
-                                </div>
+                                <h3 class="text-[10px] font-black text-neutral-400 uppercase tracking-[0.3em] mb-12 flex items-center gap-3">
+                                    <span class="material-symbols-outlined !text-[18px]">"inventory_2"</span>
+                                    {move || if item_to_edit.get().is_some() { "MODIFICAR REGISTRO" } else { "ALTA DE INSUMO" }}
+                                </h3>
 
-                                <div class="space-y-2">
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 pl-1">"Cantidad y Unidad"</label>
-                                    <div class="flex gap-2">
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            class="w-24 bg-white px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 outline-none focus:ring-2 focus:ring-gray-100 transition-all font-bold text-sm"
-                                            on:input=move |ev| {
-                                                if let Ok(val) = event_target_value(&ev).parse::<f32>() {
-                                                    set_new_item_qty.set(val);
-                                                }
-                                            }
-                                            prop:value=new_item_qty
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                    <div class="space-y-4">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 pl-1">"Identificador"</label>
+                                        <Input
+                                            placeholder="Arroz, Pollo, Leche..."
+                                            value=new_item_name
+                                            on_input=h_update_name
+                                            class="bg-white brutalist-border focus:border-accent p-4 font-bold text-sm uppercase"
                                         />
+                                    </div>
+
+                                    <div class="space-y-4">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 pl-1">"Escala y Unidad"</label>
+                                        <div class="flex gap-0 brutalist-border bg-white">
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                class="w-24 bg-white px-4 py-4 text-neutral-950 outline-none border-r border-neutral-950 font-black text-sm"
+                                                on:input=move |ev| {
+                                                    if let Ok(val) = event_target_value(&ev).parse::<f32>() {
+                                                        set_new_item_qty.set(val);
+                                                    }
+                                                }
+                                                prop:value=new_item_qty
+                                            />
                                             <select
-                                                class="flex-1 bg-white px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 outline-none focus:ring-2 focus:ring-gray-100 transition-all font-bold text-[10px] uppercase tracking-wider"
+                                                class="flex-1 bg-transparent px-4 py-4 text-neutral-950 outline-none font-black text-[10px] uppercase tracking-widest cursor-pointer"
                                                 on:change=move |ev| set_new_item_unit.set(event_target_value(&ev))
                                                 prop:value=new_item_unit
                                             >
                                                 <option value="kg">"kg"</option>
                                                 <option value="g">"g"</option>
                                                 <option value="L">"L"</option>
-                                                <option value="ml">"ml"</option>
                                                 <option value="un">"un"</option>
                                             </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-4">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 pl-1">"Clasificación"</label>
+                                        <select
+                                            class="w-full bg-white px-5 py-4 brutalist-border focus:border-accent text-neutral-950 outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
+                                            on:change=move |ev| set_new_item_cat.set(event_target_value(&ev))
+                                            prop:value=new_item_cat
+                                        >
+                                            <option value="Despensa">"Despensa"</option>
+                                            <option value="Refrigerados">"Refrigerados"</option>
+                                            <option value="Congelados">"Congelados"</option>
+                                            <option value="Frutas/Verduras">"Frescos"</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="space-y-4">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 pl-1">"Vencimiento"</label>
+                                        <input
+                                            type="date"
+                                            class="w-full bg-white px-5 py-4 brutalist-border focus:border-accent text-neutral-950 outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
+                                            on:input=move |ev| set_new_item_exp.set(event_target_value(&ev))
+                                            prop:value=new_item_exp
+                                        />
                                     </div>
                                 </div>
 
-                                <div class="space-y-2">
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 pl-1">"Categoría"</label>
-                                    <select
-                                        class="w-full bg-white px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 outline-none focus:ring-2 focus:ring-gray-100 transition-all font-bold text-[10px] uppercase tracking-wider"
-                                        on:change=move |ev| set_new_item_cat.set(event_target_value(&ev))
-                                        prop:value=new_item_cat
-                                    >
-                                        <option value="Despensa">"Despensa"</option>
-                                        <option value="Refrigerados">"Refrigerados"</option>
-                                        <option value="Congelados">"Congelados"</option>
-                                        <option value="Frutas/Verduras">"Frutas/Verduras"</option>
-                                    </select>
-                                </div>
-
-                                <div class="space-y-2">
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 pl-1">"Vencimiento"</label>
-                                    <input
-                                        type="date"
-                                        class="w-full bg-white px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 outline-none focus:ring-2 focus:ring-gray-100 transition-all font-bold text-[10px] uppercase tracking-wider"
-                                        on:input=move |ev| set_new_item_exp.set(event_target_value(&ev))
-                                        prop:value=new_item_exp
-                                    />
+                                <div class="mt-12 flex justify-end">
+                                    <button on:click=move |_| on_add_item(()) class="px-12 py-5 brutalist-border bg-neutral-950 text-white hover:bg-accent hover:text-neutral-950 transition-all text-[11px] font-black tracking-[0.3em] uppercase">
+                                        {move || if item_to_edit.get().is_some() { "ACTUALIZAR" } else { "GUARDAR" }}
+                                    </button>
                                 </div>
                             </div>
-
-                            <div class="mt-8 flex justify-end">
-                                <Button on_click=Callback::new(on_add_item) class="px-8 py-3 rounded-xl bg-black text-white shadow-soft-lg active:scale-95 transition-all text-sm font-bold".to_string()>
-                                    {move || if item_to_edit.get().is_some() { "Actualizar Cambios" } else { "Guardar Ingrediente" }}
-                                </Button>
-                            </div>
-                        </Card>
-                    </div>
-                }.into_any()
-            } else {
-                view! { <div/> }.into_any()
-            }}
-
-            <Suspense fallback=move || view! { <div class="flex justify-center py-20"><Loading /></div> }>
-                {move || {
-                    let items = pantry_resource.get().unwrap_or_default();
-                    if items.is_empty() {
-                        view! {
-                            <div class="bg-gray-50 rounded-[3rem] p-20 text-center border-2 border-dashed border-gray-200 flex flex-col items-center gap-4">
-                                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl shadow-sm">"📦"</div>
-                                <div class="space-y-1">
-                                    <p class="text-gray-900 font-bold uppercase tracking-wider text-sm">"Tu despensa está vacía"</p>
-                                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">"Agrega ingredientes para empezar"</p>
-                                </div>
-                            </div>
-                        }.into_any()
-                    } else {
-                        view! {
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {items.into_iter().map(|item| {
-                                    view! {
-                                        <PantryItemCard
-                                            item=item
-                                            on_delete=on_delete
-                                            on_update_qty=on_update_qty
-                                            on_edit=on_edit
-                                        />
-                                    }
-                                }).collect::<Vec<_>>()}
-                            </div>
-                        }.into_any()
-                    }
+                        </div>
+                    }.into_any()
+                } else {
+                    ().into_any()
                 }}
-            </Suspense>
+
+                <Suspense fallback=move || view! {
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        {(0..8).map(|_| view! { <div class="h-64 brutalist-border bg-neutral-50 animate-pulse"></div> }).collect_view()}
+                    </div>
+                }>
+                    {move || {
+                        let items = pantry_resource.get().unwrap_or_default();
+                        if items.is_empty() {
+                            view! {
+                                <div class="bg-white brutalist-border py-32 px-12 text-center shadow-brutalist flex flex-col items-center gap-8 max-w-2xl mx-auto">
+                                    <div class="w-24 h-24 brutalist-border bg-neutral-50 flex items-center justify-center text-neutral-200">
+                                        <span class="material-symbols-outlined !text-[48px]">"inventory_2"</span>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <h3 class="text-4xl font-black text-neutral-950 tracking-tighter uppercase">"Inventario Vacío"</h3>
+                                        <p class="text-neutral-400 font-bold text-[10px] max-w-xs mx-auto uppercase tracking-[0.4em] leading-relaxed">"Registra tus primeros insumos para que la IA pueda considerarlos en tus planes."</p>
+                                    </div>
+                                    <button on:click=move |_| set_show_add_form.set(true) class="bg-neutral-950 text-white px-12 py-5 brutalist-border font-black text-[11px] tracking-widest uppercase hover:bg-accent hover:text-neutral-950 transition-colors">"AGREGAR AHORA"</button>
+                                </div>
+                            }.into_any()
+                        } else {
+                            view! {
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-in fade-in duration-700">
+                                    {items.into_iter().map(|item| {
+                                        view! {
+                                            <PantryItemCard
+                                                item=item
+                                                on_delete=on_delete.clone()
+                                                on_update_qty=on_update_qty.clone()
+                                                on_edit=on_edit.clone()
+                                            />
+                                        }
+                                    }).collect_view()}
+                                </div>
+                            }.into_any()
+                        }
+                    }}
+                </Suspense>
+            </div>
         </div>
     }
 }

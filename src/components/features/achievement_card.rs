@@ -9,14 +9,14 @@ pub fn AchievementCard(achievement: Achievement) -> impl IntoView {
         <div class=format!(
             "p-6 rounded-[2.5rem] transition-all duration-500 flex flex-col items-center text-center gap-4 relative overflow-hidden group {}",
             if is_unlocked {
-                "glass border-yellow-500/30 shadow-2xl shadow-yellow-500/10"
+                "glass border-gray-200 shadow-2xl shadow-black/5"
             } else {
                 "glass border-white/5 opacity-50 grayscale hover:opacity-100 transition-all duration-700"
             }
         )>
             {if is_unlocked {
                 view! {
-                    <div class="absolute -top-12 -right-12 w-32 h-32 bg-yellow-500/10 blur-3xl group-hover:bg-yellow-500/20 transition-all duration-700"></div>
+                    <div class="absolute -top-12 -right-12 w-32 h-32 bg-gray-100 blur-3xl group-hover:bg-gray-200 transition-all duration-700"></div>
                 }.into_any()
             } else {
                 ().into_any()
@@ -38,8 +38,8 @@ pub fn AchievementCard(achievement: Achievement) -> impl IntoView {
             <div class="mt-4 w-full">
                 {if is_unlocked {
                     view! {
-                        <div class="px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20">
-                            <span class="text-[9px] text-yellow-500 font-black uppercase tracking-[0.2em]">
+                        <div class="px-4 py-1.5 rounded-full bg-black">
+                            <span class="text-[9px] text-white font-black uppercase tracking-[0.2em]">
                                 "¡Desbloqueado!"
                             </span>
                         </div>

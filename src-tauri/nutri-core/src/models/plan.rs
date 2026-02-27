@@ -1,5 +1,15 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct WeeklyMealInfo {
+    #[serde(alias = "day_index")]
+    pub day_index: u8,
+    #[serde(alias = "meal_type")]
+    pub meal_type: String,
+    pub description: Option<String>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanIndex {
@@ -14,6 +24,8 @@ pub struct PlanIndex {
     pub is_favorite: bool,
     #[serde(default)]
     pub rating: Option<u8>,
+    #[serde(default)]
+    pub weekly_structure: Option<Vec<WeeklyMealInfo>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

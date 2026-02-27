@@ -1,3 +1,5 @@
+use tracing::info;
+
 use crate::models::{PlanIndex, VariationType};
 use crate::repositories::{ConfigRepository, IngredientRepository, PlanRepository};
 use crate::services::ai_service::OllamaService;
@@ -55,7 +57,7 @@ where
         log::info!("Generating plan with exclusions: {}", exclusion_list);
 
         // Generate plan using AI
-        let (plan_content, proteins) = self
+        let (plan_content, proteins, weekly_structure) = self
             .ai_service
             .generate_plan(
                 &config.ollama_url,
@@ -69,7 +71,8 @@ where
         let plan_id = self.plan_repo.save(&plan_content)?;
 
         // Update index
-        self.plan_repo.update_index(&plan_id, proteins)?;
+        self.plan_repo
+            .update_index(&plan_id, proteins, weekly_structure)?;
 
         log::info!("Plan generated successfully: {}", plan_id);
 
@@ -78,6 +81,7 @@ where
 
     /// Get all plans
     pub fn list_plans(&self) -> AppResult<Vec<PlanIndex>> {
+        info!("listando planes");
         self.plan_repo.get_all()
     }
 
@@ -127,7 +131,7 @@ where
         log::info!("Generating {} variation for plan {}", variation, plan_id);
 
         // Generate variation using AI
-        let (plan_content, proteins) = self
+        let (plan_content, proteins, weekly_structure) = self
             .ai_service
             .generate_plan(
                 &config.ollama_url,
@@ -141,7 +145,8 @@ where
         let new_plan_id = self.plan_repo.save(&plan_content)?;
 
         // Update index with new proteins
-        self.plan_repo.update_index(&new_plan_id, proteins)?;
+        self.plan_repo
+            .update_index(&new_plan_id, proteins, weekly_structure)?;
 
         log::info!(
             "Variation generated successfully: {} -> {}",

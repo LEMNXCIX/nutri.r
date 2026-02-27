@@ -1,33 +1,54 @@
-# Tauri + Leptos
+# Nutri-R Ecosystem
 
-This template should help get you started developing with Tauri and Leptos.
+Ecosistema híbrido de nutrición: Frontend (Leptos/WASM), Escritorio (Tauri), Android (Tauri Mobile) y Servidor de Automatización (Axum).
 
-## Recommended IDE Setup
+## 🚀 Desarrollo Local (Windows)
 
-[VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+### 1. Requisitos
+- **Rust** (Stable)
+- **Node.js**
+- **Trunk** (`cargo install trunk`)
+- **Tauri CLI** (`cargo install tauri-cli`)
 
-## Android Build
+### 2. Levantar el Entorno de Escritorio
+Si recibes el error `'.' is not recognized` al correr `cargo tauri dev`, es porque Windows no reconoce el prefijo `./`. 
 
-### Environment Setup
-Before building for Android, ensure you have the necessary environment variables set:
+**Comando Correcto:**
+```powershell
+# Primero instala dependencias de frontend
+npm install
 
-```bash
-export NDK_HOME=/opt/android-sdk/ndk/25.2.9519653
-export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+# Inicia Tauri (Asegúrate que trunk esté en tu PATH)
+cargo tauri dev
 ```
 
-### Build Commands
+> **Nota:** Si el error persiste, abre `src-tauri/nutri-app/tauri.conf.json` y cambia `beforeDevCommand` de `./trunk serve` a `trunk serve`.
 
-#### Generate Debug APK (Signed with debug key)
-This version is ready for testing on devices.
+### 3. Levantar el Servidor de Automatización (API + Cron)
+Para que el cron se ejecute y la app de Android pueda sincronizar, debes iniciar el servidor en segundo plano o en otra terminal:
+
+```powershell
+cd src-tauri/nutri-server
+cargo run
+```
+El servidor escuchará en `http://127.0.0.1:3001`.
+
+## 📱 Android Build
+### Requisitos
+Asegúrate de tener instalado el **Android SDK** y **NDK**.
+
+### Comandos de Compilación
 ```bash
+# Debug APK (Instalable directamente para pruebas)
 cargo tauri android build --apk --debug
-```
-**Path:** `src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk`
 
-#### Generate Release APK (Unsigned)
-This version must be signed manually before installation.
-```bash
+# Release APK (Sin firmar)
 cargo tauri android build --apk
 ```
-**Path:** `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk`
+**Ruta del APK:** `src-tauri/nutri-app/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk`
+
+## 🛠️ Configuración del Cron
+Puedes cambiar la frecuencia de generación de planes desde la configuración de la app o enviando un JSON a:
+`GET/POST http://localhost:3001/api/config`
+
+**Ejemplo de Cron:** `"0 0 0 * * MON"` (Todos los lunes a medianoche).

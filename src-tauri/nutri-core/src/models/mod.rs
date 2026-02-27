@@ -27,7 +27,7 @@ pub use ollama::{
     ChatMessage, OllamaChatRequest, OllamaChatResponse, OllamaListResponse, OllamaModelInfo,
 };
 pub use pantry::PantryItem;
-pub use plan::{PlanDetail, PlanIndex, VariationType};
+pub use plan::{PlanDetail, PlanIndex, VariationType, WeeklyMealInfo};
 pub use preferences::UIPreferences;
 pub use search::SearchFilters;
 pub use shopping::{ShoppingItem, ShoppingList};

@@ -1,4 +1,5 @@
 use nutri_core::models::{CalendarEntry, MealType};
+use nutri_core::repositories::ConfigRepository;
 use nutri_core::state::{AppCalendarService, AppState};
 use nutri_core::utils::AppError;
 use tauri::State;
@@ -45,3 +46,33 @@ pub async fn remove_calendar_entry(
     Ok(())
 }
 
+#[tauri::command]
+pub async fn assign_weekly_plan_to_date(
+    state: State<'_, AppState>,
+    start_date: String,
+    plan_id: String,
+) -> Result<(), String> {
+    let plan_service = state.plan_service.lock().await;
+    let index = plan_service.list_plans().map_err(|e| e.to_string())?;
+    let plan = index
+        .into_iter()
+        .find(|p| p.id == plan_id)
+        .ok_or_else(|| format!("Plan {} not found", plan_id))?;
+    // Drop the lock before getting the next one if it might take time, though here it's fast
+    drop(plan_service);
+
+    let config = state.config_repo.get().map_err(|e| e.to_string())?;
+
+    let calendar_service = state.calendar_service.lock().await;
+    calendar_service
+        .assign_weekly_plan_to_date(
+            &start_date,
+            &plan_id,
+            plan.weekly_structure.clone(),
+            config.default_meal_type,
+        )
+        .map_err(|e| e.to_string())?;
+
+    state.trigger_sync().await;
+    Ok(())
+}

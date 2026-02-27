@@ -23,7 +23,8 @@ pub type AppShoppingListService =
 pub type AppCalendarService = CalendarService<FileCalendarRepository>;
 pub type AppStatisticsService =
     StatisticsService<FilePlanRepository, FileMetadataRepository, FileCalendarRepository>;
-pub type AppNutritionService = NutritionService<FilePlanRepository, FileConfigRepository>;
+pub type AppNutritionService =
+    NutritionService<FilePlanRepository, FileConfigRepository, FileShoppingListRepository>;
 pub type AppSearchService = SearchService<FilePlanRepository, FileMetadataRepository>;
 pub type AppTagService = TagService<FileTagRepository, FileMetadataRepository>;
 pub type AppPantryService = PantryService<FilePantryRepository>;
@@ -111,6 +112,7 @@ impl AppState {
         let nutrition_service = NutritionService::new(
             FilePlanRepository::new(data_dir.clone()),
             FileConfigRepository::new(config_path.clone()),
+            FileShoppingListRepository::new(data_dir.clone()),
             data_dir.clone(),
         );
         let search_service = SearchService::new(

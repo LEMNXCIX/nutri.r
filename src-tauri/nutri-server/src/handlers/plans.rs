@@ -2,9 +2,10 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use nutri_core::{models::PlanIndex, state::AppState};
+use nutri_core::{models::{PlanIndex, metadata::PlanMetadata, search::SearchFilters, plan::VariationType}, state::AppState};
 use std::sync::Arc;
 use crate::error::ApiError;
+use serde::Deserialize;
 
 pub async fn list_plans(
     State(state): State<Arc<AppState>>,
@@ -29,4 +30,90 @@ pub async fn generate_plan(
     let service = state.plan_service.lock().await;
     let id = service.generate_plan().await?;
     Ok(Json(id))
+}
+
+pub async fn get_favorite_plans(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<PlanIndex>>, ApiError> {
+    let service = state.search_service.lock().await;
+    let plans = service.search(SearchFilters {
+        only_favorites: true,
+        ..Default::default()
+    })?;
+    Ok(Json(plans))
+}
+
+pub async fn toggle_favorite(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<bool>, ApiError> {
+    let service = state.metadata_service.lock().await;
+    let is_fav = service.toggle_favorite(id)?;
+    Ok(Json(is_fav))
+}
+
+pub async fn get_metadata(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<PlanMetadata>, ApiError> {
+    let service = state.metadata_service.lock().await;
+    let meta = service.get_metadata(id)?;
+    Ok(Json(meta))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RatingRequest {
+    pub rating: u8,
+}
+
+pub async fn set_rating(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    Json(req): Json<RatingRequest>,
+) -> Result<Json<()>, ApiError> {
+    let service = state.metadata_service.lock().await;
+    service.set_rating(id, req.rating)?;
+    Ok(Json(()))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NoteRequest {
+    pub note: String,
+}
+
+pub async fn set_note(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    Json(req): Json<NoteRequest>,
+) -> Result<Json<()>, ApiError> {
+    let service = state.metadata_service.lock().await;
+    service.set_note(id, req.note)?;
+    Ok(Json(()))
+}
+
+pub async fn search_plans(
+    State(state): State<Arc<AppState>>,
+    Json(filters): Json<SearchFilters>,
+) -> Result<Json<Vec<PlanIndex>>, ApiError> {
+    let service = state.search_service.lock().await;
+    let plans = service.search(filters)?;
+    Ok(Json(plans))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VariationRequest {
+    pub variation: VariationType,
+}
+
+pub async fn generate_variation(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    Json(req): Json<VariationRequest>,
+) -> Result<Json<String>, ApiError> {
+    let service = state.plan_service.lock().await;
+    let content = service.generate_variation(&id, req.variation).await?;
+    Ok(Json(content))
 }

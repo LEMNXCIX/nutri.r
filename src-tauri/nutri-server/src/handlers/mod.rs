@@ -1,5 +1,17 @@
+pub mod achievements;
+pub mod calendar;
+pub mod config;
+pub mod email;
+pub mod import_export;
+pub mod ingredients;
+pub mod nutrition;
 pub mod ollama;
 pub mod pantry;
 pub mod plans;
+pub mod preferences;
+pub mod shopping;
+pub mod statistics;
 pub mod sync;
 pub mod system;
+pub mod tags;
+pub mod water;

@@ -1,8 +1,9 @@
-use crate::components::ui::{Card, Loading};
-use crate::tauri_bridge::{get_ingredient_stats, toggle_ingredient_exclusion, IngredientStats};
+use crate::tauri_bridge::{
+get_ingredient_stats, toggle_ingredient_exclusion, IngredientStats};
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
+use leptos_router::components::A;
 
 #[component]
 pub fn Ingredients() -> impl IntoView {
@@ -10,6 +11,7 @@ pub fn Ingredients() -> impl IntoView {
     let (ingredients_stats, set_ingredients_stats) = signal(Vec::<IngredientStats>::new());
     let (loading, set_loading) = signal(true);
     let (error, set_error) = signal(String::new());
+    let (search_query, set_search_query) = signal(String::new());
 
     // Fetch data when component mounts
     spawn_local(async move {
@@ -46,107 +48,128 @@ pub fn Ingredients() -> impl IntoView {
         });
     };
 
+    let filtered_ingredients = move || {
+        let query = search_query.get().to_lowercase();
+        ingredients_stats.get().into_iter()
+            .filter(|s| s.name.to_lowercase().contains(&query))
+            .collect::<Vec<_>>()
+    };
+
     view! {
-        <div class="p-4 md:p-6 max-w-5xl mx-auto font-sans">
-            <header class="mb-10">
-                <div class="space-y-1">
-                    <span class="text-xs font-black text-gray-400 tracking-widest uppercase">"CONFIGURACIÓN"</span>
-                    <h2 class="text-4xl font-black text-black tracking-tighter mb-2">"INGREDIENTES"</h2>
+        <div class="bg-white min-h-screen font-sans text-neutral-950 pb-32 animate-in fade-in duration-500">
+            // -- HEADER --
+            <header class="flex items-center justify-between px-6 py-8 sticky top-0 bg-white z-40 border-b border-neutral-100">
+                <A href="/" attr:class="flex items-center gap-4">
+                    <span class="material-symbols-outlined">"arrow_back"</span>
+                </A>
+                <div class="text-[10px] font-bold tracking-[0.2em] uppercase">"Library / Ingredients"</div>
+                <div class="w-8 h-8 flex items-center justify-center">
+                    <span class="material-symbols-outlined">"filter_list"</span>
                 </div>
-                <p class="text-gray-500 font-medium max-w-2xl">"Gestiona la frecuencia y exclusión de ingredientes en tus planes. Los ingredientes excluidos no aparecerán en tus futuras generaciones."</p>
             </header>
 
-            {move || {
-                if loading.get() {
-                    view! { <div class="flex justify-center p-12"><Loading /></div> }.into_any()
-                } else if !error.get().is_empty() {
-                    view! {
-                        <Card class="border-red-100 bg-red-50">
-                            <h3 class="text-lg font-bold text-red-600 mb-1">"Error"</h3>
-                            <p class="text-red-500 text-sm">
-                                {format!("Error al cargar los ingredientes: {}", error.get())}
-                            </p>
-                        </Card>
-                    }.into_any()
-                } else {
-                    let stats = ingredients_stats.get();
-                    if stats.is_empty() {
-                        view! {
-                            <div class="text-center p-16 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
-                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white border border-gray-100 mb-4 text-gray-300">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                                </div>
-                                <h3 class="text-lg font-bold text-gray-900 mb-1">"Sin ingredientes"</h3>
-                                <p class="text-gray-400 text-sm">"No hay ingredientes registrados aún."</p>
-                            </div>
-                        }.into_any()
-                    } else {
-                        view! {
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {stats.into_iter().map(|stat| {
-                                    let name = stat.name.clone();
-                                    let count = stat.count;
-                                    let is_excluded = stat.is_excluded;
-                                    let name_for_click = name.clone();
+            // -- SEARCH & TITLE --
+            <section class="px-6 py-10">
+                <h1 class="text-5xl font-extrabold uppercase leading-[0.9] tracking-tighter mb-8">
+                    "Select" <br/> "Ingredients"
+                </h1>
+                <div class="relative">
+                    <input
+                        class="w-full border border-black px-4 py-4 text-xs font-bold tracking-widest uppercase placeholder:text-neutral-300 focus:ring-0 focus:border-black outline-none rounded-none"
+                        placeholder="SEARCH DATABASE..."
+                        type="text"
+                        on:input=move |ev| set_search_query.set(event_target_value(&ev))
+                        prop:value=search_query
+                    />
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2">
+                        <span class="material-symbols-outlined text-neutral-400">"search"</span>
+                    </div>
+                </div>
+            </section>
 
-                                    view! {
-                                        <div
-                                            on:click=move |_| toggle_exclusion(name_for_click.clone())
-                                            class=move || format!(
-                                                "cursor-pointer group relative p-5 rounded-2xl border transition-all duration-300 {}",
-                                                if is_excluded {
-                                                    "bg-gray-50 border-gray-100 hover:border-gray-200"
-                                                } else {
-                                                    "bg-white border-gray-200 hover:border-black hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1"
-                                                }
-                                            )
-                                        >
-                                            <div class="flex flex-col gap-3">
-                                                <div class="flex justify-between items-start">
-                                                    <span class=move || format!(
-                                                        "text-lg font-bold capitalize truncate pr-4 {}",
-                                                        if is_excluded { "text-gray-400 line-through decoration-2 decoration-gray-300" } else { "text-gray-900" }
-                                                    )>
-                                                        {name.clone()}
-                                                    </span>
-                                                    <span class=format!("flex items-center justify-center min-w-[2rem] h-8 rounded-lg text-xs font-bold border {}",
-                                                        if is_excluded { "bg-gray-100 text-gray-400 border-gray-100" } else { "bg-gray-50 text-black border-gray-100" }
-                                                    )>
-                                                        {count}
-                                                    </span>
-                                                </div>
+            // -- CATEGORIES --
+            <section class="px-6 mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                <div class="flex gap-6">
+                    <span class="text-[10px] font-bold uppercase tracking-widest border-b-2 border-black pb-1">"All"</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 pb-1">"Proteins"</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 pb-1">"Produce"</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 pb-1">"Grains"</span>
+                </div>
+            </section>
 
-                                                <div class="flex items-center justify-between mt-1">
-                                                    {if is_excluded {
-                                                        view! {
-                                                            <span class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-black px-2.5 py-1 rounded-md bg-gray-100 text-gray-400">
-                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                                                                "Excluido"
-                                                            </span>
-                                                        }.into_any()
-                                                    } else {
-                                                        view! {
-                                                            <span class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-black px-2.5 py-1 rounded-md bg-white border border-gray-100 text-gray-500 group-hover:text-black group-hover:border-black/10 transition-colors">
-                                                                <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                                                                "Habilitado"
-                                                            </span>
-                                                        }.into_any()
-                                                    }}
+            // -- LIST --
+            <section class="px-6 space-y-10">
+                <Suspense fallback=move || view! { <div class="py-20 text-center uppercase tracking-widest text-[10px] animate-pulse">"Loading Database..."</div> }>
+                    {move || {
+                        if loading.get() {
+                            return ().into_any();
+                        }
 
-                                                    // Action hint (hidden by default, shown on hover)
-                                                    <div class="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] uppercase font-bold text-gray-300">
-                                                        {if is_excluded { "Habilitar" } else { "Excluir" }}
-                                                    </div>
-                                                </div>
-                                            </div>
+                        if !error.get().is_empty() {
+                            return view! { <div class="p-6 brutalist-border bg-red-50 text-red-500 uppercase font-bold text-[10px]">{error.get()}</div> }.into_any();
+                        }
+
+                        let stats = filtered_ingredients();
+                        if stats.is_empty() {
+                            return view! { <div class="py-20 text-center text-neutral-400 uppercase tracking-widest text-[10px]">"No matching items"</div> }.into_any();
+                        }
+
+                        stats.into_iter().map(|stat| {
+                            let name = stat.name.clone();
+                            let is_excluded = stat.is_excluded;
+                            let name_for_click = name.clone();
+                            
+                            view! {
+                                <div class=move || format!("flex items-center justify-between transition-opacity {}", if is_excluded { "opacity-40" } else { "" })>
+                                    <div class="flex flex-col gap-1">
+                                        <div class="flex items-center gap-2">
+                                            <h3 class=move || format!("text-2xl font-light tracking-tighter uppercase {}", if is_excluded { "strikethrough" } else { "" })>
+                                                {name.clone()}
+                                            </h3>
+                                            {if is_excluded {
+                                                view! { <span class="text-[8px] px-1 border border-neutral-400 font-bold uppercase tracking-tighter">"Restricted"</span> }.into_any()
+                                            } else {
+                                                ().into_any()
+                                            }}
                                         </div>
-                                    }
-                                }).collect_view()}
-                            </div>
-                        }.into_any()
-                    }
-                }
-            }}
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                                            {if is_excluded { "Disabled" } else { "Active Entry" }} " / Count: " {stat.count}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-8">
+                                        <button
+                                            on:click=move |_| toggle_exclusion(name_for_click.clone())
+                                            class=move || format!("p-2 transition-colors {}", if is_excluded { "bg-neutral-100" } else { "bg-accent" })
+                                        >
+                                            <span class="material-symbols-outlined text-neutral-950">
+                                                {if is_excluded { "lock" } else { "add" }}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="hairline-divider"></div>
+                            }
+                        }).collect::<Vec<_>>().into_any()
+                    }}
+                </Suspense>
+            </section>
+
+            // -- FOOTER SELECTION STATUS --
+            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-100 px-6 py-8 flex justify-between items-center z-50">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400">"Database Status"</span>
+                    <span class="text-lg font-light tracking-tighter uppercase">
+                        {move || {
+                            let total = ingredients_stats.get().len();
+                            let active = ingredients_stats.get().iter().filter(|s| !s.is_excluded).count();
+                            format!("{} / {} Items Active", active, total)
+                        }}
+                    </span>
+                </div>
+                <A href="/" attr:class="bg-neutral-950 text-white px-8 py-3 text-[10px] font-bold uppercase tracking-[0.2em]">
+                    "Review Plans"
+                </A>
+            </div>
         </div>
-    }
+    }.into_any()
 }

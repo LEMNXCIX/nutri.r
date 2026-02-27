@@ -9,37 +9,31 @@ pub fn Toast(
 ) -> impl IntoView {
     view! {
         <Portal>
-            <div class="fixed inset-x-0 bottom-0 pointer-events-none z-[1000] p-6 flex flex-col items-center md:items-end md:bottom-8 md:right-8 md:inset-x-auto">
-                <div class="pointer-events-auto animate-in slide-in-from-bottom-8 fade-in duration-300">
-                    <div class=format!("flex items-center gap-3 px-6 py-4 bg-white rounded-[1.5rem] shadow-2xl border border-gray-100 min-w-[280px] max-w-md {}",
-                        if is_error { "border-red-100" } else { "border-gray-100" })
+            <div class="fixed bottom-32 left-6 right-6 z-[1000] md:bottom-32 md:right-8 md:left-auto md:w-96 pointer-events-none">
+                <div class="pointer-events-auto brutalist-border bg-white p-4 shadow-brutalist animate-in slide-in-from-bottom-4 flex items-center gap-4">
+                    <div class=format!("w-10 h-10 flex items-center justify-center shrink-0 {}",
+                        if is_error { "bg-red-500 text-white" } else { "bg-accent text-neutral-950" })
                     >
-                        <div class=format!("p-2 rounded-xl {}",
-                            if is_error { "bg-red-50 text-red-500" } else { "bg-black text-white" })
-                        >
-                            {if is_error {
-                                view! { <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg> }.into_any()
-                            } else {
-                                view! { <span class="text-[10px] font-black uppercase">"n"</span> }.into_any()
-                            }}
-                        </div>
-
-                        <div class="flex-1 pr-4">
-                            <p class="text-xs font-black text-black uppercase tracking-tight leading-tight">
-                                {move || message.get()}
-                            </p>
-                        </div>
-
-                        <button
-                            on:click=move |_| on_close.run(())
-                            class="p-1 hover:bg-gray-100 rounded-lg text-gray-300 hover:text-black transition-all"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+                        <span class="material-symbols-outlined !text-xl">
+                            {if is_error { "error" } else { "check_circle" }}
+                        </span>
                     </div>
 
-                    // Visual spacer for Mobile BottomNav
-                    <div class="h-20 md:hidden"></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-0.5">
+                            {if is_error { "System Error" } else { "System Notification" }}
+                        </p>
+                        <p class="text-xs font-bold text-neutral-950 uppercase tracking-tight truncate">
+                            {move || message.get()}
+                        </p>
+                    </div>
+
+                    <button
+                        on:click=move |_| on_close.run(())
+                        class="p-2 hover:bg-neutral-50 text-neutral-300 hover:text-neutral-950 transition-colors"
+                    >
+                        <span class="material-symbols-outlined !text-lg">"close"</span>
+                    </button>
                 </div>
             </div>
         </Portal>

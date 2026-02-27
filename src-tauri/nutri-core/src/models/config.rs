@@ -29,6 +29,12 @@ pub struct AppConfig {
     pub sync_server_url: String,
     #[serde(default, alias = "last_updated")]
     pub last_updated: String,
+    #[serde(default, alias = "auto_generate_plan")]
+    pub auto_generate_plan: bool,
+    #[serde(default, alias = "cron_expression")]
+    pub cron_expression: String,
+    #[serde(default, alias = "default_meal_type")]
+    pub default_meal_type: crate::models::MealType,
 }
 
 fn deserialize_smtp_port<'de, D>(deserializer: D) -> Result<u16, D::Error>
@@ -92,6 +98,9 @@ impl Default for AppConfig {
             usda_api_key: String::new(),
             sync_server_url: "http://127.0.0.1:3001".to_string(),
             last_updated: String::new(),
+            auto_generate_plan: false,
+            cron_expression: "0 0 0 * * MON".to_string(), // Every Monday at midnight
+            default_meal_type: crate::models::MealType::Lunch,
         }
     }
 }

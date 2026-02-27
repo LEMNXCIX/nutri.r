@@ -108,7 +108,11 @@ impl OllamaService {
         model: &str,
         prompt: String,
         exclusion_list: String,
-    ) -> AppResult<(String, Vec<String>)> {
+    ) -> AppResult<(
+        String,
+        Vec<String>,
+        Option<Vec<crate::models::WeeklyMealInfo>>,
+    )> {
         // Step 1: Generate meal plan
         let full_prompt = if exclusion_list.is_empty() {
             prompt
@@ -183,7 +187,57 @@ impl OllamaService {
 
         log::info!("Extracted proteins: {:?}", proteins);
 
-        Ok((markdown, proteins))
+        // Step 3: Extract weekly structure
+        let struct_prompt = format!(
+            "Analiza el siguiente plan nutricional y extrae la estructura semanal de comidas.\n\
+            Responde SOLAMENTE con un array JSON de objetos.\n\
+            Formato de cada objeto:\n\
+            {{\"dayIndex\": numero_de_0_a_6, \"mealType\": \"Breakfast\"|\"Lunch\"|\"Dinner\"|\"Snack\"|\"Unknown\", \"description\": \"breve resumen\"}}\n\
+            Lunes = 0, Domingo = 6.\n\
+            NO añadas texto adicional.\n\
+            PLAN:\n{}",
+            markdown
+        );
+
+        let struct_messages = vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content:
+                    "Eres un extractor de datos JSON preciso. Solo respondes con el array JSON."
+                        .to_string(),
+            },
+            ChatMessage {
+                role: "user".to_string(),
+                content: struct_prompt,
+            },
+        ];
+
+        let struct_text = self.chat(ollama_url, model, struct_messages).await?;
+        log::info!("Raw struct text: {}", struct_text);
+
+        let weekly_structure: Option<Vec<crate::models::WeeklyMealInfo>> =
+            match serde_json::from_str(&struct_text) {
+                Ok(s) => Some(s),
+                Err(_) => {
+                    if let Some(start) = struct_text.find('[') {
+                        if let Some(end) = struct_text.rfind(']') {
+                            let json_str = &struct_text[start..=end];
+                            serde_json::from_str(json_str).ok()
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                }
+            };
+
+        log::info!(
+            "Extracted structure items: {:?}",
+            weekly_structure.as_ref().map(|v| v.len())
+        );
+
+        Ok((markdown, proteins, weekly_structure))
     }
 }
 

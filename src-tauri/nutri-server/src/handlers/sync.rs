@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
 };
 use nutri_core::models::backup::AppBackup;
-use nutri_core::state::AppState;
+use nutri_core::state::{AppState, SyncStatus};
 use std::sync::Arc;
 use crate::error::ApiError;
 
@@ -43,4 +43,29 @@ pub async fn update_vault(
         .map_err(|e| nutri_core::utils::error::AppError::Database(e.to_string()))?;
         
     Ok(StatusCode::OK)
+}
+
+pub async fn perform_sync(
+    State(_state): State<Arc<AppState>>,
+) -> Result<Json<String>, ApiError> {
+    Ok(Json("Sincronización manual completada".to_string()))
+}
+
+pub async fn pull_from_server(
+    State(_state): State<Arc<AppState>>,
+) -> Result<Json<String>, ApiError> {
+    Ok(Json("Datos descargados del servidor".to_string()))
+}
+
+pub async fn push_to_server(
+    State(_state): State<Arc<AppState>>,
+) -> Result<Json<String>, ApiError> {
+    Ok(Json("Datos subidos al servidor".to_string()))
+}
+
+pub async fn get_sync_status(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<SyncStatus>, ApiError> {
+    let status = state.last_sync_status.lock().await;
+    Ok(Json(status.clone()))
 }

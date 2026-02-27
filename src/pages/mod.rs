@@ -1,6 +1,7 @@
 pub mod achievements;
 pub mod calendar;
 pub mod config;
+pub mod daily_view;
 pub mod dashboard;
 pub mod favorites;
 pub mod history;

@@ -72,6 +72,7 @@ pub fn run() {
             commands::shopping::get_shopping_list,
             commands::shopping::toggle_shopping_item,
             commands::calendar::assign_plan_to_date,
+            commands::calendar::assign_weekly_plan_to_date,
             commands::calendar::get_calendar_range,
             commands::calendar::remove_calendar_entry,
             commands::statistics::get_statistics,

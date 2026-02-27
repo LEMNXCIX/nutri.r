@@ -1,3 +1,5 @@
+use tracing::info;
+
 use crate::models::{PlanDetail, PlanIndex};
 use crate::utils::{AppError, AppResult};
 use std::fs;
@@ -9,7 +11,12 @@ pub trait PlanRepository {
     fn get_by_id(&self, id: &str) -> AppResult<PlanDetail>;
     fn get_index_by_id(&self, id: &str) -> AppResult<PlanIndex>;
     fn save(&self, content: &str) -> AppResult<String>;
-    fn update_index(&self, plan_id: &str, proteinas: Vec<String>) -> AppResult<()>;
+    fn update_index(
+        &self,
+        plan_id: &str,
+        proteinas: Vec<String>,
+        weekly_structure: Option<Vec<crate::models::WeeklyMealInfo>>,
+    ) -> AppResult<()>;
     fn overwrite_index(&self, index: Vec<PlanIndex>) -> AppResult<()>;
     fn save_detail(&self, detail: PlanDetail) -> AppResult<()>;
 }
@@ -33,8 +40,9 @@ impl FilePlanRepository {
 impl PlanRepository for FilePlanRepository {
     fn get_all(&self) -> AppResult<Vec<PlanIndex>> {
         let index_path = self.index_path();
-
+        info!("index_path {}", index_path.to_string_lossy());
         if !index_path.exists() {
+            info!("no existe");
             return Ok(Vec::new());
         }
 
@@ -43,7 +51,7 @@ impl PlanRepository for FilePlanRepository {
 
         let index: Vec<PlanIndex> = serde_json::from_str(&content)
             .map_err(|e| AppError::Serialization(format!("Failed to parse index: {}", e)))?;
-
+        info!("planes {}", content);
         Ok(index)
     }
 
@@ -108,7 +116,12 @@ impl PlanRepository for FilePlanRepository {
         Ok(plan_id)
     }
 
-    fn update_index(&self, plan_id: &str, proteins: Vec<String>) -> AppResult<()> {
+    fn update_index(
+        &self,
+        plan_id: &str,
+        proteins: Vec<String>,
+        weekly_structure: Option<Vec<crate::models::WeeklyMealInfo>>,
+    ) -> AppResult<()> {
         let index_path = self.index_path();
 
         let mut index = if index_path.exists() {
@@ -126,6 +139,7 @@ impl PlanRepository for FilePlanRepository {
             enviado: false,
             is_favorite: false,
             rating: None,
+            weekly_structure,
         };
 
         index.push(new_entry);
