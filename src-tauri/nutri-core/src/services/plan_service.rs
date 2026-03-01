@@ -1,34 +1,40 @@
 use tracing::info;
 
 use crate::models::{PlanIndex, VariationType};
-use crate::repositories::{ConfigRepository, IngredientRepository, PlanRepository};
+use crate::repositories::{
+    ConfigRepository, IngredientRepository, PantryRepository, PlanRepository,
+};
 use crate::services::ai_service::OllamaService;
 use crate::utils::{AppError, AppResult};
 
 /// Service for plan management and generation
-pub struct PlanService<P, C, I>
+pub struct PlanService<P, C, I, PA>
 where
     P: PlanRepository,
     C: ConfigRepository,
     I: IngredientRepository,
+    PA: PantryRepository,
 {
     plan_repo: P,
     config_repo: C,
     ingredient_repo: I,
+    pantry_repo: PA,
     ai_service: OllamaService,
 }
 
-impl<P, C, I> PlanService<P, C, I>
+impl<P, C, I, PA> PlanService<P, C, I, PA>
 where
     P: PlanRepository,
     C: ConfigRepository,
     I: IngredientRepository,
+    PA: PantryRepository,
 {
-    pub fn new(plan_repo: P, config_repo: C, ingredient_repo: I) -> Self {
+    pub fn new(plan_repo: P, config_repo: C, ingredient_repo: I, pantry_repo: PA) -> Self {
         Self {
             plan_repo,
             config_repo,
             ingredient_repo,
+            pantry_repo,
             ai_service: OllamaService::new(),
         }
     }
@@ -54,7 +60,19 @@ where
         let excluded = self.ingredient_repo.get_excluded()?;
         let exclusion_list = excluded.ingredients.join(", ");
 
-        log::info!("Generating plan with exclusions: {}", exclusion_list);
+        // Get pantry items
+        let pantry_items = self.pantry_repo.get_all()?;
+        let pantry_list = pantry_items
+            .iter()
+            .map(|i| i.name.clone())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        log::info!(
+            "Generating plan with exclusions: {} and pantry: {}",
+            exclusion_list,
+            pantry_list
+        );
 
         // Generate plan using AI
         let (plan_content, proteins, weekly_structure) = self
@@ -64,6 +82,7 @@ where
                 &config.ollama_model,
                 config.prompt_maestro,
                 exclusion_list,
+                pantry_list,
             )
             .await?;
 
@@ -138,6 +157,7 @@ where
                 &config.ollama_model,
                 prompt,
                 String::new(), // In transformations, the prompt itself guides the adaptation
+                String::new(), // No pantry injection for variations yet unless needed
             )
             .await?;
 
@@ -170,8 +190,9 @@ mod tests {
         let plan_repo = FilePlanRepository::new(temp_dir.clone());
         let config_repo = FileConfigRepository::new(temp_dir.join("config.json"));
         let ingredient_repo = FileIngredientRepository::new(temp_dir.join("excluded.json"));
+        let pantry_repo = FilePantryRepository::new(temp_dir.clone());
 
-        let _service = PlanService::new(plan_repo, config_repo, ingredient_repo);
+        let _service = PlanService::new(plan_repo, config_repo, ingredient_repo, pantry_repo);
 
         // Cleanup
         let _ = std::fs::remove_dir_all(temp_dir);

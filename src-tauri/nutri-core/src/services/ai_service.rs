@@ -108,20 +108,28 @@ impl OllamaService {
         model: &str,
         prompt: String,
         exclusion_list: String,
+        pantry_list: String,
     ) -> AppResult<(
         String,
         Vec<String>,
         Option<Vec<crate::models::WeeklyMealInfo>>,
     )> {
         // Step 1: Generate meal plan
-        let full_prompt = if exclusion_list.is_empty() {
-            prompt
-        } else {
-            format!(
-                "{}\n\nIMPORTANTE: NO uses los siguientes ingredientes: {}",
-                prompt, exclusion_list
-            )
-        };
+        let mut full_prompt = prompt;
+
+        if !exclusion_list.is_empty() {
+            full_prompt = format!(
+                "{}\n\nIMPORTANTE: NO uses los siguientes ingredientes (están excluidos por el usuario): {}",
+                full_prompt, exclusion_list
+            );
+        }
+
+        if !pantry_list.is_empty() {
+            full_prompt = format!(
+                "{}\n\nRECOMENDACIÓN: Intenta incluir algunos de estos ingredientes que el usuario ya tiene disponibles en su despensa, pero no te limites exclusivamente a ellos: {}",
+                full_prompt, pantry_list
+            );
+        }
 
         let messages = vec![
             ChatMessage {
