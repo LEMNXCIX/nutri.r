@@ -1,6 +1,7 @@
 use crate::components::layout::Navbar;
 use crate::components::ui::Toast;
 use crate::pages::achievements::Achievements;
+use crate::pages::add::Add;
 use crate::pages::calendar::Calendar;
 use crate::pages::config::Config;
 use crate::pages::daily_view::DailyView;
@@ -102,6 +103,7 @@ pub fn App() -> impl IntoView {
                 <main class="w-full pb-32 md:pb-0">
                     <Routes fallback=|| "Not Found">
                         <Route path=path!("/") view=Home />
+                        <Route path=path!("/add") view=Add />
                         <Route path=path!("/achievements") view=Achievements />
                         <Route path=path!("/dashboard") view=Dashboard />
                         <Route path=path!("/favorites") view=Favorites />

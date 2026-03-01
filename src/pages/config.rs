@@ -1,11 +1,11 @@
 use crate::tauri_bridge::{
-    get_config, get_excluded_ingredients, get_ui_preferences, is_mobile, list_ollama_models,
-    save_config, save_excluded_ingredients, save_ui_preferences, AppConfig, OllamaModel,
-    UIPreferences,
+    check_endpoint, clear_debug_logs, get_config, get_debug_logs, get_excluded_ingredients,
+    get_ui_preferences, is_mobile, list_ollama_models, save_config, save_excluded_ingredients,
+    save_ui_preferences, AppConfig, OllamaModel, UIPreferences,
 };
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{prelude::Closure, JsCast};
 
 #[component]
 pub fn Config() -> impl IntoView {
@@ -32,6 +32,28 @@ pub fn Config() -> impl IntoView {
     let (new_ingredient, set_new_ingredient) = signal(String::new());
     let (preferences, set_preferences) = signal(UIPreferences::default());
     let (_is_mobile_ui, set_is_mobile_ui) = signal(false);
+    let (ollama_status_msg, set_ollama_status_msg) = signal(String::new());
+    let (sync_status_msg, set_sync_status_msg) = signal(String::new());
+    let (debug_logs, set_debug_logs) = signal(get_debug_logs());
+
+    // Listen for debug logs
+    #[cfg(target_arch = "wasm32")]
+    {
+        let window = web_sys::window().unwrap();
+        let cb = Closure::wrap(Box::new(move |ev: web_sys::CustomEvent| {
+            if let Some(msg) = ev.detail().as_string() {
+                set_debug_logs.update(|logs| {
+                    logs.push(msg);
+                    if logs.len() > 50 {
+                        logs.remove(0);
+                    }
+                });
+            }
+        }) as Box<dyn FnMut(web_sys::CustomEvent)>);
+
+        let _ = window.add_event_listener_with_callback("debug-log", cb.as_ref().unchecked_ref());
+        cb.forget();
+    }
 
     spawn_local(async move {
         set_is_mobile_ui.set(is_mobile().await);
@@ -265,7 +287,7 @@ pub fn Config() -> impl IntoView {
                 </h1>
 
                 <form on:submit=on_submit>
-                    // Appearance Section
+                    {/* Appearance Section */}
                     <ConfigSection title="Apariencia" icon="palette">
                         <div class="flex flex-col gap-4">
                             <div class="flex flex-col gap-1.5">
@@ -296,18 +318,51 @@ pub fn Config() -> impl IntoView {
                         </div>
                     </ConfigSection>
 
-                    // Local Intelligence Section
+                    {/* Local Intelligence Section */}
                     <ConfigSection title="Inteligencia Local" icon="memory">
                         <div class="grid grid-cols-1 gap-6">
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Endpoint del Servidor"</label>
-                                <input
-                                    class="bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
-                                    type="text"
-                                    placeholder="http://localhost:11434"
-                                    prop:value=move || config.get().ollama_url
-                                    on:input=move |ev| set_config.update(|c| c.ollama_url = event_target_value(&ev))
-                                />
+                                <div class="flex gap-2">
+                                    <input
+                                        class="flex-1 bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
+                                        type="text"
+                                        placeholder="http://localhost:11434"
+                                        prop:value=move || config.get().ollama_url
+                                        on:input=move |ev| {
+                                            set_config.update(|c| c.ollama_url = event_target_value(&ev));
+                                            set_ollama_status_msg.set(String::new());
+                                        }
+                                    />
+                                    <button
+                                        class="px-4 py-2 bg-black dark:bg-neutral-800 text-white dark:text-neutral-200 text-[10px] font-bold uppercase hover:bg-neutral-800 dark:hover:bg-neutral-700 border border-black dark:border-neutral-600 transition-colors"
+                                        on:click=move |_| {
+                                            let url = config.get().ollama_url.clone();
+                                            spawn_local(async move {
+                                                set_ollama_status_msg.set("Verificando...".to_string());
+                                                match check_endpoint(&url).await {
+                                                    Ok(_) => set_ollama_status_msg.set("✅ Conexión exitosa".to_string()),
+                                                    Err(e) => set_ollama_status_msg.set(format!("❌ {}", e)),
+                                                }
+                                            });
+                                        }
+                                    >
+                                        "PROBAR"
+                                    </button>
+                                </div>
+                                {move || {
+                                    let msg = ollama_status_msg.get();
+                                    if !msg.is_empty() {
+                                        let color_class = if msg.contains("✅") { "text-green-600 dark:text-green-400" } else { "text-red-600 dark:text-red-400" };
+                                        view! {
+                                            <div class=format!("text-[10px] font-bold uppercase mt-1 {}", color_class)>
+                                                {msg}
+                                            </div>
+                                        }.into_any()
+                                    } else {
+                                        ().into_any()
+                                    }
+                                }}
                             </div>
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Modelo de Lenguaje"</label>
@@ -330,7 +385,7 @@ pub fn Config() -> impl IntoView {
                         </div>
                     </ConfigSection>
 
-                    // Master Prompt Section
+                    {/* Master Prompt Section */}
                     <ConfigSection title="Prompt Maestro" icon="edit_note">
                         <div class="space-y-6">
                             <div class="flex flex-col gap-1.5">
@@ -374,7 +429,7 @@ pub fn Config() -> impl IntoView {
                         </div>
                     </ConfigSection>
 
-                    // Automation Section
+                    {/* Automation Section */}
                     <ConfigSection title="Automatización" icon="schedule">
                         <div class="space-y-6">
                             <div class="flex items-center justify-between py-2">
@@ -411,18 +466,51 @@ pub fn Config() -> impl IntoView {
                         </div>
                     </ConfigSection>
 
-                    // Synchronization Section
+                    {/* Synchronization Section */}
                     <ConfigSection title="Sincronización" icon="sync">
                         <div class="space-y-6">
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Endpoint de Sincronía"</label>
-                                <input
-                                    class="bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
-                                    type="text"
-                                    placeholder="http://localhost:3000/"
-                                    prop:value=move || config.get().sync_server_url
-                                    on:input=move |ev| set_config.update(|c| c.sync_server_url = event_target_value(&ev))
-                                />
+                                <div class="flex gap-2">
+                                    <input
+                                        class="flex-1 bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
+                                        type="text"
+                                        placeholder="http://localhost:3001/api/sync"
+                                        prop:value=move || config.get().sync_server_url
+                                        on:input=move |ev| {
+                                            set_config.update(|c| c.sync_server_url = event_target_value(&ev));
+                                            set_sync_status_msg.set(String::new());
+                                        }
+                                    />
+                                    <button
+                                        class="px-4 py-2 bg-black dark:bg-neutral-800 text-white dark:text-neutral-200 text-[10px] font-bold uppercase hover:bg-neutral-800 dark:hover:bg-neutral-700 border border-black dark:border-neutral-600 transition-colors"
+                                        on:click=move |_| {
+                                            let url = config.get().sync_server_url.clone();
+                                            spawn_local(async move {
+                                                set_sync_status_msg.set("Verificando...".to_string());
+                                                match check_endpoint(&url).await {
+                                                    Ok(_) => set_sync_status_msg.set("✅ Servidor activo".to_string()),
+                                                    Err(e) => set_sync_status_msg.set(format!("❌ {}", e)),
+                                                }
+                                            });
+                                        }
+                                    >
+                                        "PROBAR"
+                                    </button>
+                                </div>
+                                {move || {
+                                    let msg = sync_status_msg.get();
+                                    if !msg.is_empty() {
+                                        let color_class = if msg.contains("✅") { "text-green-600 dark:text-green-400" } else { "text-red-600 dark:text-red-400" };
+                                        view! {
+                                            <div class=format!("text-[10px] font-bold uppercase mt-1 {}", color_class)>
+                                                {msg}
+                                            </div>
+                                        }.into_any()
+                                    } else {
+                                        ().into_any()
+                                    }
+                                }}
                             </div>
                             <div class="grid grid-cols-3 gap-2">
                                 <SyncButton label="Pull" on_click=h_pull_click icon="arrow_upward" />
@@ -432,7 +520,7 @@ pub fn Config() -> impl IntoView {
                         </div>
                     </ConfigSection>
 
-                    // SMTP & Nutrition Sections
+                    {/* SMTP & Nutrition Sections */}
                     <section class="mb-10">
                         <div class="grid grid-cols-1 gap-12">
                             <div>
@@ -503,7 +591,7 @@ pub fn Config() -> impl IntoView {
                         <div class="hairline-divider mt-10"></div>
                     </section>
 
-                    // Constraints Section
+                    {/* Constraints Section */}
                     <ConfigSection title="Restricciones" icon="block">
                         <div class="space-y-4">
                             <div class="flex gap-2">
@@ -551,7 +639,7 @@ pub fn Config() -> impl IntoView {
                         </div>
                     </ConfigSection>
 
-                    // Data Vault Section
+                    {/* Data Vault Section */}
                     <section class="mb-20">
                         <div class="section-header">
                             <span class="material-symbols-outlined dark:text-white">"database"</span>
@@ -582,6 +670,36 @@ pub fn Config() -> impl IntoView {
                         <span class="text-xs font-bold uppercase tracking-[0.3em]">"Persistir Cambios Globales"</span>
                         <span class="material-symbols-outlined text-accent">"bolt"</span>
                     </button>
+
+                    {/* Debug Logger Section */}
+                    {move || {
+                        let logs = debug_logs.get();
+                        if !logs.is_empty() {
+                            view! {
+                                <ConfigSection title="Consola de Depuración" icon="terminal">
+                                    <div class="flex flex-col gap-4">
+                                        <div class="w-full h-48 bg-black dark:bg-neutral-900 border border-neutral-700 p-2 overflow-y-auto font-mono text-[10px] text-green-500 dark:text-green-400">
+                                            {logs.into_iter().rev().map(|log| {
+                                                view! { <div class="mb-1 border-b border-neutral-800 pb-1">{log}</div> }
+                                            }).collect_view()}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            on:click=move |_| {
+                                                clear_debug_logs();
+                                                set_debug_logs.set(Vec::new());
+                                            }
+                                            class="w-full border border-black dark:border-neutral-700 dark:text-white py-2 text-[9px] font-bold uppercase hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                                        >
+                                            "Limpiar Consola"
+                                        </button>
+                                    </div>
+                                </ConfigSection>
+                            }.into_any()
+                        } else {
+                            ().into_any()
+                        }
+                    }}
                 </form>
             </main>
 

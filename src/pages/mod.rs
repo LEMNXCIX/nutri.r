@@ -1,4 +1,5 @@
 pub mod achievements;
+pub mod add;
 pub mod calendar;
 pub mod config;
 pub mod daily_view;

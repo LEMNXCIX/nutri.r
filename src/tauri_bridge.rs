@@ -1,5 +1,9 @@
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
+
+static DEBUG_LOGS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
@@ -410,16 +414,47 @@ pub fn is_tauri() -> bool {
     false
 }
 
-const API_BASE_URL: &str = "http://localhost:3001/api";
+pub fn log_trace(msg: String) {
+    if let Ok(mut logs) = DEBUG_LOGS.lock() {
+        logs.push(msg.clone());
+        if logs.len() > 100 {
+            logs.remove(0);
+        }
+    }
 
-async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> {
+    if let Some(window) = web_sys::window() {
+        let mut init = web_sys::CustomEventInit::new();
+        init.detail(&JsValue::from_str(&msg));
+        init.bubbles(true);
+        if let Ok(event) = web_sys::CustomEvent::new_with_event_init_dict("debug-log", &init) {
+            let _ = window.dispatch_event(&event);
+        }
+    }
+    log::info!("[TRACE] {}", msg);
+}
+
+pub fn get_debug_logs() -> Vec<String> {
+    DEBUG_LOGS.lock().map(|l| l.clone()).unwrap_or_default()
+}
+
+pub fn clear_debug_logs() {
+    if let Ok(mut logs) = DEBUG_LOGS.lock() {
+        logs.clear();
+    }
+}
+
+async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<JsValue, String> {
     let client = reqwest::Client::new();
-    log::info!("Fallback API: Ejecutando comando '{}'", cmd);
+    log::info!(
+        "Fallback API: Ejecutando comando '{}' contra '{}'",
+        cmd,
+        api_base
+    );
 
     match cmd {
         "get_config" => {
             let res = client
-                .get(format!("{}/config", API_BASE_URL))
+                .get(format!("{}/config", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -430,7 +465,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let save_args: SaveConfigArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/config", API_BASE_URL))
+                .post(format!("{}/config", api_base))
                 .json(&save_args.config)
                 .send()
                 .await
@@ -439,7 +474,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_index" => {
             let res = client
-                .get(format!("{}/plans", API_BASE_URL))
+                .get(format!("{}/plans", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -453,7 +488,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let id_args: IdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .get(format!("{}/plans/{}", API_BASE_URL, id_args.id))
+                .get(format!("{}/plans/{}", api_base, id_args.id))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -462,7 +497,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "generate_week" => {
             let res = client
-                .post(format!("{}/plans/generate", API_BASE_URL))
+                .post(format!("{}/plans/generate", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -471,7 +506,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_favorite_plans" => {
             let res = client
-                .get(format!("{}/plans/favorites", API_BASE_URL))
+                .get(format!("{}/plans/favorites", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -485,10 +520,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let fav_args: PlanIdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .post(format!(
-                    "{}/plans/{}/favorite",
-                    API_BASE_URL, fav_args.plan_id
-                ))
+                .post(format!("{}/plans/{}/favorite", api_base, fav_args.plan_id))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -499,10 +531,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let meta_args: PlanIdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .get(format!(
-                    "{}/plans/{}/metadata",
-                    API_BASE_URL, meta_args.plan_id
-                ))
+                .get(format!("{}/plans/{}/metadata", api_base, meta_args.plan_id))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -516,10 +545,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let rate_args: SetRatingArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!(
-                    "{}/plans/{}/rating",
-                    API_BASE_URL, rate_args.plan_id
-                ))
+                .post(format!("{}/plans/{}/rating", api_base, rate_args.plan_id))
                 .json(&rate_args)
                 .send()
                 .await
@@ -530,7 +556,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let note_args: SetNoteArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/plans/{}/note", API_BASE_URL, note_args.plan_id))
+                .post(format!("{}/plans/{}/note", api_base, note_args.plan_id))
                 .json(&note_args)
                 .send()
                 .await
@@ -541,7 +567,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let shop_args: PlanIdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .post(format!("{}/shopping/{}", API_BASE_URL, shop_args.plan_id))
+                .post(format!("{}/shopping/{}", api_base, shop_args.plan_id))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -555,7 +581,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let shop_args: PlanIdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .get(format!("{}/shopping/{}", API_BASE_URL, shop_args.plan_id))
+                .get(format!("{}/shopping/{}", api_base, shop_args.plan_id))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -571,7 +597,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             client
                 .post(format!(
                     "{}/shopping/{}/toggle",
-                    API_BASE_URL, item_args.plan_id
+                    api_base, item_args.plan_id
                 ))
                 .json(&item_args)
                 .send()
@@ -584,7 +610,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let url = format!(
                 "{}/calendar?startDate={}&endDate={}",
-                API_BASE_URL, range_args.start_date, range_args.end_date
+                api_base, range_args.start_date, range_args.end_date
             );
             let res = client.get(url).send().await.map_err(|e| e.to_string())?;
             let entries = res
@@ -597,7 +623,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let assign_args: AssignPlanArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/calendar", API_BASE_URL))
+                .post(format!("{}/calendar", api_base))
                 .json(&assign_args)
                 .send()
                 .await
@@ -608,7 +634,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let assign_args: AssignWeeklyPlanArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/calendar/weekly", API_BASE_URL))
+                .post(format!("{}/calendar/weekly", api_base))
                 .json(&assign_args)
                 .send()
                 .await
@@ -619,7 +645,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let rem_args: RemoveEntryArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .delete(format!("{}/calendar", API_BASE_URL))
+                .delete(format!("{}/calendar", api_base))
                 .json(&rem_args)
                 .send()
                 .await
@@ -630,7 +656,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let water_args: GetWaterArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .get(format!("{}/water/{}", API_BASE_URL, water_args.date))
+                .get(format!("{}/water/{}", api_base, water_args.date))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -641,7 +667,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let water_args: UpdateWaterArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/water/{}", API_BASE_URL, water_args.date))
+                .post(format!("{}/water/{}", api_base, water_args.date))
                 .json(&water_args)
                 .send()
                 .await
@@ -653,7 +679,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let url = format!(
                 "{}/water/history?startDate={}&endDate={}",
-                API_BASE_URL, hist_args.start_date, hist_args.end_date
+                api_base, hist_args.start_date, hist_args.end_date
             );
             let res = client.get(url).send().await.map_err(|e| e.to_string())?;
             let history = res
@@ -664,7 +690,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_statistics" => {
             let res = client
-                .get(format!("{}/stats", API_BASE_URL))
+                .get(format!("{}/stats", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -673,7 +699,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_ingredient_trends" => {
             let res = client
-                .get(format!("{}/stats/trends", API_BASE_URL))
+                .get(format!("{}/stats/trends", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -687,10 +713,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let nut_args: PlanIdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .get(format!(
-                    "{}/plans/{}/nutrition",
-                    API_BASE_URL, nut_args.plan_id
-                ))
+                .get(format!("{}/plans/{}/nutrition", api_base, nut_args.plan_id))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -704,10 +727,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let var_args: VariationArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .post(format!(
-                    "{}/plans/{}/variation",
-                    API_BASE_URL, var_args.plan_id
-                ))
+                .post(format!("{}/plans/{}/variation", api_base, var_args.plan_id))
                 .json(&var_args)
                 .send()
                 .await
@@ -719,7 +739,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let search_args: SearchArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .post(format!("{}/plans/search", API_BASE_URL))
+                .post(format!("{}/plans/search", api_base))
                 .json(&search_args.filters)
                 .send()
                 .await
@@ -732,7 +752,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_all_tags" => {
             let res = client
-                .get(format!("{}/tags", API_BASE_URL))
+                .get(format!("{}/tags", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -743,7 +763,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let tag_args: CreateTagArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .post(format!("{}/tags", API_BASE_URL))
+                .post(format!("{}/tags", api_base))
                 .json(&tag_args)
                 .send()
                 .await
@@ -755,7 +775,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let tag_args: IdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .delete(format!("{}/tags/{}", API_BASE_URL, tag_args.id))
+                .delete(format!("{}/tags/{}", api_base, tag_args.id))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -767,7 +787,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             client
                 .post(format!(
                     "{}/tags/{}/{}",
-                    API_BASE_URL, tag_args.plan_id, tag_args.tag_id
+                    api_base, tag_args.plan_id, tag_args.tag_id
                 ))
                 .send()
                 .await
@@ -780,7 +800,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             client
                 .delete(format!(
                     "{}/tags/{}/{}",
-                    API_BASE_URL, tag_args.plan_id, tag_args.tag_id
+                    api_base, tag_args.plan_id, tag_args.tag_id
                 ))
                 .send()
                 .await
@@ -789,7 +809,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_pantry_items" => {
             let res = client
-                .get(format!("{}/pantry", API_BASE_URL))
+                .get(format!("{}/pantry", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -803,7 +823,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let item_args: PantryItemArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/pantry", API_BASE_URL))
+                .post(format!("{}/pantry", api_base))
                 .json(&item_args.item)
                 .send()
                 .await
@@ -814,7 +834,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let item_args: PantryItemArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .put(format!("{}/pantry", API_BASE_URL))
+                .put(format!("{}/pantry", api_base))
                 .json(&item_args.item)
                 .send()
                 .await
@@ -825,7 +845,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let id_args: IdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .delete(format!("{}/pantry/{}", API_BASE_URL, id_args.id))
+                .delete(format!("{}/pantry/{}", api_base, id_args.id))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -833,7 +853,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "export_data" => {
             let res = client
-                .get(format!("{}/backup/export", API_BASE_URL))
+                .get(format!("{}/backup/export", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -844,7 +864,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let import_args: ImportDataArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/backup/import", API_BASE_URL))
+                .post(format!("{}/backup/import", api_base))
                 .json(&import_args.backup)
                 .send()
                 .await
@@ -853,7 +873,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_achievements" => {
             let res = client
-                .get(format!("{}/achievements", API_BASE_URL))
+                .get(format!("{}/achievements", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -865,7 +885,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_ui_preferences" => {
             let res = client
-                .get(format!("{}/preferences", API_BASE_URL))
+                .get(format!("{}/preferences", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -879,7 +899,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let pref_args: SavePreferencesArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/preferences", API_BASE_URL))
+                .post(format!("{}/preferences", api_base))
                 .json(&pref_args.preferences)
                 .send()
                 .await
@@ -890,7 +910,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let email_args: SendEmailArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/email/send", API_BASE_URL))
+                .post(format!("{}/email/send", api_base))
                 .json(&email_args)
                 .send()
                 .await
@@ -899,7 +919,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "perform_sync" => {
             let res = client
-                .post(format!("{}/sync", API_BASE_URL))
+                .post(format!("{}/sync", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -908,7 +928,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "pull_from_server" => {
             let res = client
-                .post(format!("{}/sync/pull", API_BASE_URL))
+                .post(format!("{}/sync/pull", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -917,7 +937,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "push_to_server" => {
             let res = client
-                .post(format!("{}/sync/push", API_BASE_URL))
+                .post(format!("{}/sync/push", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -926,7 +946,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_sync_status" => {
             let res = client
-                .get(format!("{}/sync/status", API_BASE_URL))
+                .get(format!("{}/sync/status", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -935,7 +955,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_excluded_ingredients" => {
             let res = client
-                .get(format!("{}/ingredients/excluded", API_BASE_URL))
+                .get(format!("{}/ingredients/excluded", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -946,7 +966,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let excl_args: SaveExcludedArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             client
-                .post(format!("{}/ingredients/excluded", API_BASE_URL))
+                .post(format!("{}/ingredients/excluded", api_base))
                 .json(&excl_args.ingredients)
                 .send()
                 .await
@@ -955,7 +975,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "get_ingredient_stats" => {
             let res = client
-                .get(format!("{}/ingredients/stats", API_BASE_URL))
+                .get(format!("{}/ingredients/stats", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -969,7 +989,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
             let excl_args: ToggleExclusionArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
             let res = client
-                .post(format!("{}/ingredients/toggle", API_BASE_URL))
+                .post(format!("{}/ingredients/toggle", api_base))
                 .json(&excl_args)
                 .send()
                 .await
@@ -979,7 +999,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
         }
         "list_ollama_models" => {
             let res = client
-                .get(format!("{}/ollama/models", API_BASE_URL))
+                .get(format!("{}/ollama/models", api_base))
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -997,11 +1017,98 @@ async fn call_api_fallback(cmd: &str, args: JsValue) -> Result<JsValue, String> 
     }
 }
 
-async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
+pub async fn check_endpoint(url: &str) -> Result<(), String> {
+    log_trace(format!("CHECK_ENDPOINT: {}", url));
+    let client = reqwest::Client::builder()
+        .build()
+        .map_err(|e: reqwest::Error| e.to_string())?;
+
+    match client.get(url).send().await {
+        Ok(res) => {
+            let status = res.status();
+            log_trace(format!("CHECK_RES: {} -> {}", url, status));
+            if status.is_success() {
+                Ok(())
+            } else {
+                Err(format!(
+                    "Servidor alcanzado pero devolvió error: {}",
+                    status
+                ))
+            }
+        }
+        Err(e) => {
+            let e: reqwest::Error = e;
+            let msg = e.to_string();
+            log_trace(format!("CHECK_ERR: {} -> {}", url, msg));
+            if msg.contains("Failed to fetch") || msg.contains("NetworkError") {
+                Err("No se pudo conectar al servidor. Verifica la IP, el puerto y que no haya un firewall bloqueando la conexión.".to_string())
+            } else {
+                Err(format!("Error de red: {}", msg))
+            }
+        }
+    }
+}
+
+async fn get_api_base_url() -> String {
     if is_tauri() {
+        if let Ok(config_js) = invoke("get_config", JsValue::NULL).await {
+            if let Ok(config) = serde_wasm_bindgen::from_value::<AppConfig>(config_js) {
+                if !config.sync_server_url.is_empty() {
+                    let mut base = config.sync_server_url.trim_end_matches('/').to_string();
+                    if base.ends_with("/api/sync") {
+                        base = base.replace("/api/sync", "/api");
+                    } else if !base.contains("/api") {
+                        base = format!("{}/api", base);
+                    }
+                    return base;
+                }
+            }
+        }
+    }
+    // // Web
+    // if let Some(window) = web_sys::window() {
+    //     if let Ok(origin) = window.location().origin() {
+    //         if !origin.is_empty() && origin != "null" {
+    //             return format!("{}/api", origin);
+    //         }
+    //     }
+    // }
+    "http://localhost:3001/api".to_string()
+}
+
+async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
+    let mut use_tauri = is_tauri();
+
+    // Comandos que SIEMPRE deben ser locales en Android para poder configurar la IP
+    let is_config_cmd = cmd == "get_config" || cmd == "save_config" || cmd == "is_mobile";
+
+    if use_tauri && !is_config_cmd {
+        match invoke("is_mobile", JsValue::NULL).await {
+            Ok(js_val) => {
+                if js_val.as_bool().unwrap_or(false) {
+                    use_tauri = false;
+                }
+            }
+            Err(_) => {}
+        }
+    }
+
+    if use_tauri {
         invoke(cmd, args).await.map_err(|e| format!("{:?}", e))
     } else {
-        call_api_fallback(cmd, args).await
+        let api_base = get_api_base_url().await;
+        let _ = notify(
+            Ok(()),
+            Some(&format!("API Base: {} - Command: {}", api_base, cmd)),
+        );
+
+        log_trace(format!("REQ: {} a {}", cmd, api_base));
+        let res = call_api_fallback(cmd, args, &api_base).await;
+        match &res {
+            Ok(_) => log_trace(format!("RES: {} -> OK", cmd)),
+            Err(e) => log_trace(format!("RES: {} -> ERR: {}", cmd, e)),
+        }
+        res
     }
 }
 
@@ -1033,10 +1140,12 @@ fn notify<T>(result: Result<T, String>, success_msg: Option<&str>) -> Result<T, 
     match &result {
         Ok(_) => {
             if let Some(msg) = success_msg {
+                log_trace(format!("NOTIFY OK : {}", msg));
                 emit_toast(msg, false);
             }
         }
         Err(e) => {
+            log_trace(format!("NOTIFY ERR: {}", e));
             emit_toast(e, true);
         }
     }

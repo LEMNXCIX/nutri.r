@@ -1,0 +1,25 @@
+# Exclude huge folders
+target/
+src-tauri/target/
+node_modules/
+dist/
+trunk
+.git/
+.vscode/
+
+# Recursive exclusions
+**/target
+**/node_modules
+**/dist
+**/.git
+**/.tauri
+**/*.log
+**/*.orig
+**/.github
+**/.devcontainer
+
+# App specific
+src-tauri/nutri-app/gen/
+src-tauri/nutri-app/target/
+src-tauri/nutri-app/android/
+src-tauri/nutri-app/ios/

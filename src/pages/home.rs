@@ -1,10 +1,9 @@
-use crate::components::ui::Loading;
+use leptos::prelude::*;
 use crate::tauri_bridge::{
-    calculate_nutrition, generate_week, get_calendar_range, get_index, get_water_intake,
+    calculate_nutrition, get_calendar_range, get_index, get_water_intake,
     update_water_intake, MealType,
 };
 use chrono::Local;
-use leptos::portal::Portal;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::A;
@@ -69,23 +68,6 @@ pub fn Home() -> impl IntoView {
     // Computed Stats & Meals
     let (daily_stats, set_daily_stats) = signal((0.0, 0.0, 0.0, 0.0));
     let (meal_details, set_meal_details) = signal(Vec::<(String, String, f32)>::new());
-    let (generating, set_generating) = signal(false);
-
-    let on_generate = move |_| {
-        set_generating.set(true);
-        spawn_local(async move {
-            match generate_week().await {
-                Ok(_) => {
-                    if let Some(window) = web_sys::window() {
-                        let _ = window.location().reload();
-                    }
-                }
-                Err(_) => {
-                    set_generating.set(false);
-                }
-            }
-        });
-    };
 
     Effect::new(move |_| {
         if let Some(entries) = today_resource.get() {
@@ -272,37 +254,10 @@ pub fn Home() -> impl IntoView {
             <section class="px-6 pb-12">
                 <div class="flex items-center justify-between mb-8">
                     <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">"My Archive"</h2>
-                    <button class="bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 p-2 flex items-center justify-center">
+                    <A href="/add" attr:class="bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 p-2 flex items-center justify-center">
                         <span class="material-symbols-outlined !text-sm">"add"</span>
-                    </button>
+                    </A>
                 </div>
-
-                <div class="mb-12">
-                   <button 
-                        on:click=on_generate
-                        disabled=move || generating.get()
-                        class="w-full py-4 brutalist-border bg-white dark:bg-background-dark hover:bg-neutral-50 dark:hover:bg-neutral-900 flex items-center justify-center gap-3 transition-all group disabled:opacity-50"
-                    >
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-white">
-                            {move || if generating.get() { "Optimizing..." } else { "Generate Week Plan" }}
-                        </span>
-                        <span class="material-symbols-outlined !text-lg text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">"auto_awesome"</span>
-                   </button>
-                </div>
-
-                {move || -> AnyView {
-                    if generating.get() {
-                        view! {
-                            <Portal>
-                                <div class="fixed inset-0 bg-white/95 dark:bg-background-dark/95 z-[1000] flex flex-col items-center justify-center animate-in fade-in">
-                                    <Loading />
-                                </div>
-                            </Portal>
-                        }.into_any()
-                    } else {
-                        ().into_any()
-                    }
-                }}
 
                 <div class="space-y-4">
                     <Suspense fallback=move || view! { <div class="animate-pulse h-12 bg-neutral-50 dark:bg-neutral-900 mb-4"></div> }>

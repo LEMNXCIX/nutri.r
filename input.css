@@ -229,6 +229,18 @@
         padding-top: env(safe-area-inset-top);
     }
 
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .pl-safe {
+        padding-left: env(safe-area-inset-left);
+    }
+
+    .pr-safe {
+        padding-right: env(safe-area-inset-right);
+    }
+
     .shadow-brutalist {
         box-shadow: 4px 4px 0 0 #0a0a0a;
     }

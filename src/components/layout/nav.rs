@@ -63,7 +63,7 @@ pub fn Navbar() -> impl IntoView {
         </header>
 
         // ── Mobile top bar (hidden on desktop) ─────────────────────────
-        <header class="md:hidden flex items-center justify-between px-5 py-3 sticky top-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl z-40 border-b border-neutral-200/30 dark:border-neutral-800/30">
+        <header class="md:hidden pt-safe flex items-center justify-between px-5 py-3 sticky top-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl z-40 border-b border-neutral-200/30 dark:border-neutral-800/30">
             <div class="flex flex-col">
                 <div class="text-xs font-bold tracking-[0.15em] uppercase">"nutri.r"</div>
                 <div class="flex items-center gap-1.5 mt-0.5">
@@ -87,7 +87,7 @@ pub fn Navbar() -> impl IntoView {
         </header>
 
         // ── Mobile bottom navbar (hidden on desktop) ───────────────────
-        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl border-t border-neutral-200/30 dark:border-neutral-800/30 px-6 pb-10 pt-4 z-40">
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl border-t border-neutral-200/30 dark:border-neutral-800/30 px-6 pb-10 pt-4 pb-safe z-40">
             <div class="flex items-center justify-between max-w-md mx-auto relative">
                 <BottomNavLink
                     href="/"

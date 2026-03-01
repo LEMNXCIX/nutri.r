@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  nutri-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nutri-frontend
+    ports:
+      - "1420:80"
+    depends_on:
+      - nutri-server
+    restart: unless-stopped
+
+  nutri-server:
+    build:
+      context: ./src-tauri
+      dockerfile: ./nutri-server/Dockerfile
+    container_name: nutri-server
+    environment:
+      - RUST_LOG=info
+      - PORT=3001
+      - NUTRI_DATA_DIR=/data
+    ports:
+      - "3001:3001"
+    volumes:
+      - C:/Users/emele/AppData/Roaming/com.emele.nutri-r:/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# volumes:
+#   nutri_data:
+#     driver: local

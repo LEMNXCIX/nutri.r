@@ -5,7 +5,11 @@ use axum::{
 use directories::BaseDirs;
 use nutri_core::state::AppState;
 use std::{net::SocketAddr, path::PathBuf, sync::Arc};
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::{
+    cors::{Any, CorsLayer},
+    trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+};
+use tracing::Level;
 
 mod error;
 mod handlers;
@@ -159,10 +163,20 @@ async fn main() {
         .route("/api/backup/import", post(import_export::import_data))
         // Email
         .route("/api/email/send", post(email::send_plan_email))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_request(DefaultOnRequest::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO)),
+        )
         .layer(cors)
         .with_state(shared_state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(3001);
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
