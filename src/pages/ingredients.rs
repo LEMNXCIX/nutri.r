@@ -56,7 +56,7 @@ pub fn Ingredients() -> impl IntoView {
     };
 
     view! {
-        <div class="w-full font-sans pb-32 animate-in fade-in duration-500">
+        <div class="w-full font-sans pb-64 md:pb-32 animate-in fade-in duration-500">
             // -- HEADER --
             <header class="flex items-center justify-between px-6 py-8 sticky top-0 bg-white dark:bg-background-dark z-40 border-b border-neutral-100 dark:border-neutral-800">
                 <A href="/" attr:class="flex items-center gap-4">
@@ -155,7 +155,7 @@ pub fn Ingredients() -> impl IntoView {
             </section>
 
             // -- FOOTER SELECTION STATUS --
-            <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-neutral-100 dark:border-neutral-800 px-6 py-8 flex justify-between items-center z-50">
+            <div class="fixed bottom-[74px] md:bottom-0 left-0 right-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-sm border-t border-neutral-100 dark:border-neutral-800 px-6 py-6 flex justify-between items-center z-50">
                 <div class="flex flex-col">
                      <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Estado de la Base de Datos"</span>
                     <span class="text-lg font-light tracking-tighter uppercase dark:text-white">

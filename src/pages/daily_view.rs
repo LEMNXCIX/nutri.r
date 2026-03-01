@@ -1,10 +1,17 @@
+use crate::components::ui::Loading;
+use crate::tauri_bridge::{get_calendar_range, get_index, remove_calendar_entry, MealType};
 use chrono::{Datelike, NaiveDate};
 use leptos::prelude::*;
-use leptos_router::hooks::use_params_map;
+use leptos::task::spawn_local;
+use leptos_router::hooks::{use_navigate, use_params_map};
+use std::collections::HashMap;
 
 #[component]
 pub fn DailyView() -> impl IntoView {
     let params = use_params_map();
+    let navigate = use_navigate();
+    let navigate_add = navigate.clone();
+    let navigate_main = navigate.clone();
     let date_param = move || {
         params
             .read()
@@ -12,35 +19,57 @@ pub fn DailyView() -> impl IntoView {
             .unwrap_or_else(|| "2026-02-25".to_string())
     };
 
+    let calendar_resource = LocalResource::new(move || {
+        let date = date_param();
+        async move {
+            get_calendar_range(date.clone(), date)
+                .await
+                .unwrap_or_default()
+        }
+    });
+
+    let plans_resource =
+        LocalResource::new(move || async move { get_index().await.unwrap_or_default() });
+
     let parsed_date = move || {
         NaiveDate::parse_from_str(&date_param(), "%Y-%m-%d")
             .unwrap_or_else(|_| NaiveDate::from_ymd_opt(2026, 2, 25).unwrap())
     };
 
     let day_name = move || match parsed_date().weekday() {
-        chrono::Weekday::Mon => "Monday",
-        chrono::Weekday::Tue => "Tuesday",
-        chrono::Weekday::Wed => "Wednesday",
-        chrono::Weekday::Thu => "Thursday",
-        chrono::Weekday::Fri => "Friday",
-        chrono::Weekday::Sat => "Saturday",
-        chrono::Weekday::Sun => "Sunday",
+        chrono::Weekday::Mon => "Lunes",
+        chrono::Weekday::Tue => "Martes",
+        chrono::Weekday::Wed => "Miércoles",
+        chrono::Weekday::Thu => "Jueves",
+        chrono::Weekday::Fri => "Viernes",
+        chrono::Weekday::Sat => "Sábado",
+        chrono::Weekday::Sun => "Domingo",
     };
 
     let month_name = move || match parsed_date().month() {
-        1 => "January",
-        2 => "February",
-        3 => "March",
-        4 => "April",
-        5 => "May",
-        6 => "June",
-        7 => "July",
-        8 => "August",
-        9 => "September",
-        10 => "October",
-        11 => "November",
-        12 => "December",
-        _ => "Unknown",
+        1 => "Enero",
+        2 => "Febrero",
+        3 => "Marzo",
+        4 => "Abril",
+        5 => "Mayo",
+        6 => "Junio",
+        7 => "Julio",
+        8 => "Agosto",
+        9 => "Septiembre",
+        10 => "Octubre",
+        11 => "Noviembre",
+        12 => "Diciembre",
+        _ => "Desconocido",
+    };
+
+    let on_remove = move |meal: MealType| {
+        let date = date_param();
+        let calendar_resource = calendar_resource.clone();
+        spawn_local(async move {
+            if let Ok(_) = remove_calendar_entry(date, meal).await {
+                calendar_resource.refetch();
+            }
+        });
     };
 
     view! {
@@ -69,8 +98,8 @@ pub fn DailyView() -> impl IntoView {
                         <div class="mt-4 flex justify-between items-end">
                             <span class="text-xs font-bold uppercase tracking-tighter text-zinc-400">{move || format!("{} {}", month_name(), parsed_date().year())}</span>
                             <div class="flex gap-2">
-                                <div class="px-3 py-1 bg-black text-white dark:bg-white dark:text-black text-[10px] font-black uppercase">Optimal</div>
-                                <div class="px-3 py-1 border border-black dark:border-neutral-700 text-[10px] font-black uppercase">Active</div>
+                                <div class="px-3 py-1 bg-black text-white dark:bg-white dark:text-black text-[10px] font-black uppercase">Óptimo</div>
+                                <div class="px-3 py-1 border border-black dark:border-neutral-700 text-[10px] font-black uppercase">Activo</div>
                             </div>
                         </div>
                     </div>
@@ -78,15 +107,15 @@ pub fn DailyView() -> impl IntoView {
 
                 <section class="grid grid-cols-3 gap-0 border-b border-black dark:border-neutral-800">
                     <div class="py-4 border-r border-black dark:border-neutral-800">
-                        <div class="text-[10px] uppercase font-bold text-zinc-400">Calories</div>
-                        <div class="text-lg font-black">1,840<span class="text-[10px] text-zinc-400 ml-1">/ 2.2k</span></div>
+                        <div class="text-[10px] uppercase font-bold text-zinc-400">Calorías</div>
+                        <div class="text-lg font-black">-- <span class="text-[10px] text-zinc-400 ml-1">/ 2.2k</span></div>
                     </div>
                     <div class="py-4 px-4 border-r border-black dark:border-neutral-800">
-                        <div class="text-[10px] uppercase font-bold text-zinc-400">Protein</div>
-                        <div class="text-lg font-black">142g</div>
+                        <div class="text-[10px] uppercase font-bold text-zinc-400">Proteína</div>
+                        <div class="text-lg font-black">--</div>
                     </div>
                     <div class="py-4 px-4">
-                        <div class="text-[10px] uppercase font-bold text-zinc-400">Status</div>
+                        <div class="text-[10px] uppercase font-bold text-zinc-400">Estado</div>
                         <div class="flex items-center gap-1">
                             <div class="w-2 h-2 bg-[#00FF66]"></div>
                             <div class="text-lg font-black uppercase">92%</div>
@@ -95,114 +124,115 @@ pub fn DailyView() -> impl IntoView {
                 </section>
 
                 <div class="mt-8 space-y-12">
-                    <section>
-                        <div class="flex justify-between items-baseline mb-4">
-                            <h2 class="text-3xl font-black italic uppercase tracking-tighter">Breakfast</h2>
-                            <span class="text-xs font-bold text-zinc-400">07:30 AM</span>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex items-center gap-4 group">
-                                <div class="w-16 h-16 bg-zinc-100 dark:bg-neutral-900 overflow-hidden border border-zinc-200 dark:border-neutral-800 flex-shrink-0">
-                                    <img alt="Greek Yogurt Bowl" class="grayscale w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNEHW93nqqC6FjrTPAfgFIQ-yp5mwk99YPL9wkpIL6Zs9_ovpGg7bxh-YKjicwtuNIUU4V5CZCVxgqwcaF1QpVN_jT4WrP8k6V6GnL3gVawVPCuo2_ZCClNP7V9cyB3yr1NFoiJI62ob_kI4ZFdiAsETQSm-fgx2FSuF4C2PoJ9sx17H5RtoRYBXn152zEyYYMIHMo-z9Zn4ysq-AMlas9UDGNnwdaoz7O3fXesSiCnbGGZN43miL7F2svxwc34Uu--L5puRWTdJH4"/>
-                                </div>
-                                <div class="flex-grow">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="font-bold text-sm uppercase">Greek Yogurt Bowl</h3>
-                                            <p class="text-xs text-zinc-500">Honey, Walnuts, Blueberries</p>
-                                        </div>
-                                        <span class="material-icons-outlined text-[#00FF66] text-xl">check_circle</span>
-                                    </div>
-                                    <div class="mt-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex gap-3">
-                                        <span>340 kcal</span>
-                                        <span>24g P</span>
-                                        <span>12g F</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 h-[1px] bg-zinc-200 dark:bg-neutral-800"></div>
-                    </section>
+                    <Suspense fallback=move || view! { <div class="flex justify-center p-10"><Loading /></div> }>
+                        {move || {
+                            let entries = calendar_resource.get().unwrap_or_default();
+                            let plans = plans_resource.get().unwrap_or_default();
 
-                    <section>
-                        <div class="flex justify-between items-baseline mb-4">
-                            <h2 class="text-3xl font-black italic uppercase tracking-tighter">Lunch</h2>
-                            <span class="text-xs font-bold text-zinc-400">01:15 PM</span>
-                        </div>
-                        <div class="space-y-6">
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 bg-zinc-100 dark:bg-neutral-900 overflow-hidden border border-zinc-200 dark:border-neutral-800 flex-shrink-0">
-                                    <img alt="Grilled Salmon Salad" class="grayscale w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASHwVHo5iU7NZSV8t9afO2mkvP4ngQR-Q5Zl8dmqykgBa1zGWtAkri8BP1Oc-oSrwGtBomDE7e80t5r8gp0oSJ4kmSAerU3rB3RfikPS2HCVwQApEs5v1Zjbh7TUypg1zpI1-OQBM_YOVpI6AQ2mI-3F2ykYKtptqlmoQjH2V6xmb_zb4VuUx0nZuICNuONzKCGSJnStUBfqksFI7zGS9i1CR2m6vq9ROeLzqbGawpFtd0Stm9QF86bOJuNyvQg8g3omy9aY_zsoB6"/>
-                                </div>
-                                <div class="flex-grow">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="font-bold text-sm uppercase">Grilled Salmon Salad</h3>
-                                            <p class="text-xs text-zinc-500">Spinach, Quinoa, Lemon Vinaigrette</p>
-                                        </div>
-                                        <span class="material-icons-outlined text-[#00FF66] text-xl">check_circle</span>
-                                    </div>
-                                    <div class="mt-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex gap-3">
-                                        <span>520 kcal</span>
-                                        <span>38g P</span>
-                                        <span>22g F</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 bg-zinc-100 dark:bg-neutral-900 overflow-hidden border border-zinc-200 dark:border-neutral-800 flex-shrink-0">
-                                    <img alt="Sourdough Bread" class="grayscale w-full h-full object-cover opacity-50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-fJcLRr4P0_lOJw_XtBombMSQ_iOxngMRNi8umaD1G1HxZpT5kJX6N3-i9R-3fgsV3Zyg2aDYltgyAR-19_C3JTdDaqHQDeQ8jVoMFAtlVALpbrTJJDiuHiZ2VH7vpSLnB43Cf6Rz8raFcD6YcTq1sx9gLcrKukyzsFgrqu2-bRR3VC-4JYT2-prHct7h6DBUC3KmIGvrF8LOmMUzXIpU5AP1rPMeecTuLc6mDahTCIMuA1dd_F7TB6U_yuEreNkmq8XM1u4Jh3v6"/>
-                                </div>
-                                <div class="flex-grow">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="font-bold text-sm uppercase opacity-50">Sourdough Slice</h3>
-                                            <p class="text-xs text-zinc-500 italic">Optional side</p>
-                                        </div>
-                                        <div class="w-5 h-5 border border-zinc-300 dark:border-neutral-700"></div>
-                                    </div>
-                                    <div class="mt-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex gap-3">
-                                        <span>110 kcal</span>
-                                        <span>4g P</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 h-[1px] bg-zinc-200 dark:bg-neutral-800"></div>
-                    </section>
+                            let mut meal_map = HashMap::new();
+                            for entry in entries {
+                                meal_map.insert(entry.meal_type, entry.plan_id);
+                            }
 
-                    <section>
-                        <div class="flex justify-between items-baseline mb-4">
-                            <h2 class="text-3xl font-black italic uppercase tracking-tighter">Dinner</h2>
-                            <span class="text-xs font-bold text-zinc-400">08:00 PM</span>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 bg-zinc-100 dark:bg-neutral-900 overflow-hidden border-2 border-dashed border-zinc-300 dark:border-neutral-700 flex-shrink-0 flex items-center justify-center">
-                                    <span class="material-icons-outlined text-zinc-400">restaurant</span>
-                                </div>
-                                <div class="flex-grow">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="font-bold text-sm uppercase">Black Garlic Chicken</h3>
-                                            <p class="text-xs text-zinc-500">Broccoli, Roasted Sweet Potato</p>
+                            vec![
+                                (MealType::Breakfast, "Desayuno", "07:30 AM"),
+                                (MealType::Lunch, "Almuerzo", "01:15 PM"),
+                                (MealType::Dinner, "Cena", "08:00 PM"),
+                                (MealType::Snack, "Snack", "04:30 PM"),
+                            ].into_iter().map(|(m_type, label, time)| {
+                                let plan_id = meal_map.get(&m_type).cloned();
+                                let plan_info = plan_id.as_ref().and_then(|id| {
+                                    plans.iter().find(|p| p.id == *id)
+                                });
+
+                                let description = if let (Some(_info), Some(p_id)) = (plan_info, plan_id.as_ref()) {
+                                    // Try to match the meal description from weekly_structure if available
+                                    // But we don't know the day_index for this specific date easily without more info
+                                    // For now, let's just show the Plan ID or a generic "Assigned"
+                                    // In a real scenario we'd need to know which day of the plan this is.
+                                    // Let's assume day_index is derived from the creation date vs this date?
+                                    // Actually, let's just show "Plan: [ID]" for now.
+                                    format!("Plan: {}", &p_id[..8.min(p_id.len())])
+                                } else {
+                                    "No asignado".to_string()
+                                };
+
+                                let nav_detail = navigate_main.clone();
+                                let nav_assign = navigate_main.clone();
+                                let p_id_for_nav = plan_id.clone();
+                                let meal_type_for_remove = m_type;
+
+                                view! {
+                                    <section>
+                                        <div class="flex justify-between items-baseline mb-4">
+                                            <h2 class="text-3xl font-black italic uppercase tracking-tighter">{label}</h2>
+                                            <span class="text-xs font-bold text-zinc-400">{time}</span>
                                         </div>
-                                        <div class="w-5 h-5 border border-black dark:border-neutral-700"></div>
-                                    </div>
-                                    <div class="mt-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex gap-3">
-                                        <span>610 kcal</span>
-                                        <span>45g P</span>
-                                        <span>14g F</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 h-[1px] bg-zinc-200 dark:bg-neutral-800"></div>
-                    </section>
+                                        <div class="space-y-4">
+                                            <div class="flex items-center gap-4 group">
+                                                <div class="w-16 h-16 bg-zinc-100 dark:bg-neutral-900 overflow-hidden border border-zinc-200 dark:border-neutral-800 flex-shrink-0 flex items-center justify-center">
+                                                    <span class="material-icons-outlined text-zinc-400">restaurant</span>
+                                                </div>
+                                                <div class="flex-grow">
+                                                    <div class="flex justify-between items-start">
+                                                        <div
+                                                            on:click=move |_| {
+                                                                if let Some(id) = p_id_for_nav.as_ref() {
+                                                                    nav_detail(&format!("/plan/{}", id), Default::default());
+                                                                }
+                                                            }
+                                                            class="cursor-pointer"
+                                                        >
+                                                            <h3 class="font-bold text-sm uppercase">{description}</h3>
+                                                            {if let Some(info) = plan_info {
+                                                                view! {
+                                                                    <p class="text-[10px] text-zinc-500 mt-0.5">
+                                                                        {info.proteinas.join(", ")}
+                                                                    </p>
+                                                                }.into_any()
+                                                            } else {
+                                                                ().into_any()
+                                                            }}
+                                                        </div>
+                                                        <div class="flex gap-2">
+                                                            {if plan_id.is_some() {
+                                                                view! {
+                                                                    <button
+                                                                        on:click=move |_| on_remove(meal_type_for_remove)
+                                                                        class="text-zinc-300 hover:text-red-500 transition-colors"
+                                                                    >
+                                                                        <span class="material-icons-outlined text-xl">delete_outline</span>
+                                                                    </button>
+                                                                    <span class="material-icons-outlined text-[#00FF66] text-xl">check_circle</span>
+                                                                }.into_any()
+                                                            } else {
+                                                                view! {
+                                                                    <button
+                                                                        on:click=move |_| nav_assign("/calendar", Default::default())
+                                                                        class="text-zinc-300 hover:text-primary transition-colors"
+                                                                    >
+                                                                        <span class="material-icons-outlined text-xl">add_circle_outline</span>
+                                                                    </button>
+                                                                }.into_any()
+                                                            }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-6 h-[1px] bg-zinc-200 dark:bg-neutral-800"></div>
+                                    </section>
+                                }
+                            }).collect_view()
+                        }}
+                    </Suspense>
                 </div>
 
-                <button class="mt-12 w-full bg-black dark:bg-white text-white dark:text-black py-5 font-black uppercase tracking-[0.3em] text-sm">
-                    Add Supplement
+                <button
+                    on:click=move |_| navigate_add("/add", Default::default())
+                    class="mt-12 w-full bg-black dark:bg-white text-white dark:text-black py-5 font-black uppercase tracking-[0.3em] text-sm"
+                >
+                    Generar Nuevo Plan
                 </button>
             </main>
         </div>

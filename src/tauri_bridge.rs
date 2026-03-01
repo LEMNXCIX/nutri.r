@@ -125,7 +125,7 @@ pub struct ShoppingList {
     pub items: Vec<ShoppingItem>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum MealType {
     #[default]
     Breakfast,
