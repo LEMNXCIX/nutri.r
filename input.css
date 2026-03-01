@@ -129,14 +129,16 @@
 
     /* Professional Brutalist Markdown Styling */
     .prose-brutalist {
-        @apply text-sm leading-relaxed text-neutral-800;
-        white-space: pre-line;
+        @apply text-sm leading-relaxed text-neutral-800 dark:text-neutral-300;
+        /* white-space: pre-line removed to prevent table layout breakage */
     }
 
     .prose-brutalist h1,
     .prose-brutalist h2,
     .prose-brutalist h3 {
-        @apply font-black uppercase tracking-tighter text-neutral-950 mt-8 mb-4 leading-none;
+        @apply font-black uppercase tracking-tighter text-neutral-950 dark:text-white mt-8 mb-6 leading-[0.9] break-words;
+        overflow-wrap: break-word;
+        word-break: break-word;
     }
 
     .prose-brutalist h1 {
@@ -161,19 +163,20 @@
 
     /* Technical Tables */
     .prose-brutalist table {
-        @apply w-full border-collapse border border-neutral-950 my-6;
+        @apply w-full border-collapse border border-neutral-950 dark:border-neutral-700 my-8 block overflow-x-auto;
+        font-variant-numeric: tabular-nums;
     }
 
     .prose-brutalist th {
-        @apply bg-neutral-950 text-white p-3 text-left text-[10px] font-black uppercase tracking-widest border border-neutral-950;
+        @apply bg-neutral-950 dark:bg-neutral-800 text-white p-4 text-left text-[11px] font-black uppercase tracking-[0.2em] border border-neutral-950 dark:border-neutral-700 whitespace-nowrap;
     }
 
     .prose-brutalist td {
-        @apply p-3 border border-neutral-200 text-xs font-medium bg-white;
+        @apply p-4 border border-neutral-200 dark:border-neutral-700 text-[11px] font-medium bg-white dark:bg-neutral-900 dark:text-neutral-300 transition-colors;
     }
 
     .prose-brutalist tr:hover td {
-        @apply bg-neutral-50;
+        @apply bg-neutral-50 dark:bg-neutral-800/50;
     }
 
     /* Technical Lists */

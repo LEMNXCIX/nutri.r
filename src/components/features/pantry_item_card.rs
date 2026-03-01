@@ -19,20 +19,20 @@ pub fn PantryItemCard(
                 let days_until = (exp_date - today).num_days();
 
                 if days_until < 0 {
-                    ("EXPIRED", "text-red-500 bg-red-50 border-red-100")
+                    ("CADUCADO", "text-red-500 bg-red-50 border-red-100")
                 } else if days_until <= 7 {
                     (
-                        "CRITICAL STOCK",
+                        "DISPONIBILIDAD CRÍTICA",
                         "text-[#D4AF37] bg-black border-black shadow-lg shadow-black/20",
                     )
                 } else {
-                    ("STABLE STOCK", "text-gray-400 bg-white border-gray-100")
+                    ("STOCK ESTABLE", "text-gray-400 bg-white border-gray-100")
                 }
             } else {
-                ("INVALID DATE", "text-gray-300 bg-gray-50 border-gray-100")
+                ("FECHA INVÁLIDA", "text-gray-300 bg-gray-50 border-gray-100")
             }
         } else {
-            ("PERPETUAL", "text-gray-400 bg-white border-gray-100")
+            ("PERMANENTE", "text-gray-400 bg-white border-gray-100")
         }
     };
 
@@ -49,8 +49,8 @@ pub fn PantryItemCard(
 
     view! {
         <div class="bg-white dark:bg-neutral-900 p-8 brutalist-border dark:border-neutral-700 flex flex-col justify-between h-full group relative overflow-hidden transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-brutalist">
-            // Actions - High Contrast
-            <div class="absolute top-4 right-4 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all z-20">
+            // Actions - High Contrast - Always visible on mobile, hover on desktop
+            <div class="absolute top-4 right-4 flex gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-20">
                 <button
                     on:click={
                         let item = item.clone();
@@ -117,6 +117,7 @@ pub fn PantryItemCard(
             <div class=format!("mt-8 py-2 px-4 text-[9px] font-black tracking-[0.3em] transition-all uppercase text-center brutalist-border {}", status_class)>
                 {status_text}
             </div>
+
         </div>
     }
 }

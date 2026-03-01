@@ -26,7 +26,7 @@ pub fn Achievements() -> impl IntoView {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-in fade-in duration-700">
             <header class="mb-12 text-center">
                 <span class="inline-block px-4 py-1.5 rounded-full bg-yellow-500/10 text-yellow-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
-                    "Rewards & Milestones"
+                    "Recompensas e Hitos"
                 </span>
                 <h2 class="text-5xl font-black text-white tracking-tighter mb-4 uppercase italic premium-gradient-text">
                     "Logros y Trofeos"

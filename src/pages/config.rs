@@ -44,7 +44,7 @@ pub fn Config() -> impl IntoView {
             if let Some(msg) = ev.detail().as_string() {
                 set_debug_logs.update(|logs| {
                     logs.push(msg);
-                    if logs.len() > 50 {
+                    if logs.len() > 100 {
                         logs.remove(0);
                     }
                 });
@@ -513,9 +513,9 @@ pub fn Config() -> impl IntoView {
                                 }}
                             </div>
                             <div class="grid grid-cols-3 gap-2">
-                                <SyncButton label="Pull" on_click=h_pull_click icon="arrow_upward" />
-                                <SyncButton label="Sync" on_click=h_sync_click icon="sync" primary=true />
-                                <SyncButton label="Push" on_click=h_push_click icon="arrow_downward" />
+                                <SyncButton label="Bajar" on_click=h_pull_click icon="arrow_upward" />
+                                <SyncButton label="Sinc" on_click=h_sync_click icon="sync" primary=true />
+                                <SyncButton label="Subir" on_click=h_push_click icon="arrow_downward" />
                             </div>
                         </div>
                     </ConfigSection>

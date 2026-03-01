@@ -115,7 +115,7 @@ pub fn Pantry() -> impl IntoView {
                     <div class="space-y-4">
                         <div class="flex items-center gap-3">
                             <span class="h-[1px] w-8 bg-accent"></span>
-                            <span class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 tracking-[0.4em] uppercase">"Stock Mastery"</span>
+                            <span class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 tracking-[0.4em] uppercase">"Control de Inventario"</span>
                         </div>
                         <h2 class="text-6xl md:text-8xl font-black text-neutral-950 dark:text-white tracking-tighter leading-[0.8] uppercase">
                             "Despensa"

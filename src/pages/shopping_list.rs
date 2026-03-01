@@ -1,4 +1,4 @@
-use crate::components::ui::{Button, Loading};
+use crate::components::ui::Loading;
 use crate::tauri_bridge::{generate_shopping_list, get_shopping_list, toggle_shopping_item};
 use leptos::logging::log;
 use leptos::prelude::*;
@@ -11,12 +11,19 @@ pub fn ShoppingList() -> impl IntoView {
     let params = use_params_map();
     let plan_id = move || params.read().get("id").unwrap_or_default();
 
+    let (items, set_items) = signal(Vec::<crate::tauri_bridge::ShoppingItem>::new());
+    let (generating, set_generating) = signal(false);
+
     let shopping_resource = LocalResource::new(move || {
         let id = plan_id();
         async move { get_shopping_list(&id).await }
     });
 
-    let (generating, set_generating) = signal(false);
+    Effect::new(move |_| {
+        if let Some(Ok(Some(list))) = shopping_resource.get() {
+            set_items.set(list.items);
+        }
+    });
 
     let on_generate = move |_| {
         let id = plan_id();
@@ -36,6 +43,13 @@ pub fn ShoppingList() -> impl IntoView {
 
     let on_toggle = move |item_name: String, checked: bool| {
         let id = plan_id();
+        // Optimistic update
+        set_items.update(|list| {
+            if let Some(item) = list.iter_mut().find(|i| i.name == item_name) {
+                item.checked = checked;
+            }
+        });
+
         spawn_local(async move {
             if let Err(e) = toggle_shopping_item(&id, &item_name, checked).await {
                 log!("Error toggling item: {}", e);
@@ -43,167 +57,189 @@ pub fn ShoppingList() -> impl IntoView {
         });
     };
 
+    let progress_data = move || {
+        let current_items = items.get();
+        let total = current_items.len();
+        let checked = current_items.iter().filter(|i| i.checked).count();
+        let pct = if total > 0 {
+            (checked as f32 / total as f32) * 100.0
+        } else {
+            0.0
+        };
+        (checked, total, pct)
+    };
+
     view! {
         <div class="w-full font-sans pb-32">
-            <div class="bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 pb-10 pt-12 px-4 shadow-sm relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 -mr-32 -mt-32 rounded-full blur-3xl"></div>
-
-                <div class="max-w-4xl mx-auto relative z-10">
-                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                        <div class="space-y-6">
-                             <A href={move || format!("/plan/{}", plan_id())} attr:class="inline-flex items-center text-[10px] font-black text-gray-400 dark:text-neutral-500 hover:text-black dark:hover:text-white tracking-[0.2em] transition-all group uppercase">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 group-hover:-translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-                                </svg>
-                                "VOLVER AL PLAN"
-                             </A>
-                             <div class="space-y-2">
+            // Header - Editorial Brutalist Style
+            <header class="bg-white dark:bg-neutral-900 border-b border-neutral-950 dark:border-neutral-800 pb-16 pt-16 px-6 relative overflow-hidden">
+                <div class="max-w-5xl mx-auto relative z-10">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-10">
+                        <div class="space-y-8">
+                            <A
+                                href=move || format!("/plan/{}", plan_id())
+                                attr:class="inline-flex items-center text-[10px] font-black text-neutral-400 hover:text-neutral-950 dark:hover:text-white tracking-[0.3em] transition-all group uppercase"
+                            >
+                                <span class="material-symbols-outlined !text-sm mr-2 group-hover:-translate-x-1 transition-transform">
+                                    "arrow_back"
+                                </span>
+                                "Volver al Plan"
+                            </A>
+                            <div class="space-y-3">
                                 <div class="flex items-center gap-3">
-                                    <span class="h-px w-8 bg-[#D4AF37]"></span>
-                                    <span class="text-[10px] font-black text-[#D4AF37] tracking-[0.3em] uppercase">"Gestión de Insumos"</span>
+                                    <span class="h-px w-10 bg-accent"></span>
+                                    <span class="text-[10px] font-black text-accent tracking-[0.4em] uppercase">
+                                        "Protocolo de Inventario"
+                                    </span>
                                 </div>
-                                <h2 class="text-4xl md:text-5xl font-black text-black dark:text-white tracking-tighter leading-none">
-                                    "LISTA DE COMPRAS"
+                                <h2 class="text-6xl md:text-7xl font-black text-neutral-950 dark:text-white tracking-tighter leading-none uppercase">
+                                    "Lista de" <br /> "Compras"
                                 </h2>
-                             </div>
+                            </div>
                         </div>
 
-                        <Button
-                            on_click=Callback::new(on_generate)
+                        <button
+                            on:click=on_generate
                             disabled=generating
-                            class="bg-black hover:bg-[#D4AF37] text-white px-8 py-4 rounded-2xl flex items-center gap-3 transition-all shadow-xl shadow-black/10 text-[11px] font-black tracking-widest uppercase"
+                            class="group relative px-10 py-5 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 border border-neutral-950 font-black text-[12px] tracking-[0.3em] uppercase hover:bg-accent hover:text-neutral-950 transition-all active:translate-x-1 active:translate-y-1 shadow-brutalist"
                         >
-                            {move || if generating.get() {
-                                view! { <Loading size="w-4 h-4" /> }.into_any()
-                            } else {
-                                view! {
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    <span>"ACTUALIZAR"</span>
-                                }.into_any()
+                            {move || {
+                                if generating.get() {
+                                    view! { <Loading size="w-4 h-4" /> }.into_any()
+                                } else {
+                                    view! {
+                                        <div class="flex items-center gap-3">
+                                            <span class="material-symbols-outlined !text-lg">"sync"</span>
+                                            <span>"Regenerar"</span>
+                                        </div>
+                                    }.into_any()
+                                }
                             }}
-                        </Button>
+                        </button>
                     </div>
 
-                    // PROGRESS BAR - New Mobile Utility
-                    <Suspense fallback=move || ()>
-                        {move || {
-                            if let Some(Ok(Some(list))) = shopping_resource.get() {
-                                let total = list.items.len();
-                                let checked = list.items.iter().filter(|i| i.checked).count();
-                                let pct = if total > 0 { (checked as f32 / total as f32) * 100.0 } else { 0.0 };
-                                view! {
-                                    <div class="mt-12 space-y-3">
-                                        <div class="flex justify-between items-end px-1">
-                                            <span class="text-[9px] font-black text-gray-400 dark:text-neutral-500 uppercase tracking-widest">"Progreso de Compra"</span>
-                                            <span class="text-xs font-black text-black dark:text-white">{checked} " / " {total}</span>
-                                        </div>
-                                        <div class="h-2 w-full bg-gray-50 dark:bg-neutral-800 rounded-full overflow-hidden border border-gray-100 dark:border-neutral-700">
-                                            <div
-                                                class="h-full bg-black dark:bg-white rounded-full transition-all duration-700 ease-out"
-                                                style=format!("width: {}%", pct)
-                                            ></div>
-                                        </div>
-                                    </div>
-                                }.into_any()
-                            } else { ().into_any() }
-                        }}
-                    </Suspense>
+                    // PROGRESS BAR - Integrated & Reactive
+                    <div class="mt-16 space-y-4 max-w-2xl">
+                        <div class="flex justify-between items-end px-1">
+                            <span class="text-[11px] font-black text-neutral-400 uppercase tracking-widest">
+                                "Sincronización"
+                            </span>
+                            <span class="text-xl font-black text-neutral-950 dark:text-white tabular-nums tracking-tighter">
+                                {move || {
+                                    let (checked, total, _) = progress_data();
+                                    format!("{:02} / {:02}", checked, total)
+                                }}
+                            </span>
+                        </div>
+                        <div class="h-3 w-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-950 p-[2px]">
+                            <div
+                                class="h-full bg-accent transition-all duration-500 ease-out"
+                                style:width=move || format!("{}%", progress_data().2)
+                            ></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </header>
 
-            <div class="max-w-4xl mx-auto px-4 mt-12">
-                <Suspense fallback=move || view! {
-                    <div class="space-y-6">
-                        <div class="h-32 bg-white dark:bg-neutral-900 rounded-3xl animate-pulse"></div>
-                        <div class="h-32 bg-white dark:bg-neutral-900 rounded-3xl animate-pulse"></div>
-                    </div>
+            <div class="max-w-5xl mx-auto px-6 mt-16">
+                <Suspense fallback=move || {
+                    view! {
+                        <div class="space-y-8">
+                            <div class="h-48 bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 animate-pulse"></div>
+                            <div class="h-48 bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 animate-pulse"></div>
+                        </div>
+                    }
                 }>
                     {move || {
-                        match shopping_resource.get() {
-                            Some(Ok(Some(list))) => {
-                                let categories = group_by_category(list.items);
-                                view! {
-                                    <div class="space-y-12">
-                                        {categories.into_iter().map(|(cat, items)| {
-                                            view! {
-                                                <section class="space-y-5">
-                                                    <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] px-2 flex items-center gap-3">
-                                                        <span class="w-1.5 h-1.5 bg-[#D4AF37] rounded-full"></span>
+                        let current_items = items.get();
+                        if current_items.is_empty() && shopping_resource.get().is_some() {
+                            view! {
+                                <div class="text-center py-40 px-8 bg-neutral-50 dark:bg-neutral-900 border border-neutral-950 shadow-brutalist">
+                                    <div class="w-24 h-24 border-2 border-dashed border-neutral-200 dark:border-neutral-800 flex items-center justify-center mx-auto mb-10">
+                                        <span class="material-symbols-outlined !text-4xl text-neutral-300">"inventory_2"</span>
+                                    </div>
+                                    <h3 class="text-3xl font-black text-neutral-950 dark:text-white tracking-tighter mb-4 uppercase">"Manifiesto Vacío"</h3>
+                                    <p class="text-neutral-500 dark:text-neutral-400 text-[10px] font-bold tracking-widest uppercase max-w-xs mx-auto mb-12 leading-relaxed">
+                                        "No se detectaron artículos. Inicia el protocolo para extraer ingredientes de tu plan."
+                                    </p>
+                                    <button
+                                        on:click=on_generate
+                                        class="bg-accent text-neutral-950 px-12 py-5 border border-neutral-950 font-black text-[11px] tracking-[0.3em] uppercase hover:bg-neutral-950 hover:text-accent transition-all active:translate-x-1 active:translate-y-1 shadow-brutalist"
+                                    >
+                                        "Ejecutar Extracción"
+                                    </button>
+                                </div>
+                            }.into_any()
+                        } else {
+                            let categories = group_by_category(current_items);
+                            view! {
+                                <div class="space-y-20">
+                                    {categories.into_iter().map(|(cat, cat_items)| {
+                                        view! {
+                                            <section class="group">
+                                                <div class="flex items-center gap-4 mb-8">
+                                                    <div class="w-2 h-2 bg-accent"></div>
+                                                    <h3 class="text-[11px] font-black text-neutral-400 uppercase tracking-[0.4em] group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">
                                                         {cat}
                                                     </h3>
-                                                    <div class="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-black/5 divide-y divide-gray-50 overflow-hidden">
-                                                        {items.into_iter().map(|item| {
-                                                            let name = item.name.clone();
-                                                            let (checked, set_checked) = signal(item.checked);
-                                                            view! {
-                                                                <label class="flex items-center gap-5 p-6 md:p-8 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all group cursor-pointer active:scale-[0.99]">
-                                                                    // Custom Tactical Checkbox
-                                                                    <div class="relative flex items-center justify-center shrink-0">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked=checked
-                                                                            on:change=move |ev| {
-                                                                                let val = event_target_checked(&ev);
-                                                                                set_checked.set(val);
-                                                                                on_toggle(name.clone(), val);
-                                                                            }
-                                                                            class="peer absolute opacity-0 w-full h-full cursor-pointer z-10"
-                                                                        />
-                                                                        <div class=move || format!("w-8 h-8 rounded-xl border-2 transition-all flex items-center justify-center {}",
-                                                                            if checked.get() { "bg-black dark:bg-white border-black dark:border-white shadow-lg" }
-                                                                            else { "bg-white dark:bg-neutral-800 border-gray-200 dark:border-neutral-600 group-hover:border-[#D4AF37]" }
-                                                                        )>
-                                                                            <svg class=move || format!("w-4 h-4 transition-all {}", if checked.get() { "text-[#D4AF37] scale-100" } else { "text-transparent scale-50" }) fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                                                            </svg>
-                                                                        </div>
-                                                                    </div>
+                                                    <div class="flex-1 h-px bg-neutral-100 dark:bg-neutral-800"></div>
+                                                </div>
 
-                                                                    <div class="flex-1 min-w-0">
-                                                                        <div class="flex flex-wrap items-baseline gap-2">
-                                                                            <span class=move || format!("text-base md:text-lg transition-all duration-500 {}",
-                                                                                if checked.get() { "text-gray-300 dark:text-neutral-600 line-through italic" } else { "text-black dark:text-white font-black tracking-tight" }
+                                                <div class="grid grid-cols-1 border-t border-l border-neutral-950">
+                                                    {cat_items.into_iter().map(|item| {
+                                                        let name = item.name.clone();
+                                                        let is_checked = item.checked;
+                                                        view! {
+                                                            <label class="flex items-center gap-6 p-8 border-r border-b border-neutral-950 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all cursor-pointer group/item relative overflow-hidden">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked=is_checked
+                                                                    on:change=move |ev| {
+                                                                        let val = event_target_checked(&ev);
+                                                                        on_toggle(name.clone(), val);
+                                                                    }
+                                                                    class="peer absolute opacity-0 w-full h-full cursor-pointer z-10"
+                                                                />
+
+                                                                // Custom Brutalist Checkbox
+                                                                <div class=move || format!("w-10 h-10 border-2 transition-all flex items-center justify-center shrink-0 {}",
+                                                                    if is_checked { "bg-accent border-neutral-950" }
+                                                                    else { "bg-white dark:bg-neutral-800 border-neutral-950 group-hover/item:bg-neutral-100" }
+                                                                )>
+                                                                    <span class=move || format!("material-symbols-outlined !text-xl !font-black transition-all {}",
+                                                                        if is_checked { "text-neutral-950 scale-100" } else { "text-transparent scale-50" }
+                                                                    )>
+                                                                        "check"
+                                                                    </span>
+                                                                </div>
+
+                                                                <div class="flex-1 min-w-0">
+                                                                    <div class="flex flex-wrap items-baseline gap-4">
+                                                                        <span class=move || format!("text-xl transition-all duration-300 {}",
+                                                                            if is_checked { "text-neutral-300 dark:text-neutral-700 line-through skew-x-[-12deg]" }
+                                                                            else { "text-neutral-950 dark:text-white font-black tracking-tighter" }
+                                                                        )>
+                                                                            {item.name.clone()}
+                                                                        </span>
+                                                                        {item.quantity.map(|q| view! {
+                                                                            <span class=move || format!("text-[10px] font-black px-3 py-1 border transition-all {}",
+                                                                                if is_checked { "border-neutral-100 bg-neutral-50 text-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-700" }
+                                                                                else { "border-neutral-950 bg-white text-neutral-950 dark:bg-neutral-900 dark:text-neutral-400 group-hover/item:bg-accent" }
                                                                             )>
-                                                                                {item.name.clone()}
+                                                                                {q}
                                                                             </span>
-                                                                            {item.quantity.map(|q| view! {
-                                                                                <span class=move || format!("text-[10px] font-black px-2.5 py-1 rounded-lg transition-all {}",
-                                                                                    if checked.get() { "bg-gray-50 dark:bg-neutral-800 text-gray-300 dark:text-neutral-600" } else { "bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400" }
-                                                                                )>
-                                                                                    {q}
-                                                                                </span>
-                                                                            })}
-                                                                        </div>
+                                                                        })}
                                                                     </div>
-                                                                </label>
-                                                            }
-                                                        }).collect::<Vec<_>>()}
-                                                    </div>
-                                                </section>
-                                            }
-                                        }).collect::<Vec<_>>()}
-                                    </div>
-                                }.into_any()
-                            }
-                            Some(Ok(None)) => {
-                                view! {
-                                    <div class="text-center py-32 px-8 bg-white dark:bg-neutral-900 rounded-[3rem] border border-gray-100 dark:border-neutral-800 shadow-xl shadow-black/5">
-                                        <div class="w-24 h-24 bg-gray-50 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-8 text-gray-300 dark:text-neutral-600">
-                                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                            </svg>
-                                        </div>
-                                        <h3 class="text-2xl font-black text-black dark:text-white tracking-tighter mb-4">"SIN LISTA GENERADA"</h3>
-                                        <p class="text-gray-500 dark:text-neutral-400 text-sm max-w-xs mx-auto mb-10 leading-relaxed font-medium">"Extraeremos todos los ingredientes de tu plan semanal automáticamente por ti."</p>
-                                        <Button on_click=Callback::new(on_generate) class="bg-black dark:bg-white hover:bg-[#D4AF37] text-white dark:text-black px-10 py-5 rounded-[1.5rem] font-black text-[11px] tracking-[0.2em] uppercase shadow-2xl shadow-black/20">
-                                            "GENERAR LISTA AHORA"
-                                        </Button>
-                                    </div>
-                                }.into_any()
-                            }
-                            _ => view! { <div class="flex justify-center p-20"><Loading /></div> }.into_any()
+                                                                </div>
+                                                            </label>
+                                                        }
+                                                    }).collect_view()}
+                                                </div>
+                                            </section>
+                                        }
+                                    }).collect_view()}
+                                </div>
+                            }.into_any()
                         }
                     }}
                 </Suspense>

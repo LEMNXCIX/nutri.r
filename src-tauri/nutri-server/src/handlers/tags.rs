@@ -1,15 +1,13 @@
+use crate::error::ApiError;
 use axum::{
     extract::{Path, State},
     Json,
 };
 use nutri_core::{models::tag::Tag, state::AppState};
-use std::sync::Arc;
-use crate::error::ApiError;
 use serde::Deserialize;
+use std::sync::Arc;
 
-pub async fn get_all_tags(
-    State(state): State<Arc<AppState>>,
-) -> Result<Json<Vec<Tag>>, ApiError> {
+pub async fn get_all_tags(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Tag>>, ApiError> {
     let service = state.tag_service.lock().await;
     let tags = service.get_all_tags()?;
     Ok(Json(tags))
@@ -26,7 +24,7 @@ pub async fn create_tag(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CreateTagRequest>,
 ) -> Result<Json<Tag>, ApiError> {
-    let mut service = state.tag_service.lock().await;
+    let service = state.tag_service.lock().await;
     let tag = service.create_tag(req.name, req.color)?;
     Ok(Json(tag))
 }

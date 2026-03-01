@@ -69,6 +69,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/health", get(system::health_check))
+        .route("/api/health", get(system::health_check))
         // Config
         .route(
             "/api/config",

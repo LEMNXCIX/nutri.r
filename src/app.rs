@@ -96,6 +96,12 @@ pub fn App() -> impl IntoView {
         }
     });
 
+    Effect::new(move |_| {
+        leptos::task::spawn_local(async {
+            crate::tauri_bridge::auto_pull().await;
+        });
+    });
+
     view! {
         <Router>
             <div class="min-h-screen bg-white text-neutral-950 dark:bg-background-dark dark:text-white selection:bg-accent selection:text-neutral-950">

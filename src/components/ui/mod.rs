@@ -10,6 +10,4 @@ pub use button::Button;
 pub use card::Card;
 pub use input::Input;
 pub use loading::Loading;
-pub use star_rating::StarRating;
-pub use sync_status::SyncStatus;
 pub use toast::Toast;

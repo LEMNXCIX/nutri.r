@@ -1,7 +1,6 @@
-use leptos::prelude::*;
 use crate::tauri_bridge::{
-    calculate_nutrition, get_calendar_range, get_index, get_water_intake,
-    update_water_intake, MealType,
+    calculate_nutrition, get_calendar_range, get_index, get_water_intake, update_water_intake,
+    MealType,
 };
 use chrono::Local;
 use leptos::prelude::*;
@@ -12,7 +11,7 @@ use leptos_router::components::A;
 pub fn Home() -> impl IntoView {
     let today = Local::now().date_naive().to_string();
 
-    // Water Logic
+    // Lógica de Hidratación
     let (water_current, set_water_current) = signal(0.0f32);
     let (water_target, set_water_target) = signal(2.5f32);
 
@@ -29,31 +28,25 @@ pub fn Home() -> impl IntoView {
         }
     });
 
-    let on_add_water = Callback::new({
+    let on_add_water = move |_| {
         let today = today.clone();
-        move |_| {
-            let today = today.clone();
-            let new_value = (water_current.get() + 0.25f32).min(5.0f32);
-            set_water_current.set(new_value);
-            spawn_local(async move {
-                let _ = update_water_intake(today, new_value, water_target.get()).await;
-            });
-        }
-    });
+        let new_value = (water_current.get() + 0.25f32).min(5.0f32);
+        set_water_current.set(new_value);
+        spawn_local(async move {
+            let _ = update_water_intake(today, new_value, water_target.get()).await;
+        });
+    };
 
-    let on_remove_water = Callback::new({
+    let on_remove_water = move |_| {
         let today = today.clone();
-        move |_| {
-            let today = today.clone();
-            let new_value = (water_current.get() - 0.25f32).max(0.0f32);
-            set_water_current.set(new_value);
-            spawn_local(async move {
-                let _ = update_water_intake(today, new_value, water_target.get()).await;
-            });
-        }
-    });
+        let new_value = (water_current.get() - 0.25f32).max(0.0f32);
+        set_water_current.set(new_value);
+        spawn_local(async move {
+            let _ = update_water_intake(today, new_value, water_target.get()).await;
+        });
+    };
 
-    // Data Resources
+    // Recursos de Datos
     let today_resource = LocalResource::new(move || async move {
         let today = Local::now().date_naive().to_string();
         get_calendar_range(today.clone(), today)
@@ -61,11 +54,10 @@ pub fn Home() -> impl IntoView {
             .unwrap_or_default()
     });
 
-    let plans_resource = LocalResource::new(move || async move {
-        get_index().await.unwrap_or_default()
-    });
+    let plans_resource =
+        LocalResource::new(move || async move { get_index().await.unwrap_or_default() });
 
-    // Computed Stats & Meals
+    // Estadísticas y Comidas Computadas
     let (daily_stats, set_daily_stats) = signal((0.0, 0.0, 0.0, 0.0));
     let (meal_details, set_meal_details) = signal(Vec::<(String, String, f32)>::new());
 
@@ -89,7 +81,7 @@ pub fn Home() -> impl IntoView {
                             MealType::Breakfast => "Desayuno",
                             MealType::Lunch => "Almuerzo",
                             MealType::Dinner => "Cena",
-                            MealType::Snack => "Merienda",
+                            MealType::Snack => "Aperitivo",
                         };
 
                         meals.push((
@@ -106,182 +98,156 @@ pub fn Home() -> impl IntoView {
     });
 
     view! {
-        <div class="w-full font-sans pb-32">
-            // -- TITLE SECTION --
-            <section class="px-6 pt-8 pb-10">
-                <h1 class="text-6xl font-extrabold uppercase leading-[0.9] tracking-tighter mb-4 text-header dark:text-white">
-                    "Daily" <br/> "Metrics"
-                </h1>
-                <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                    <span>{Local::now().format("Cycle %d.%m").to_string()}</span>
-                    <span class="w-1 h-1 bg-neutral-300 rounded-full"></span>
-                    <span>"Premium Account"</span>
-                </div>
-            </section>
+        <div class="w-full font-sans pb-32 animate-in fade-in duration-700">
+            // -- HERO HEADER --
+            <header class="bg-white dark:bg-background-dark border-b border-neutral-100 dark:border-neutral-800 pt-16 pb-12 px-6">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <div class="flex items-center gap-3">
+                        <span class="h-[1px] w-8 bg-black dark:bg-white transition-all"></span>
+                        <span class="text-[10px] font-black text-black dark:text-white tracking-[0.4em] uppercase">"Protocolo de Nutrición"</span>
+                    </div>
 
-            // -- METRICS GRID --
-            <section class="px-6">
-                {move || {
-                    let (cal, prot, carbs, fat) = daily_stats.get();
-                    view! {
-                        <div class="grid grid-cols-2 gap-y-12 gap-x-8">
-                            <div class="flex flex-col gap-1">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">"01 / Calories"</span>
-                                <div class="hairline-divider mb-2"></div>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-4xl font-light tracking-tighter">{format!("{:.0}", cal)}</span>
-                                    <span class="text-xs font-bold uppercase text-neutral-400">"kcal"</span>
-                                </div>
-                                <div class="flex items-center gap-1 mt-1">
-                                    <span class="material-symbols-outlined text-accent text-sm leading-none">"trending_up"</span>
-                                    <span class="text-[10px] font-bold text-accent tracking-tighter">{format!("+12.4% vs Avg")}</span>
-                                </div>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">"02 / Protein"</span>
-                                <div class="hairline-divider mb-2"></div>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-4xl font-light tracking-tighter">{format!("{:.0}", prot)}</span>
-                                    <span class="text-xs font-bold uppercase text-neutral-400">"g"</span>
-                                </div>
-                                <div class="flex items-center gap-1 mt-1">
-                                    <span class="material-symbols-outlined text-red-500 text-sm leading-none">"trending_down"</span>
-                                    <span class="text-[10px] font-bold text-red-500 tracking-tighter">"-5.0% vs Goal"</span>
-                                </div>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">"03 / Carbohydrates"</span>
-                                <div class="hairline-divider mb-2"></div>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-4xl font-light tracking-tighter">{format!("{:.0}", carbs)}</span>
-                                    <span class="text-xs font-bold uppercase text-neutral-400">"g"</span>
-                                </div>
-                                <div class="mt-1">
-                                    <span class="px-1.5 py-0.5 border border-neutral-200 text-[9px] font-bold uppercase tracking-tighter">"Target Met"</span>
-                                </div>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">"04 / Total Fats"</span>
-                                <div class="hairline-divider mb-2"></div>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-4xl font-light tracking-tighter">{format!("{:.0}", fat)}</span>
-                                    <span class="text-xs font-bold uppercase text-neutral-400">"g"</span>
-                                </div>
-                                <div class="mt-1">
-                                    <span class="bg-accent px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-tighter">"Efficiency Optimized"</span>
-                                </div>
-                            </div>
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                        <h1 class="text-7xl md:text-8xl font-black text-black dark:text-white tracking-tighter leading-[0.8] uppercase">
+                            "Estado" <br/> "Diario"
+                        </h1>
+                        <div class="flex flex-col items-start md:items-end gap-2 text-right">
+                            <span class="text-4xl font-black text-black dark:text-white tabular-nums tracking-tighter uppercase">
+                                {move || chrono::Local::now().format("%d / %m").to_string()}
+                            </span>
+                            <span class="text-[9px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">{move || chrono::Local::now().format("%A / %Y").to_string()}</span>
                         </div>
-                    }
-                }}
-            </section>
+                    </div>
+                </div>
+            </header>
 
-            // -- HYDRATION & PROGRESS --
-            <section class="px-6 py-16 space-y-12">
-                <div>
-                    <div class="flex justify-between items-end mb-3">
-                        <div class="flex flex-col gap-1">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-neutral-300">"Hydration Index"</span>
-                            <div class="flex items-center gap-2 mt-1">
-                                <button on:click=move |_| on_remove_water.run(()) class="text-neutral-300 hover:text-neutral-950 dark:text-neutral-500 dark:hover:text-white">
-                                    <span class="material-symbols-outlined !text-sm">"remove"</span>
+            <div class="max-w-5xl mx-auto px-6 space-y-20">
+                // -- HYDRATION CONTROL --
+                <section class="mt-12 bg-accent dark:bg-accent p-8 md:p-12 brutalist-border shadow-brutalist relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-black/5 -mr-32 -mt-32 rounded-full blur-3xl group-hover:bg-black/10 transition-all duration-700"></div>
+
+                    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-12">
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined !text-base">"water_drop"</span>
+                                <span class="text-[10px] font-black uppercase tracking-[0.3em]">"Integridad de Hidratación"</span>
+                            </div>
+                            <h2 class="text-4xl font-black text-black tracking-tighter uppercase">"Rastreador de Agua"</h2>
+                        </div>
+
+                        <div class="flex items-center gap-8">
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="text-5xl font-black text-black tracking-tighter tabular-nums leading-none">
+                                    {move || water_current.get()}
+                                </span>
+                                <span class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">"Vasos Registrados"</span>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <button
+                                    on:click=on_remove_water
+                                    class="w-14 h-14 bg-black text-white flex items-center justify-center hover:bg-neutral-800 transition-all active:translate-y-1 shadow-brutalist-sm"
+                                >
+                                    <span class="material-symbols-outlined">"remove"</span>
                                 </button>
-                                <span class="text-xs font-medium tabular-nums text-neutral-950 dark:text-white">{move || format!("{:.1} / {:.1} L", water_current.get(), water_target.get())}</span>
-                                <button on:click=move |_| on_add_water.run(()) class="text-neutral-300 hover:text-neutral-950 dark:text-neutral-500 dark:hover:text-white">
-                                    <span class="material-symbols-outlined !text-sm">"add"</span>
+                                <button
+                                    on:click=on_add_water
+                                    class="w-14 h-14 bg-white text-black flex items-center justify-center hover:bg-neutral-100 transition-all active:translate-y-1 shadow-brutalist-sm"
+                                >
+                                    <span class="material-symbols-outlined">"add"</span>
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div class="relative w-full h-[2px] bg-neutral-100 dark:bg-neutral-800">
-                        <div 
-                            class="absolute top-0 left-0 h-full bg-neutral-950 dark:bg-white transition-all duration-700" 
-                            style:width=move || format!("{}%", (water_current.get() / water_target.get() * 100.0).min(100.0))
-                        ></div>
-                    </div>
-                </div>
+                </section>
 
-                <div>
-                    <div class="flex justify-between items-end mb-3">
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-neutral-300">"Micronutrient Diversity"</span>
-                        <span class="text-xs font-medium tabular-nums text-neutral-950 dark:text-white">"84%"</span>
-                    </div>
-                    <div class="relative w-full h-[2px] bg-neutral-100 dark:bg-neutral-800">
-                        <div class="absolute top-0 left-0 h-full bg-accent" style="width: 84%;"></div>
-                    </div>
-                </div>
-            </section>
-
-            // -- NEXT PLANNED INTAKE --
-            <section class="px-6 mb-16 space-y-8">
-                {move || -> AnyView {
-                    let meals = meal_details.get();
-                    if meals.is_empty() {
-                        view! {
-                            <div class="p-12 border border-neutral-100 dark:border-neutral-800 flex flex-col items-center justify-center gap-4 text-center">
-                                <span class="material-symbols-outlined text-neutral-200 dark:text-neutral-700 !text-4xl">"fastfood"</span>
-                                <p class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"No Meals Scheduled"</p>
-                                <A href="/calendar" attr:class="mt-4 px-6 py-3 bg-neutral-950 dark:bg-white text-accent text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-neutral-950 transition-all">"Assign Plan"</A>
-                            </div>
-                        }.into_any()
-                    } else {
-                        meals.into_iter().map(|(title, id, cal)| {
-                            view! {
-                                <A href=format!("/plan/{}", id) attr:class="block relative group aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-                                    <img 
-                                        alt=title.clone()
-                                        class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
-                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuLIs4J3BB-Asz5cdNOorESMj1X3AVHQ_CyacDzU2zpMKJ4AmCCVsAedD5NzL-tBYxXv2eygd4hFNASqgdKD0gQnv78equgwci1mxJTvwA2XoV8I5GKSnShEzhTNk-Sfq7lK0QTcqEUsgGCWjJnyFLnU1YJVwoIJEK5Hfo3fFegV_Qf78T58vwbdtEQOflSZsT_ZYtWI8zXgmyhEojqt3UqYpvZwNrIO1VYttV3E3A3lfStG6x_jIYbQxMszgc2jS4Z_ticQKZ8Mha"
-                                    />
-                                    <div class="absolute inset-0 bg-neutral-950/10 dark:bg-black/30"></div>
-                                    <div class="absolute top-6 left-6">
-                                        <div class="bg-white dark:bg-neutral-900 px-3 py-1.5 inline-block">
-                                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-950 dark:text-white">"Next Planned Intake"</p>
+                // -- NUTRITION METRICS --
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <h3 class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.4em] pl-1">"Lectura Biométrica"</h3>
+                        <div class="bg-white dark:bg-neutral-900 brutalist-border dark:border-neutral-800 p-8 shadow-brutalist space-y-10">
+                            <Suspense fallback=move || view! { <div class="animate-pulse space-y-8">{(0..4).map(|_| view! { <div class="h-12 bg-neutral-100 dark:bg-neutral-800"></div> }).collect_view()}</div> }>
+                                {move || {
+                                    let stats = daily_stats.get();
+                                    view! {
+                                        <div class="space-y-10">
+                                            <MetricLine label="Energía Total" value=format!("{:.0}", stats.0) unit="Kcal" />
+                                            <MetricLine label="Proteínas" value=format!("{:.0}", stats.1) unit="G" />
+                                            <MetricLine label="Carbohidratos" value=format!("{:.0}", stats.2) unit="G" />
+                                            <MetricLine label="Lípidos" value=format!("{:.0}", stats.3) unit="G" />
                                         </div>
-                                    </div>
-                                    <div class="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-neutral-950/60 to-transparent">
-                                        <h3 class="text-white text-3xl font-extrabold uppercase tracking-tighter leading-none mb-2">{title.clone()}</h3>
-                                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-widest">{format!("{:.0} KCAL / {}", cal, id.chars().take(8).collect::<String>())}</p>
-                                    </div>
-                                </A>
-                            }
-                        }).collect_view().into_any()
-                    }
-                }}
-            </section>
+                                    }
+                                }}
+                            </Suspense>
+                        </div>
+                    </div>
 
-            // -- MY ARCHIVE --
-            <section class="px-6 pb-12">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">"My Archive"</h2>
-                    <A href="/add" attr:class="bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 p-2 flex items-center justify-center">
-                        <span class="material-symbols-outlined !text-sm">"add"</span>
-                    </A>
-                </div>
-
-                <div class="space-y-4">
-                    <Suspense fallback=move || view! { <div class="animate-pulse h-12 bg-neutral-50 dark:bg-neutral-900 mb-4"></div> }>
-                        {move || plans_resource.get().map(|plans| {
-                            plans.into_iter().take(5).map(|plan| {
-                                let pid = plan.id.clone();
-                                let date = plan.fecha.clone();
-                                view! {
-                                    <A href=format!("/plan/{}", pid) attr:class="flex items-center justify-between py-6 border-b border-neutral-100 dark:border-neutral-800 group">
-                                        <div class="flex items-center gap-6">
-                                            <span class="text-xs font-black text-neutral-950 dark:text-white">"P"</span>
-                                            <div class="flex flex-col gap-1">
-                                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-white group-hover:text-accent dark:group-hover:text-accent transition-colors">{pid.chars().take(12).collect::<String>()}</span>
-                                                <span class="text-[8px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">{date.clone()}</span>
+                    // -- MEAL LOG --
+                    <div class="space-y-6">
+                        <h3 class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.4em] pl-1">"Registro Alimentario"</h3>
+                        <div class="space-y-4">
+                            <Suspense fallback=move || view! { <div class="animate-pulse space-y-4">{(0..4).map(|_| view! { <div class="h-24 bg-neutral-100 dark:bg-neutral-800 brutalist-border"></div> }).collect_view()}</div> }>
+                                {move || {
+                                    let meals = meal_details.get();
+                                    if meals.is_empty() {
+                                        view! {
+                                            <div class="py-20 bg-neutral-50 dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 text-center space-y-4">
+                                                <span class="material-symbols-outlined text-neutral-200 dark:text-neutral-700 !text-4xl">"restaurant"</span>
+                                                <p class="text-[10px] font-black text-neutral-300 dark:text-neutral-600 uppercase tracking-widest leading-relaxed">"No se han detectado <br/> ingestas hoy"</p>
                                             </div>
-                                        </div>
-                                        <span class="material-symbols-outlined text-neutral-200 dark:text-neutral-700 group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">"arrow_forward"</span>
-                                    </A>
-                                }
-                            }).collect_view()
-                        })}
-                    </Suspense>
-                </div>
-            </section>
+                                        }.into_any()
+                                    } else {
+                                        meals.into_iter().map(|(label, id, cal)| {
+                                            view! {
+                                                <A href=format!("/plan/{}", id) attr:class="p-6 bg-white dark:bg-neutral-900 brutalist-border dark:border-neutral-800 flex justify-between items-center group hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+                                                    <div class="space-y-1">
+                                                        <span class="text-[9px] font-black text-accent uppercase tracking-widest">{label}</span>
+                                                        <h4 class="text-lg font-black text-black dark:text-white tracking-tighter uppercase leading-none">{id.chars().take(12).collect::<String>()}</h4>
+                                                        <span class="text-[9px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">{format!("{:.0} Kcal", cal)}</span>
+                                                    </div>
+                                                    <span class="material-symbols-outlined text-neutral-200 dark:text-neutral-700 group-hover:text-black dark:group-hover:text-white transition-colors">"chevron_right"</span>
+                                                </A>
+                                            }
+                                        }).collect_view().into_any()
+                                    }
+                                }}
+                            </Suspense>
+                        </div>
+                    </div>
+                </section>
+
+                // -- QUICK ACTIONS / CTA --
+                <section class="pb-20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <A href="/plan" attr:class="p-8 bg-black dark:bg-white text-white dark:text-black brutalist-border flex flex-col items-center gap-4 group hover:bg-neutral-900 dark:hover:bg-neutral-100 transition-all">
+                            <span class="material-symbols-outlined !text-3xl group-hover:scale-110 transition-transform">"auto_awesome"</span>
+                            <span class="text-[11px] font-black uppercase tracking-[0.3em]">"Generar Nuevo Plan"</span>
+                        </A>
+                        <A href="/pantry" attr:class="p-8 bg-white dark:bg-neutral-900 text-black dark:text-white brutalist-border flex flex-col items-center gap-4 group hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all">
+                            <span class="material-symbols-outlined !text-3xl group-hover:scale-110 transition-transform">"inventory_2"</span>
+                            <span class="text-[11px] font-black uppercase tracking-[0.3em]">"Gestionar Despensa"</span>
+                        </A>
+                    </div>
+                </section>
+            </div>
         </div>
-    }.into_any()
+    }
+}
+
+#[component]
+fn MetricLine(label: &'static str, value: String, unit: &'static str) -> impl IntoView {
+    view! {
+        <div class="group">
+            <div class="flex justify-between items-end mb-2 px-1">
+                <span class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest group-hover:text-black dark:group-hover:text-white transition-colors">{label}</span>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-3xl font-black text-black dark:text-white tracking-tighter tabular-nums leading-none transition-transform group-hover:scale-105 origin-right">{value}</span>
+                    <span class="text-[9px] font-black text-neutral-300 dark:text-neutral-600 uppercase">{unit}</span>
+                </div>
+            </div>
+            <div class="h-[1px] w-full bg-neutral-100 dark:bg-neutral-800 relative overflow-hidden">
+                <div class="absolute inset-0 bg-accent translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700"></div>
+            </div>
+        </div>
+    }
 }

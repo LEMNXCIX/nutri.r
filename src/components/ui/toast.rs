@@ -21,7 +21,7 @@ pub fn Toast(
 
                     <div class="flex-1 min-w-0">
                         <p class="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-0.5">
-                            {if is_error { "System Error" } else { "System Notification" }}
+                            {if is_error { "Error del Sistema" } else { "Notificación del Sistema" }}
                         </p>
                         <p class="text-xs font-bold text-neutral-950 dark:text-white uppercase tracking-tight truncate">
                             {move || message.get()}

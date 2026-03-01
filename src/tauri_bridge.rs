@@ -416,16 +416,20 @@ pub fn is_tauri() -> bool {
 
 pub fn log_trace(msg: String) {
     if let Ok(mut logs) = DEBUG_LOGS.lock() {
+        let logs: &mut Vec<String> = &mut *logs;
         logs.push(msg.clone());
         if logs.len() > 100 {
             logs.remove(0);
         }
     }
 
+    // Diagnostic console log for the developer
+    web_sys::console::debug_1(&JsValue::from_str(&format!("[DEBUG_LOG] {}", msg)));
+
     if let Some(window) = web_sys::window() {
-        let mut init = web_sys::CustomEventInit::new();
-        init.detail(&JsValue::from_str(&msg));
-        init.bubbles(true);
+        let init = web_sys::CustomEventInit::new();
+        init.set_detail(&JsValue::from_str(&msg));
+        init.set_bubbles(true);
         if let Ok(event) = web_sys::CustomEvent::new_with_event_init_dict("debug-log", &init) {
             let _ = window.dispatch_event(&event);
         }
@@ -434,11 +438,17 @@ pub fn log_trace(msg: String) {
 }
 
 pub fn get_debug_logs() -> Vec<String> {
-    DEBUG_LOGS.lock().map(|l| l.clone()).unwrap_or_default()
+    if let Ok(logs) = DEBUG_LOGS.lock() {
+        let logs: &Vec<String> = &*logs;
+        logs.clone()
+    } else {
+        Vec::new()
+    }
 }
 
 pub fn clear_debug_logs() {
     if let Ok(mut logs) = DEBUG_LOGS.lock() {
+        let logs: &mut Vec<String> = &mut *logs;
         logs.clear();
     }
 }
@@ -1076,12 +1086,65 @@ async fn get_api_base_url() -> String {
     "http://localhost:3001/api".to_string()
 }
 
+pub async fn check_health() -> bool {
+    let api_base = get_api_base_url().await;
+    let url = format!("{}/health", api_base);
+    log_trace(format!("HEALTH_CHECK: {}", url));
+
+    let client = reqwest::Client::new();
+
+    match client.get(&url).send().await {
+        Ok(res) => {
+            let ok = res.status().is_success();
+            log_trace(format!("HEALTH_RES: {} -> {}", url, ok));
+            ok
+        }
+        Err(e) => {
+            log_trace(format!("HEALTH_ERR: {} -> {}", url, e));
+            false
+        }
+    }
+}
+
+pub async fn auto_pull() {
+    log_trace("SYNC: Auto Pull Starting...".to_string());
+    match safe_invoke("pull_from_server", JsValue::NULL).await {
+        Ok(_) => log_trace("SYNC: Auto Pull OK".to_string()),
+        Err(e) => log_trace(format!("SYNC: Auto Pull Failed: {}", e)),
+    }
+}
+
+pub async fn auto_push() {
+    log_trace("SYNC: Auto Push Starting...".to_string());
+    match safe_invoke("push_to_server", JsValue::NULL).await {
+        Ok(_) => log_trace("SYNC: Auto Push OK".to_string()),
+        Err(e) => log_trace(format!("SYNC: Auto Push Failed: {}", e)),
+    }
+}
+
 async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
     let mut use_tauri = is_tauri();
-
-    // Comandos que SIEMPRE deben ser locales en Android para poder configurar la IP
     let is_config_cmd = cmd == "get_config" || cmd == "save_config" || cmd == "is_mobile";
+    let is_sync_cmd = cmd == "pull_from_server"
+        || cmd == "push_to_server"
+        || cmd == "get_sync_status"
+        || cmd == "perform_sync";
 
+    // Detect write operations for auto-sync
+    let is_write = !is_sync_cmd
+        && (cmd.starts_with("save_")
+            || cmd.starts_with("add_")
+            || cmd.starts_with("delete_")
+            || cmd.starts_with("toggle_")
+            || cmd.starts_with("assign_")
+            || cmd.starts_with("set_")
+            || cmd.starts_with("import_")
+            || cmd.starts_with("remove_")
+            || cmd.starts_with("update_")
+            || cmd.starts_with("generate_")
+            || cmd.starts_with("clear_"));
+
+    // If we are in Tauri (Desktop/Mobile), verify if we are in mobile to force API
     if use_tauri && !is_config_cmd {
         match invoke("is_mobile", JsValue::NULL).await {
             Ok(js_val) => {
@@ -1093,23 +1156,58 @@ async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
         }
     }
 
-    if use_tauri {
-        invoke(cmd, args).await.map_err(|e| format!("{:?}", e))
+    log_trace(format!("SAFE_INVOKE: {} (T_PREV: {})", cmd, use_tauri));
+
+    let res = if use_tauri {
+        let res = invoke(cmd, args).await.map_err(|e| format!("{:?}", e));
+        match &res {
+            Ok(_) => log_trace(format!("T_RES: {} -> OK", cmd)),
+            Err(e) => log_trace(format!("T_RES: {} -> ERR: {}", cmd, e)),
+        }
+        res
     } else {
         let api_base = get_api_base_url().await;
-        let _ = notify(
-            Ok(()),
-            Some(&format!("API Base: {} - Command: {}", api_base, cmd)),
-        );
+
+        // Before attempting API, if it's not a config command, check health
+        if !is_config_cmd && !is_sync_cmd {
+            if !check_health().await {
+                log_trace(format!(
+                    "FALLBACK: API unreachable, falling back to LOCAL for {}",
+                    cmd
+                ));
+                return invoke(cmd, args).await.map_err(|e| format!("{:?}", e));
+            }
+        }
 
         log_trace(format!("REQ: {} a {}", cmd, api_base));
-        let res = call_api_fallback(cmd, args, &api_base).await;
+        let res = call_api_fallback(cmd, args.clone(), &api_base).await;
+
+        // If the call fails due to network, make a last local attempt
+        if let Err(ref e) = res {
+            if e.contains("NetworkError") || e.contains("Failed to fetch") {
+                log_trace(format!(
+                    "RETRY_LOCAL: API error {}, attempting LOCAL fallback",
+                    e
+                ));
+                return invoke(cmd, args).await.map_err(|err| format!("{:?}", err));
+            }
+        }
+
         match &res {
             Ok(_) => log_trace(format!("RES: {} -> OK", cmd)),
             Err(e) => log_trace(format!("RES: {} -> ERR: {}", cmd, e)),
         }
         res
+    };
+
+    // Unified auto_push for all successful write operations
+    if res.is_ok() && is_write {
+        leptos::task::spawn_local(async {
+            auto_push().await;
+        });
     }
+
+    res
 }
 
 fn emit_toast(message: &str, is_error: bool) {

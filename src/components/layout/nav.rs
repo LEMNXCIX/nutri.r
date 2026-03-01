@@ -29,26 +29,27 @@ pub fn Navbar() -> impl IntoView {
             // Brand / left section
             <div class="flex items-center gap-4 flex-1">
                 <div class="flex flex-col">
-                    <div class="text-[10px] font-bold tracking-[0.2em] uppercase">"Status: Optimal"</div>
+                    <div class="text-[10px] font-bold tracking-[0.2em] uppercase">"Estado: Óptimo"</div>
                     <div class="flex items-center gap-1.5 mt-0.5">
                         <span class="h-[1px] w-3 bg-primary"></span>
-                        <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.25em]">"nutri.r / Mastery"</span>
+                        <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.25em]">"nutri.r / Maestría"</span>
                     </div>
                 </div>
             </div>
 
             // Center nav links
             <nav class="flex items-center gap-8 flex-1 justify-center font-medium text-sm">
-                <A href="/" attr:class=move || format!("transition-colors {}", if location.pathname.get() == "/" { "text-black dark:text-white font-bold" } else { "text-zinc-400 hover:text-black dark:hover:text-white" })>"Dashboard"</A>
+                <A href="/" attr:class=move || format!("transition-colors {}", if location.pathname.get() == "/" { "text-black dark:text-white font-bold" } else { "text-zinc-400 hover:text-black dark:hover:text-white" })>"Inicio"</A>
                 <A href="/plan" attr:class=move || format!("transition-colors {}", if location.pathname.get().starts_with("/plan") { "text-black dark:text-white font-bold" } else { "text-zinc-400 hover:text-black dark:hover:text-white" })>"Plan"</A>
-                <A href="/calendar" attr:class=move || format!("transition-colors {}", if location.pathname.get().starts_with("/calendar") { "text-black dark:text-white font-bold" } else { "text-zinc-400 hover:text-black dark:hover:text-white" })>"Calendar"</A>
-                <A href="/pantry" attr:class=move || format!("transition-colors {}", if location.pathname.get().starts_with("/pantry") { "text-black dark:text-white font-bold" } else { "text-zinc-400 hover:text-black dark:hover:text-white" })>"Pantry"</A>
+                <A href="/calendar" attr:class=move || format!("transition-colors {}", if location.pathname.get().starts_with("/calendar") { "text-black dark:text-white font-bold" } else { "text-zinc-400 hover:text-black dark:hover:text-white" })>"Calendario"</A>
+                <A href="/ingredients" attr:class=move || format!("transition-colors {}", if location.pathname.get().starts_with("/ingredients") { "text-black dark:text-white font-bold" } else { "text-zinc-400 hover:text-black dark:hover:text-white" })>"Ingredientes"</A>
+                <A href="/pantry" attr:class=move || format!("transition-colors {}", if location.pathname.get().starts_with("/pantry") { "text-black dark:text-white font-bold" } else { "text-zinc-400 hover:text-black dark:hover:text-white" })>"Despensa"</A>
             </nav>
 
             // Right actions
             <div class="flex items-center gap-3 flex-1 justify-end">
                 <A href="/add" attr:class="flex bg-primary text-black px-4 py-1.5 rounded-full text-xs font-bold hover:scale-105 transition-all mr-2 shadow-sm">
-                    "Add Meal"
+                    "Añadir Comida"
                 </A>
                 <button
                     on:click=toggle_dark
@@ -68,7 +69,7 @@ pub fn Navbar() -> impl IntoView {
                 <div class="text-xs font-bold tracking-[0.15em] uppercase">"nutri.r"</div>
                 <div class="flex items-center gap-1.5 mt-0.5">
                     <span class="h-[1px] w-3 bg-primary"></span>
-                    <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.25em]">"Mastery"</span>
+                    <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.25em]">"Maestría"</span>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -115,12 +116,18 @@ pub fn Navbar() -> impl IntoView {
                     active=Memo::new(move |_| location.pathname.get().starts_with("/calendar"))
                 />
                 <BottomNavLink
+                    href="/ingredients"
+                    icon="inventory_2"
+                    active=Memo::new(move |_| location.pathname.get().starts_with("/ingredients"))
+                />
+                <BottomNavLink
                     href="/pantry"
                     icon="kitchen"
                     active=Memo::new(move |_| location.pathname.get().starts_with("/pantry"))
                 />
             </div>
         </nav>
+
     }
 }
 

@@ -37,12 +37,12 @@ pub fn PlanDetail() -> impl IntoView {
     let params = use_params_map();
     let id_signal = move || params.with(|params| params.get("id").unwrap_or_default());
 
-    let (_metadata, set_metadata) = signal(PlanMetadata::default());
+    let (metadata, set_metadata) = signal(PlanMetadata::default());
     let (generating_variation, set_generating_variation) = signal(false);
     let navigate = leptos_router::hooks::use_navigate();
-    let (_email, _set_email) = signal(String::new());
-    let (_show_email_input, _set_show_email_input) = signal(false);
-    let (_sending_email, _set_sending_email) = signal(false);
+    let (email, set_email) = signal(String::new());
+    let (show_email_input, set_show_email_input) = signal(false);
+    let (sending_email, set_sending_email) = signal(false);
 
     // Calendar Assign State
     let (show_assign_modal, set_show_assign_modal) = signal(false);
@@ -52,7 +52,7 @@ pub fn PlanDetail() -> impl IntoView {
         async move { calculate_nutrition(&id_val).await }
     });
 
-    let (_all_tags, set_all_tags) = signal::<Vec<Tag>>(vec![]);
+    let (all_tags, set_all_tags) = signal::<Vec<Tag>>(vec![]);
     spawn_local(async move {
         if let Ok(tags) = get_all_tags().await {
             set_all_tags.set(tags);
@@ -61,7 +61,7 @@ pub fn PlanDetail() -> impl IntoView {
 
     let (structured_plan, set_structured_plan) = signal::<Option<StructuredPlan>>(None);
 
-    let _on_add_tag = Callback::new(move |tag: Tag| {
+    let on_add_tag = Callback::new(move |tag: Tag| {
         let id_val = id_signal();
         let tag_id = tag.id.clone();
         spawn_local(async move {
@@ -75,7 +75,7 @@ pub fn PlanDetail() -> impl IntoView {
         });
     });
 
-    let _on_remove_tag = Callback::new(move |tag_id: String| {
+    let on_remove_tag = Callback::new(move |tag_id: String| {
         let id_val = id_signal();
         let tid = tag_id.clone();
         spawn_local(async move {
@@ -156,7 +156,7 @@ pub fn PlanDetail() -> impl IntoView {
         });
     };
 
-    let _on_rate = Callback::new(move |rating: u8| {
+    let on_rate = Callback::new(move |rating: u8| {
         let id_val = id_signal();
         spawn_local(async move {
             if let Ok(_) = set_plan_rating(&id_val, rating).await {
@@ -165,7 +165,7 @@ pub fn PlanDetail() -> impl IntoView {
         });
     });
 
-    let _on_variation = Callback::new(move |v_type: VariationType| {
+    let on_variation = Callback::new(move |v_type: VariationType| {
         let id_val = id_signal();
         let navigate = navigate.clone();
         set_generating_variation.set(true);
@@ -183,24 +183,24 @@ pub fn PlanDetail() -> impl IntoView {
         });
     });
 
-    let _on_send_email = move |_: web_sys::MouseEvent| {
+    let on_send_email = move |_: web_sys::MouseEvent| {
         let id_val = id_signal();
-        let target = _email.get();
+        let target = email.get();
         if target.is_empty() {
             return;
         }
 
-        _set_sending_email.set(true);
+        set_sending_email.set(true);
         spawn_local(async move {
             match send_plan_email(id_val, target).await {
                 Ok(_) => {
-                    _set_show_email_input.set(false);
+                    set_show_email_input.set(false);
                 }
                 Err(e) => {
                     log!("Error sending email: {}", e);
                 }
             }
-            _set_sending_email.set(false);
+            set_sending_email.set(false);
         });
     };
 
@@ -223,7 +223,7 @@ pub fn PlanDetail() -> impl IntoView {
                         class="w-10 h-10 bg-white flex items-center justify-center rounded-full shadow-sm"
                     >
                         <span class=move || format!("material-symbols-outlined {}",
-                            if _metadata.get().is_favorite { "text-red-500" } else { "text-neutral-400" }
+                            if metadata.get().is_favorite { "text-red-500" } else { "text-neutral-400" }
                         )>
                             "favorite"
                         </span>
@@ -232,14 +232,14 @@ pub fn PlanDetail() -> impl IntoView {
 
                 <div class="absolute bottom-12 left-6 right-6">
                     <div class="bg-accent px-2 py-1 inline-block mb-4">
-                        <span class="text-[10px] font-bold uppercase tracking-[0.2em]">"Signature Plan"</span>
+                        <span class="text-[10px] font-bold uppercase tracking-[0.2em]">"Plan de Autor"</span>
                     </div>
                     <h1 class="text-6xl font-extrabold text-white uppercase leading-[0.85] tracking-tighter">
                         {move || {
                             let title = if let Some(p) = structured_plan.get() {
                                 p.titulo
                             } else {
-                                format!("Nutritional Plan #{}", id_signal().chars().take(4).collect::<String>())
+                                format!("Plan Nutricional #{}", id_signal().chars().take(4).collect::<String>())
                             };
                             let words: Vec<&str> = title.split_whitespace().collect();
                             if words.len() >= 2 {
@@ -262,7 +262,7 @@ pub fn PlanDetail() -> impl IntoView {
                         view! {
                             <div class="flex flex-col space-y-4">
                                 <div class="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
-                                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Total Calories"</span>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Calorías Totales"</span>
                                     {match nutrition.as_ref() {
                                         Some(n) => view! { <span class="text-2xl font-light tracking-tighter">{format!("{} kcal", n.total_calories as i32)}</span> }.into_any(),
                                         None => view! { <span class="text-2xl font-light tracking-tighter text-neutral-200">"-- kcal"</span> }.into_any(),
@@ -270,7 +270,7 @@ pub fn PlanDetail() -> impl IntoView {
                                 </div>
                                 <div class="grid grid-cols-3 gap-8 py-2">
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Protein"</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Proteína"</span>
                                         <div class="flex items-baseline gap-1">
                                             {match nutrition.as_ref() {
                                                 Some(n) => view! { <span class="text-2xl font-medium tracking-tighter">{n.total_protein as i32}</span> }.into_any(),
@@ -280,7 +280,7 @@ pub fn PlanDetail() -> impl IntoView {
                                         </div>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Carbs"</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Carbohidratos"</span>
                                         <div class="flex items-baseline gap-1">
                                             {match nutrition.as_ref() {
                                                 Some(n) => view! { <span class="text-2xl font-medium tracking-tighter">{n.total_carbs as i32}</span> }.into_any(),
@@ -290,7 +290,7 @@ pub fn PlanDetail() -> impl IntoView {
                                         </div>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Fats"</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Grasas"</span>
                                         <div class="flex items-baseline gap-1">
                                             {match nutrition.as_ref() {
                                                 Some(n) => view! { <span class="text-2xl font-medium tracking-tighter">{n.total_fat as i32}</span> }.into_any(),
@@ -307,6 +307,135 @@ pub fn PlanDetail() -> impl IntoView {
                 </Suspense>
             </section>
 
+            // -- ENHANCED ACTIONS SECTION --
+            <section class="px-6 py-6 bg-neutral-50 dark:bg-neutral-900/30 space-y-8">
+                // Quick Actions
+                <div class="grid grid-cols-2 gap-4">
+                    <A href=move || format!("/shopping/{}", id_signal())
+                        attr:class="p-4 brutalist-border bg-white dark:bg-neutral-800 flex flex-col items-center justify-center gap-2 hover:bg-accent dark:hover:bg-accent hover:text-black transition-all group"
+                    >
+                        <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">"shopping_cart"</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest">"Lista de Compras"</span>
+                    </A>
+                    <button
+                        on:click=move |_| set_show_email_input.update(|v| *v = !*v)
+                        class="p-4 brutalist-border bg-white dark:bg-neutral-800 flex flex-col items-center justify-center gap-2 hover:bg-accent dark:hover:bg-accent hover:text-black transition-all group"
+                    >
+                        <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">"mail"</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest">"Enviar Email"</span>
+                    </button>
+                </div>
+
+                // Email Input (Conditional)
+                {move || if show_email_input.get() {
+                    view! {
+                        <div class="p-4 bg-white dark:bg-neutral-800 brutalist-border flex items-center gap-2">
+                            <input
+                                type="email"
+                                placeholder="tu@email.com"
+                                class="flex-1 bg-transparent border-none outline-none text-sm font-medium"
+                                on:input=move |ev| set_email.set(event_target_value(&ev))
+                                prop:value=email
+                            />
+                            <button
+                                on:click=on_send_email
+                                disabled=move || sending_email.get()
+                                class="bg-black dark:bg-white text-white dark:text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                            >
+                                {move || if sending_email.get() { "Enviando..." } else { "Enviar" }}
+                            </button>
+                        </div>
+                    }.into_any()
+                } else { ().into_any() }}
+
+                // Rating
+                <div class="flex flex-col gap-3">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-neutral-400">"Califica este Plan"</span>
+                    <div class="flex gap-2">
+                        {(1..=5).map(|i| {
+                            let rated = move || metadata.get().rating.unwrap_or(0) >= i;
+                            view! {
+                                <button
+                                    on:click=move |_| on_rate.run(i)
+                                    class=move || format!("p-2 transition-colors {}", if rated() { "text-accent" } else { "text-neutral-200 dark:text-neutral-800" })
+                                >
+                                    <span class="material-symbols-outlined !text-4xl" style=move || if rated() { "font-variation-settings: 'FILL' 1" } else { "" }>
+                                        "star"
+                                    </span>
+                                </button>
+                            }
+                        }).collect::<Vec<_>>()}
+                    </div>
+                </div>
+
+                // Tags
+                <div class="flex flex-col gap-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-neutral-400">"Etiquetas"</span>
+                    </div>
+
+                    // Existing Tags
+                    <div class="flex flex-wrap gap-2">
+                        {move || {
+                            let m = metadata.get();
+                            let current_tags = m.tags.clone();
+                            let all = all_tags.get();
+
+                            current_tags.into_iter().map(|tid| {
+                                let tag_name = all.iter().find(|t| t.id == tid).map(|t| t.name.clone()).unwrap_or(tid.clone());
+                                let tid_c = tid.clone();
+                                view! {
+                                    <div class="px-3 py-1 bg-neutral-100 dark:bg-neutral-800 brutalist-border flex items-center gap-2 group">
+                                        <span class="text-[10px] font-black uppercase">{tag_name}</span>
+                                        <button on:click=move |_| on_remove_tag.run(tid_c.clone()) class="material-symbols-outlined !text-[14px] hover:text-red-500">"close"</button>
+                                    </div>
+                                }
+                            }).collect::<Vec<_>>()
+                        }}
+                    </div>
+
+                    // Add Tag
+                    <div class="flex flex-wrap gap-2 pt-2">
+                        {move || {
+                            let m = metadata.get();
+                            let all = all_tags.get();
+                            all.into_iter()
+                                .filter(|t| !m.tags.contains(&t.id))
+                                .map(|t| {
+                                    let t_c = t.clone();
+                                    view! {
+                                        <button
+                                            on:click=move |_| on_add_tag.run(t_c.clone())
+                                            class="px-2 py-1 border border-dashed border-neutral-300 dark:border-neutral-700 text-[9px] font-bold uppercase text-neutral-400 hover:border-accent hover:text-accent transition-colors"
+                                        >
+                                            {format!("+ {}", t.name)}
+                                        </button>
+                                    }
+                                }).collect::<Vec<_>>()
+                        }}
+                    </div>
+                </div>
+
+                // Variations
+                <div class="flex flex-col gap-3">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-neutral-400">"Generar Variación"</span>
+                    <div class="flex gap-2">
+                        <button
+                            on:click=move |_| on_variation.run(VariationType::HighProtein)
+                            class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest brutalist-border bg-white dark:bg-neutral-800 hover:bg-neutral-950 dark:hover:bg-white hover:text-white dark:hover:text-black transition-all"
+                        >
+                            "Más Saludable"
+                        </button>
+                        <button
+                            on:click=move |_| on_variation.run(VariationType::LowCarb)
+                            class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest brutalist-border bg-white dark:bg-neutral-800 hover:bg-neutral-950 dark:hover:bg-white hover:text-white dark:hover:text-black transition-all"
+                        >
+                            "Más Económico"
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             // -- CONTENT SECTION --
             <section class="px-6 py-4">
                 <Suspense fallback=move || view! { <Loading /> }>
@@ -317,7 +446,7 @@ pub fn PlanDetail() -> impl IntoView {
                                 let sp = structured_plan.get().unwrap();
                                 view! {
                                     <div class="space-y-12">
-                                        <h2 class="text-xs font-bold uppercase tracking-[0.2em] mb-8 text-neutral-400">"Selected Plan Breakdown"</h2>
+                                        <h2 class="text-xs font-bold uppercase tracking-[0.2em] mb-8 text-neutral-400">"Desglose del Plan Seleccionado"</h2>
 
                                         {if let Some(instr) = sp.instrucciones {
                                             view! {
@@ -337,10 +466,10 @@ pub fn PlanDetail() -> impl IntoView {
                                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                                         {day.comidas.into_iter().map(|meal| view! {
                                                             <div class="flex flex-col gap-1">
-                                                                <span class="text-sm font-medium dark:text-white">{meal.nombre}</span>
-                                                                <span class="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">
-                                                                    {format!("{} / {}", meal.tipo, meal.ingredientes.join(", "))}
-                                                                </span>
+                                                                 <span class="text-sm font-medium dark:text-white">{meal.nombre}</span>
+                                                                 <span class="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">
+                                                                     {format!("{} / {}", meal.tipo, meal.ingredientes.join(", "))}
+                                                                 </span>
                                                             </div>
                                                         }).collect::<Vec<_>>()}
                                                     </div>
@@ -356,7 +485,7 @@ pub fn PlanDetail() -> impl IntoView {
                                     inner_html=html
                                 />
                             }.into_any(),
-                            _ => view! { <div class="py-20 text-center text-neutral-200 uppercase tracking-widest text-[10px]">"No content found"</div> }.into_any()
+                            _ => view! { <div class="py-20 text-center text-neutral-200 uppercase tracking-widest text-[10px]">"No se encontró contenido"</div> }.into_any()
                         }
                     }}
                 </Suspense>
@@ -367,7 +496,7 @@ pub fn PlanDetail() -> impl IntoView {
                 <div class="flex flex-col space-y-6">
                     <div>
                         <div class="flex justify-between items-end mb-2">
-                            <span class="text-[10px] font-bold uppercase tracking-widest dark:text-neutral-300">"Fiber Integrity"</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest dark:text-neutral-300">"Integridad de Fibra"</span>
                             <span class="text-[10px] font-bold tabular-nums dark:text-neutral-300">"12g"</span>
                         </div>
                         <div class="w-full h-[1px] bg-neutral-100 dark:bg-neutral-700 relative">
@@ -376,7 +505,7 @@ pub fn PlanDetail() -> impl IntoView {
                     </div>
                     <div>
                         <div class="flex justify-between items-end mb-2">
-                            <span class="text-[10px] font-bold uppercase tracking-widest dark:text-neutral-300">"Sodium Index"</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest dark:text-neutral-300">"Índice de Sodio"</span>
                             <span class="text-[10px] font-bold tabular-nums dark:text-neutral-300">"480mg"</span>
                         </div>
                         <div class="w-full h-[1px] bg-neutral-100 dark:bg-neutral-700 relative">
@@ -387,12 +516,12 @@ pub fn PlanDetail() -> impl IntoView {
             </section>
 
             // -- FOOTER ACTIONS --
-            <footer class="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-neutral-100 dark:border-neutral-800 z-50">
+            <footer class="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-neutral-100 dark:border-neutral-800 z-[45]">
                 <button
                     on:click=move |_| set_show_assign_modal.set(true)
                     class="w-full bg-accent py-5 flex items-center justify-center gap-3 active:scale-[0.98] transition-transform text-neutral-950"
                 >
-                    <span class="text-sm font-bold uppercase tracking-[0.3em]">"Log Meal"</span>
+                    <span class="text-sm font-bold uppercase tracking-[0.3em]">"Registrar Comida"</span>
                     <span class="material-symbols-outlined !text-base">"add"</span>
                 </button>
             </footer>
@@ -415,9 +544,9 @@ pub fn PlanDetail() -> impl IntoView {
                             <button on:click=move |_| set_show_assign_modal.set(false) class="absolute top-6 left-6 w-10 h-10 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center rounded-full">
                                 <span class="material-symbols-outlined">"close"</span>
                             </button>
-                            <h2 class="text-4xl font-black uppercase tracking-tighter mb-12 dark:text-white">"Assign to Week"</h2>
+                            <h2 class="text-4xl font-black uppercase tracking-tighter mb-12 dark:text-white">"Asignar a la Semana"</h2>
                             <div class="flex flex-col gap-4">
-                                {vec!["Next Monday", "Next Tuesday", "Manual Select"].into_iter().map(|label| view! {
+                                {vec!["Próximo Lunes", "Próximo Martes", "Selección Manual"].into_iter().map(|label| view! {
                                     <button class="w-full p-6 brutalist-border dark:border-neutral-700 dark:text-white text-left uppercase font-bold text-sm hover:bg-accent dark:hover:bg-accent transition-colors">
                                         {label}
                                     </button>
