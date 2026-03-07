@@ -58,8 +58,8 @@ pub fn Plan() -> impl IntoView {
 
             <main>
                 <section class="px-6 pt-8 pb-12">
-                    <div class="flex justify-between items-start">
-                        <h1 class="text-6xl font-extrabold uppercase leading-[0.85] tracking-tighter mb-4">
+                    <div class="flex flex-row justify-between items-start gap-4">
+                        <h1 class="text-4xl md:text-6xl font-extrabold uppercase leading-[0.85] tracking-tighter mb-4 break-words">
                             "Planes" <br/> "Guardados"
                         </h1>
                         <button

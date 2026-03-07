@@ -1,8 +1,8 @@
 use crate::components::ui::Loading;
 use crate::tauri_bridge::{
-    add_tag_to_plan, calculate_nutrition, generate_variation, get_all_tags, get_plan_content,
-    get_plan_metadata, remove_tag_from_plan, send_plan_email, set_plan_rating, toggle_favorite,
-    PlanMetadata, Tag, VariationType,
+    add_tag_to_plan, calculate_nutrition, delete_plan, generate_variation, get_all_tags,
+    get_plan_content, get_plan_metadata, remove_tag_from_plan, send_plan_email, set_plan_rating,
+    toggle_favorite, PlanMetadata, Tag, VariationType,
 };
 use leptos::logging::log;
 use leptos::portal::Portal;
@@ -46,6 +46,10 @@ pub fn PlanDetail() -> impl IntoView {
 
     // Calendar Assign State
     let (show_assign_modal, set_show_assign_modal) = signal(false);
+
+    // Delete Plan State
+    let (show_delete_modal, set_show_delete_modal) = signal(false);
+    let (deleting_plan, set_deleting_plan) = signal(false);
 
     let nutrition_resource = LocalResource::new(move || {
         let id_val = id_signal();
@@ -310,19 +314,26 @@ pub fn PlanDetail() -> impl IntoView {
             // -- ENHANCED ACTIONS SECTION --
             <section class="px-6 py-6 bg-neutral-50 dark:bg-neutral-900/30 space-y-8">
                 // Quick Actions
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-3 gap-4">
                     <A href=move || format!("/shopping/{}", id_signal())
                         attr:class="p-4 brutalist-border bg-white dark:bg-neutral-800 flex flex-col items-center justify-center gap-2 hover:bg-accent dark:hover:bg-accent hover:text-black transition-all group"
                     >
                         <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">"shopping_cart"</span>
-                        <span class="text-[10px] font-black uppercase tracking-widest">"Lista de Compras"</span>
+                        <span class="text-[10px] text-center font-black uppercase tracking-widest">"Compras"</span>
                     </A>
                     <button
                         on:click=move |_| set_show_email_input.update(|v| *v = !*v)
                         class="p-4 brutalist-border bg-white dark:bg-neutral-800 flex flex-col items-center justify-center gap-2 hover:bg-accent dark:hover:bg-accent hover:text-black transition-all group"
                     >
                         <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">"mail"</span>
-                        <span class="text-[10px] font-black uppercase tracking-widest">"Enviar Email"</span>
+                        <span class="text-[10px] text-center font-black uppercase tracking-widest">"Email"</span>
+                    </button>
+                    <button
+                        on:click=move |_| set_show_delete_modal.set(true)
+                        class="p-4 brutalist-border bg-white dark:bg-neutral-800 flex flex-col items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all group text-red-500"
+                    >
+                        <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">"delete"</span>
+                        <span class="text-[10px] text-center font-black uppercase tracking-widest">"Eliminar"</span>
                     </button>
                 </div>
 
@@ -551,6 +562,48 @@ pub fn PlanDetail() -> impl IntoView {
                                         {label}
                                     </button>
                                 }).collect::<Vec<_>>()}
+                            </div>
+                        </div>
+                    </Portal>
+                }.into_any()
+            } else { ().into_any() }}
+
+            {move || if show_delete_modal.get() {
+                view! {
+                    <Portal>
+                        <div class="fixed inset-0 bg-neutral-950/80 z-[500] flex items-center justify-center animate-in fade-in p-6">
+                            <div class="bg-white dark:bg-neutral-900 brutalist-border w-full max-w-sm flex flex-col overflow-hidden shadow-2xl">
+                                <div class="bg-red-500 p-6 flex justify-center items-center">
+                                    <span class="material-symbols-outlined !text-6xl text-white font-light">"warning"</span>
+                                </div>
+                                <div class="p-8 pb-4 flex flex-col space-y-4 text-center">
+                                    <h3 class="text-2xl font-black uppercase tracking-tighter text-neutral-900 dark:text-white leading-none">
+                                        "¿Eliminar Plan?"
+                                    </h3>
+                                    <p class="text-xs uppercase tracking-widest text-neutral-500 dark:text-neutral-400 font-bold leading-relaxed">
+                                        "Esta acción no se puede deshacer. Perderás el acceso a este plan."
+                                    </p>
+                                </div>
+                                <div class="p-4 flex gap-3">
+                                    <button
+                                        on:click=move |_| set_show_delete_modal.set(false)
+                                        disabled=move || deleting_plan.get()
+                                        class="flex-1 py-4 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white text-[10px] font-black uppercase tracking-widest hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
+                                    >
+                                        "Cancelar"
+                                    </button>
+                                    <button
+                                        on:click=on_delete_confirm
+                                        disabled=move || deleting_plan.get()
+                                        class="flex-1 py-4 bg-red-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {move || if deleting_plan.get() {
+                                            view! { <span class="material-symbols-outlined animate-spin !text-[14px]">"sync"</span> " Borrando..." }.into_any()
+                                        } else {
+                                            view! { "Confirmar" }.into_any()
+                                        }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </Portal>

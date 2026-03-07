@@ -23,6 +23,7 @@ pub fn Pantry() -> impl IntoView {
     let (new_item_exp, set_new_item_exp) = signal(String::new());
     let (show_add_form, set_show_add_form) = signal(false);
     let (item_to_edit, set_item_to_edit) = signal(Option::<PantryItem>::None);
+    let (search_query, set_search_query) = signal(String::new());
 
     let on_add_item = move |_| {
         let name = new_item_name.get();
@@ -116,7 +117,7 @@ pub fn Pantry() -> impl IntoView {
                     <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">"Control de Inventario"</span>
                 </div>
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                    <h1 class="text-[72px] font-black uppercase leading-[0.85] tracking-tighter text-neutral-950 dark:text-white">
+                    <h1 class="text-[72px] font-black uppercase leading-[0.85] tracking-tighter text-neutral-950 dark:text-white break-words">
                         "DESPENSA"
                     </h1>
                     <button
@@ -134,6 +135,16 @@ pub fn Pantry() -> impl IntoView {
                     >
                         {move || if show_add_form.get() { "CANCELAR" } else { "NUEVO INGREDIENTE" }}
                     </button>
+                </div>
+                <div class="mt-8 relative max-w-xl">
+                    <input
+                        type="text"
+                        placeholder="BUSCAR INGREDIENTE..."
+                        class="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-6 py-4 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-neutral-950 dark:focus:border-neutral-500 transition-colors text-neutral-950 dark:text-white"
+                        on:input=move |ev| set_search_query.set(event_target_value(&ev))
+                        prop:value=search_query
+                    />
+                    <span class="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400">"search"</span>
                 </div>
             </section>
 
@@ -230,7 +241,15 @@ pub fn Pantry() -> impl IntoView {
                     </div>
                 }>
                     {move || {
-                        let items = pantry_resource.get().unwrap_or_default();
+                        let query = search_query.get().to_lowercase();
+                        let all_items = pantry_resource.get().unwrap_or_default();
+
+                        let items = if query.is_empty() {
+                            all_items
+                        } else {
+                            all_items.into_iter().filter(|i| i.name.to_lowercase().contains(&query) || i.category.to_lowercase().contains(&query)).collect::<Vec<_>>()
+                        };
+
                         if items.is_empty() {
                             view! {
                                 <div class="py-32 px-12 text-center flex flex-col items-center gap-8 max-w-2xl mx-auto">

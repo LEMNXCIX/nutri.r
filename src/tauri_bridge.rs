@@ -4,6 +4,7 @@ use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 
 static DEBUG_LOGS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+static IS_API_ONLINE: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(true));
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
@@ -504,6 +505,16 @@ async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<J
                 .map_err(|e| e.to_string())?;
             let content = res.json::<String>().await.map_err(|e| e.to_string())?;
             Ok(JsValue::from_str(&content))
+        }
+        "delete_plan" => {
+            let id_args: IdArgs =
+                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
+            client
+                .delete(format!("{}/plans/{}", api_base, id_args.id))
+                .send()
+                .await
+                .map_err(|e| e.to_string())?;
+            Ok(JsValue::NULL)
         }
         "generate_week" => {
             let res = client
@@ -1093,7 +1104,7 @@ pub async fn check_health() -> bool {
 
     let client = reqwest::Client::new();
 
-    match client.get(&url).send().await {
+    let is_online = match client.get(&url).send().await {
         Ok(res) => {
             let ok = res.status().is_success();
             log_trace(format!("HEALTH_RES: {} -> {}", url, ok));
@@ -1103,7 +1114,24 @@ pub async fn check_health() -> bool {
             log_trace(format!("HEALTH_ERR: {} -> {}", url, e));
             false
         }
+    };
+
+    if let Ok(mut health) = IS_API_ONLINE.lock() {
+        *health = is_online;
     }
+
+    is_online
+}
+
+pub async fn start_health_check_loop() {
+    log_trace("NET: Starting health check background loop".to_string());
+    leptos::task::spawn_local(async {
+        loop {
+            // Check health every 30 seconds
+            let _ = check_health().await;
+            gloo_timers::future::sleep(std::time::Duration::from_secs(30)).await;
+        }
+    });
 }
 
 pub async fn auto_pull() {
@@ -1168,34 +1196,45 @@ async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
     } else {
         let api_base = get_api_base_url().await;
 
-        // Before attempting API, if it's not a config command, check health
-        if !is_config_cmd && !is_sync_cmd {
-            if !check_health().await {
-                log_trace(format!(
-                    "FALLBACK: API unreachable, falling back to LOCAL for {}",
-                    cmd
-                ));
-                return invoke(cmd, args).await.map_err(|e| format!("{:?}", e));
-            }
+        // Use cached health status
+        let is_online = if let Ok(health) = IS_API_ONLINE.lock() {
+            *health
+        } else {
+            true
+        };
+
+        if !is_config_cmd && !is_sync_cmd && !is_online {
+            log_trace(format!(
+                "FALLBACK: API marked as OFFLINE, skipping health check for {}",
+                cmd
+            ));
+            return invoke(cmd, args).await.map_err(|e| format!("{:?}", e));
         }
 
         log_trace(format!("REQ: {} a {}", cmd, api_base));
         let res = call_api_fallback(cmd, args.clone(), &api_base).await;
 
-        // If the call fails due to network, make a last local attempt
-        if let Err(ref e) = res {
-            if e.contains("NetworkError") || e.contains("Failed to fetch") {
-                log_trace(format!(
-                    "RETRY_LOCAL: API error {}, attempting LOCAL fallback",
-                    e
-                ));
-                return invoke(cmd, args).await.map_err(|err| format!("{:?}", err));
-            }
-        }
-
+        // Update health status based on result
         match &res {
-            Ok(_) => log_trace(format!("RES: {} -> OK", cmd)),
-            Err(e) => log_trace(format!("RES: {} -> ERR: {}", cmd, e)),
+            Ok(_) => {
+                log_trace(format!("RES: {} -> OK", cmd));
+                if let Ok(mut health) = IS_API_ONLINE.lock() {
+                    *health = true;
+                }
+            }
+            Err(e) => {
+                log_trace(format!("RES: {} -> ERR: {}", cmd, e));
+                if e.contains("NetworkError") || e.contains("Failed to fetch") {
+                    if let Ok(mut health) = IS_API_ONLINE.lock() {
+                        *health = false;
+                    }
+                    log_trace(format!(
+                        "RETRY_LOCAL: API error {}, attempting LOCAL fallback",
+                        e
+                    ));
+                    return invoke(cmd, args).await.map_err(|err| format!("{:?}", err));
+                }
+            }
         }
         res
     };
@@ -1299,6 +1338,18 @@ pub async fn push_to_server() -> Result<String, String> {
         emit_toast(e, true);
     }
     res
+}
+
+pub async fn delete_plan(plan_id: &str) -> Result<(), String> {
+    let args = IdArgs {
+        id: plan_id.to_string(),
+    };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    let res = match safe_invoke("delete_plan", args_js).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e),
+    };
+    notify(res, Some("Plan eliminado"))
 }
 
 pub async fn generate_week() -> Result<String, String> {

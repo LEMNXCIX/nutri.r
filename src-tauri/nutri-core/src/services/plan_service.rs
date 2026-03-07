@@ -64,7 +64,8 @@ where
         let pantry_items = self.pantry_repo.get_all()?;
         let pantry_list = pantry_items
             .iter()
-            .map(|i| i.name.clone())
+            .filter(|i| i.quantity > 0.0)
+            .map(|i| format!("{} ({} {})", i.name, i.quantity, i.unit))
             .collect::<Vec<String>>()
             .join(", ");
 
@@ -108,6 +109,14 @@ where
     pub fn get_plan_content(&self, plan_id: &str) -> AppResult<String> {
         let plan = self.plan_repo.get_by_id(plan_id)?;
         Ok(plan.markdown_content)
+    }
+
+    /// Delete a plan by ID
+    pub fn delete_plan(&self, plan_id: &str) -> AppResult<()> {
+        log::info!("Deleting plan {}", plan_id);
+        self.plan_repo.delete_plan(plan_id)?;
+        log::info!("Plan {} deleted successfully", plan_id);
+        Ok(())
     }
 
     /// Generate a variation of an existing plan

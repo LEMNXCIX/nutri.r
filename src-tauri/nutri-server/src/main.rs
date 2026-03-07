@@ -80,7 +80,10 @@ async fn main() {
         .route("/api/plans/favorites", get(plans::get_favorite_plans))
         .route("/api/plans/search", post(plans::search_plans))
         .route("/api/plans/generate", post(plans::generate_plan))
-        .route("/api/plans/:id", get(plans::get_plan))
+        .route(
+            "/api/plans/:id",
+            get(plans::get_plan).delete(plans::delete_plan),
+        )
         .route("/api/plans/:id/favorite", post(plans::toggle_favorite))
         .route("/api/plans/:id/metadata", get(plans::get_metadata))
         .route("/api/plans/:id/rating", post(plans::set_rating))

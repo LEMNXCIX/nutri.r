@@ -19,6 +19,7 @@ pub trait PlanRepository {
     ) -> AppResult<()>;
     fn overwrite_index(&self, index: Vec<PlanIndex>) -> AppResult<()>;
     fn save_detail(&self, detail: PlanDetail) -> AppResult<()>;
+    fn delete_plan(&self, id: &str) -> AppResult<()>;
 }
 
 /// File-based implementation of PlanRepository
@@ -160,6 +161,36 @@ impl PlanRepository for FilePlanRepository {
     fn save_detail(&self, detail: PlanDetail) -> AppResult<()> {
         let plan_path = self.data_dir.join(format!("{}.md", detail.id));
         fs::write(&plan_path, detail.markdown_content)?;
+        Ok(())
+    }
+
+    fn delete_plan(&self, id: &str) -> AppResult<()> {
+        // Delete plan file
+        let plan_path_md = self.data_dir.join(format!("{}.md", id));
+        if plan_path_md.exists() {
+            fs::remove_file(&plan_path_md)
+                .map_err(|e| AppError::Database(format!("Failed to delete plan file: {}", e)))?;
+        }
+
+        let plan_path_json = self.data_dir.join(format!("{}.json", id));
+        if plan_path_json.exists() {
+            fs::remove_file(&plan_path_json).map_err(|e| {
+                AppError::Database(format!("Failed to delete legacy plan file: {}", e))
+            })?;
+        }
+
+        // Remove from index
+        let index_path = self.index_path();
+        if index_path.exists() {
+            let mut index = self.get_all()?;
+            index.retain(|p| p.id != id);
+
+            let json = serde_json::to_string_pretty(&index)?;
+            fs::write(&index_path, json).map_err(|e| {
+                AppError::Database(format!("Failed to update index after deletion: {}", e))
+            })?;
+        }
+
         Ok(())
     }
 }

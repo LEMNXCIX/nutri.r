@@ -126,7 +126,7 @@ impl OllamaService {
 
         if !pantry_list.is_empty() {
             full_prompt = format!(
-                "{}\n\nRECOMENDACIÓN: Intenta incluir algunos de estos ingredientes que el usuario ya tiene disponibles en su despensa, pero no te limites exclusivamente a ellos: {}",
+                "{}\n\nRECOMENDACIÓN: El usuario dispone de los siguientes ingredientes en su despensa con sus respectivas cantidades disponibles: {}.\n\nInstrucciones para la receta:\n- Usa TODOS estos ingredientes en la medida de lo posible.\n- Ajusta las porciones y cantidades de la receta para reflejar exactamente lo que está disponible.\n- Si algún ingrediente falta o no es suficiente, complementa con otros ingredientes externos, pero nunca ignores lo que ya está en la despensa.\n- Explica claramente cómo se usan y en qué cantidad dentro de la receta.",
                 full_prompt, pantry_list
             );
         }
@@ -134,7 +134,7 @@ impl OllamaService {
         let messages = vec![
             ChatMessage {
                 role: "system".to_string(),
-                content: "Eres un chef experto en nutrición. Genera planes nutricionales balanceados en formato Markdown.".to_string(),
+                content: "Eres un chef experto en nutrición. Genera planes nutricionales balanceados en formato Markdown sin emojis.".to_string(),
             },
             ChatMessage {
                 role: "user".to_string(),

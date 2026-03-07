@@ -1,11 +1,14 @@
+use crate::error::ApiError;
 use axum::{
     extract::{Path, State},
     Json,
 };
-use nutri_core::{models::{PlanIndex, metadata::PlanMetadata, search::SearchFilters, plan::VariationType}, state::AppState};
-use std::sync::Arc;
-use crate::error::ApiError;
+use nutri_core::{
+    models::{metadata::PlanMetadata, plan::VariationType, search::SearchFilters, PlanIndex},
+    state::AppState,
+};
 use serde::Deserialize;
+use std::sync::Arc;
 
 pub async fn list_plans(
     State(state): State<Arc<AppState>>,
@@ -24,12 +27,19 @@ pub async fn get_plan(
     Ok(Json(content))
 }
 
-pub async fn generate_plan(
-    State(state): State<Arc<AppState>>,
-) -> Result<Json<String>, ApiError> {
+pub async fn generate_plan(State(state): State<Arc<AppState>>) -> Result<Json<String>, ApiError> {
     let service = state.plan_service.lock().await;
     let id = service.generate_plan().await?;
     Ok(Json(id))
+}
+
+pub async fn delete_plan(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<()>, ApiError> {
+    let service = state.plan_service.lock().await;
+    service.delete_plan(&id)?;
+    Ok(Json(()))
 }
 
 pub async fn get_favorite_plans(

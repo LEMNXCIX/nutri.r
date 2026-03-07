@@ -90,7 +90,17 @@ pub fn PantryItemCard(
                     <span class="text-5xl font-light tracking-tighter text-neutral-950 dark:text-white">{item.quantity}</span>
                     <span class="text-sm font-bold text-neutral-400 uppercase">{item.unit.clone()}</span>
                 </div>
-                <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4 md:gap-6">
+                    <button
+                        on:click={
+                            let id = id_qty.clone();
+                            move |_| on_update_qty.run((id.clone(), 0.0))
+                        }
+                        class="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-100 dark:border-neutral-800 text-neutral-400 hover:border-error dark:hover:border-error hover:text-error dark:hover:text-error transition-all"
+                        title="Limpiar stock (marcar como agotado)"
+                    >
+                        <span class="material-symbols-outlined !text-[20px]">"layers_clear"</span>
+                    </button>
                     <button
                         on:click={
                             let id = id_qty.clone();
