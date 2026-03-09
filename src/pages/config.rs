@@ -34,6 +34,8 @@ pub fn Config() -> impl IntoView {
     let (_is_mobile_ui, set_is_mobile_ui) = signal(false);
     let (ollama_status_msg, set_ollama_status_msg) = signal(String::new());
     let (sync_status_msg, set_sync_status_msg) = signal(String::new());
+    let (sync_op_status, set_sync_op_status) = signal(Option::<(bool, String, String)>::None); // (is_ok, title, detail)
+    let (is_syncing, set_is_syncing) = signal(Option::<&'static str>::None); // which op is running
     let (debug_logs, set_debug_logs) = signal(get_debug_logs());
 
     // Listen for debug logs
@@ -170,47 +172,63 @@ pub fn Config() -> impl IntoView {
         Callback::new(move |val: String| set_config.update(|c| c.sync_server_url = val));
 
     let h_sync_click = Callback::new(move |_: web_sys::MouseEvent| {
-        set_status_msg.set("Iniciando sincronización..".to_string());
+        set_is_syncing.set(Some("sync"));
+        set_sync_op_status.set(None);
         spawn_local(async move {
             match crate::tauri_bridge::perform_sync().await {
                 Ok(msg) => {
-                    set_status_msg.set(msg);
+                    set_sync_op_status.set(Some((
+                        true,
+                        "Sincronización completada".to_string(),
+                        msg,
+                    )));
                     if let Ok(c) = get_config().await {
                         set_config.set(c);
                     }
                 }
-                Err(e) => set_status_msg.set(format!("Error: {}", e)),
+                Err(e) => {
+                    set_sync_op_status.set(Some((false, "Error al sincronizar".to_string(), e)))
+                }
             }
+            set_is_syncing.set(None);
         });
     });
 
     let h_pull_click = Callback::new(move |_: web_sys::MouseEvent| {
-        set_status_msg.set("Descargando datos del servidor...".to_string());
+        set_is_syncing.set(Some("pull"));
+        set_sync_op_status.set(None);
         spawn_local(async move {
             match crate::tauri_bridge::pull_from_server().await {
                 Ok(msg) => {
-                    set_status_msg.set(msg);
+                    set_sync_op_status.set(Some((true, "Datos recibidos".to_string(), msg)));
                     if let Ok(c) = get_config().await {
                         set_config.set(c);
                     }
                 }
-                Err(e) => set_status_msg.set(format!("Error: {}", e)),
+                Err(e) => {
+                    set_sync_op_status.set(Some((false, "Error al recibir datos".to_string(), e)))
+                }
             }
+            set_is_syncing.set(None);
         });
     });
 
     let h_push_click = Callback::new(move |_: web_sys::MouseEvent| {
-        set_status_msg.set("Subiendo datos al servidor...".to_string());
+        set_is_syncing.set(Some("push"));
+        set_sync_op_status.set(None);
         spawn_local(async move {
             match crate::tauri_bridge::push_to_server().await {
                 Ok(msg) => {
-                    set_status_msg.set(msg);
+                    set_sync_op_status.set(Some((true, "Datos enviados".to_string(), msg)));
                     if let Ok(c) = get_config().await {
                         set_config.set(c);
                     }
                 }
-                Err(e) => set_status_msg.set(format!("Error: {}", e)),
+                Err(e) => {
+                    set_sync_op_status.set(Some((false, "Error al enviar datos".to_string(), e)))
+                }
             }
+            set_is_syncing.set(None);
         });
     });
 
@@ -512,11 +530,98 @@ pub fn Config() -> impl IntoView {
                                     }
                                 }}
                             </div>
-                            <div class="grid grid-cols-3 gap-2">
-                                <SyncButton label="Bajar" on_click=h_pull_click icon="arrow_upward" />
-                                <SyncButton label="Sinc" on_click=h_sync_click icon="sync" primary=true />
-                                <SyncButton label="Subir" on_click=h_push_click icon="arrow_downward" />
-                            </div>
+
+                        // Sync Operation Buttons
+                        <div class="grid grid-cols-3 gap-2">
+                            // PULL: receive from server
+                            <button
+                                type="button"
+                                on:click=move |e| h_pull_click.run(e)
+                                disabled=move || is_syncing.get().is_some()
+                                class="border border-black dark:border-neutral-700 dark:text-white p-4 flex flex-col items-center gap-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900 active:bg-neutral-100 transition-colors disabled:opacity-50 group"
+                            >
+                                {move || if is_syncing.get() == Some("pull") {
+                                    view! { <span class="material-symbols-outlined animate-spin">"sync"</span> }.into_any()
+                                } else {
+                                    view! { <span class="material-symbols-outlined">"cloud_download"</span> }.into_any()
+                                }}
+                                <span class="text-[9px] font-bold uppercase tracking-wider">"Recibir"</span>
+                                <span class="text-[8px] text-neutral-400 dark:text-neutral-500 uppercase">"Servidor → App"</span>
+                            </button>
+
+                            // SYNC: bidirectional smart sync
+                            <button
+                                type="button"
+                                on:click=move |e| h_sync_click.run(e)
+                                disabled=move || is_syncing.get().is_some()
+                                class="bg-black dark:bg-white text-white dark:text-black p-4 flex flex-col items-center gap-1.5 hover:bg-neutral-800 dark:hover:bg-neutral-100 active:bg-neutral-900 transition-colors disabled:opacity-50"
+                            >
+                                {move || if is_syncing.get() == Some("sync") {
+                                    view! { <span class="material-symbols-outlined animate-spin text-accent">"sync"</span> }.into_any()
+                                } else {
+                                    view! { <span class="material-symbols-outlined text-accent">"sync"</span> }.into_any()
+                                }}
+                                <span class="text-[9px] font-bold uppercase tracking-wider">"Sincronizar"</span>
+                                <span class="text-[8px] uppercase opacity-60">"Inteligente"</span>
+                            </button>
+
+                            // PUSH: send to server
+                            <button
+                                type="button"
+                                on:click=move |e| h_push_click.run(e)
+                                disabled=move || is_syncing.get().is_some()
+                                class="border border-black dark:border-neutral-700 dark:text-white p-4 flex flex-col items-center gap-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900 active:bg-neutral-100 transition-colors disabled:opacity-50 group"
+                            >
+                                {move || if is_syncing.get() == Some("push") {
+                                    view! { <span class="material-symbols-outlined animate-spin">"sync"</span> }.into_any()
+                                } else {
+                                    view! { <span class="material-symbols-outlined">"cloud_upload"</span> }.into_any()
+                                }}
+                                <span class="text-[9px] font-bold uppercase tracking-wider">"Enviar"</span>
+                                <span class="text-[8px] text-neutral-400 dark:text-neutral-500 uppercase">"App → Servidor"</span>
+                            </button>
+                        </div>
+
+                        // Inline sync result panel
+                        {move || match sync_op_status.get() {
+                            Some((is_ok, title, detail)) => {
+                                let (bg, border, icon, text_color) = if is_ok {
+                                    ("bg-green-50 dark:bg-green-950/40", "border-green-500", "check_circle", "text-green-700 dark:text-green-400")
+                                } else {
+                                    ("bg-red-50 dark:bg-red-950/40", "border-red-500", "error", "text-red-700 dark:text-red-400")
+                                };
+                                view! {
+                                    <div class=format!("border-l-4 {} {} p-4 flex items-start gap-3", border, bg)>
+                                        <span class=format!("material-symbols-outlined {} flex-shrink-0 !text-xl", text_color)>{icon}</span>
+                                        <div class="flex-1 min-w-0">
+                                            <p class=format!("text-[10px] font-black uppercase tracking-widest {}", text_color)>{title}</p>
+                                            <p class="text-[10px] text-neutral-600 dark:text-neutral-400 mt-1 leading-relaxed break-words">{detail}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            on:click=move |_| set_sync_op_status.set(None)
+                                            class="material-symbols-outlined !text-sm text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 flex-shrink-0"
+                                        >
+                                            "close"
+                                        </button>
+                                    </div>
+                                }.into_any()
+                            }
+                            None if is_syncing.get().is_some() => {
+                                let label = match is_syncing.get() {
+                                    Some("pull") => "Descargando datos del servidor...",
+                                    Some("push") => "Subiendo datos al servidor...",
+                                    _ => "Sincronizando de forma inteligente...",
+                                };
+                                view! {
+                                    <div class="border border-black dark:border-neutral-700 p-4 flex items-center gap-3">
+                                        <span class="material-symbols-outlined animate-spin !text-xl">"sync"</span>
+                                        <p class="text-[10px] font-black uppercase tracking-widest">{label}</p>
+                                    </div>
+                                }.into_any()
+                            }
+                            _ => ().into_any()
+                        }}
                         </div>
                     </ConfigSection>
 

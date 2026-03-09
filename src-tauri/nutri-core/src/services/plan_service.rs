@@ -190,7 +190,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repositories::{FileConfigRepository, FileIngredientRepository, FilePlanRepository};
+    use crate::repositories::{
+        FileConfigRepository, FileIngredientRepository, FilePantryRepository, FilePlanRepository,
+    };
     use std::env;
 
     #[test]

@@ -115,6 +115,9 @@ pub fn App() -> impl IntoView {
 
     Effect::new(move |_| {
         leptos::task::spawn_local(async {
+            // Do an immediate health check first so IS_API_ONLINE is accurate
+            // before any page data fetch happens, then start the periodic loop.
+            crate::tauri_bridge::check_health().await;
             crate::tauri_bridge::start_health_check_loop().await;
             crate::tauri_bridge::auto_pull().await;
         });

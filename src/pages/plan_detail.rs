@@ -1,9 +1,10 @@
 use crate::components::ui::Loading;
 use crate::tauri_bridge::{
-    add_tag_to_plan, calculate_nutrition, delete_plan, generate_variation, get_all_tags,
-    get_plan_content, get_plan_metadata, remove_tag_from_plan, send_plan_email, set_plan_rating,
-    toggle_favorite, PlanMetadata, Tag, VariationType,
+    add_tag_to_plan, assign_weekly_plan_to_date, calculate_nutrition, delete_plan,
+    generate_variation, get_all_tags, get_plan_content, get_plan_metadata, remove_tag_from_plan,
+    send_plan_email, set_plan_rating, toggle_favorite, PlanMetadata, Tag, VariationType,
 };
+use chrono::{Datelike, Duration, Local, Weekday};
 use leptos::logging::log;
 use leptos::portal::Portal;
 use leptos::prelude::*;
@@ -32,6 +33,17 @@ struct StructuredPlan {
     dias: Vec<PlanDay>,
 }
 
+fn get_next_weekday(weekday: Weekday) -> String {
+    let now = Local::now().date_naive();
+    let mut days_ahead = weekday.number_from_monday() as i32 - now.weekday().number_from_monday() as i32;
+    if days_ahead <= 0 {
+        days_ahead += 7;
+    }
+    (now + Duration::days(days_ahead as i64))
+        .format("%Y-%m-%d")
+        .to_string()
+}
+
 #[component]
 pub fn PlanDetail() -> impl IntoView {
     let params = use_params_map();
@@ -46,6 +58,7 @@ pub fn PlanDetail() -> impl IntoView {
 
     // Calendar Assign State
     let (show_assign_modal, set_show_assign_modal) = signal(false);
+    let (assigning_weekly, set_assigning_weekly) = signal(false);
 
     // Delete Plan State
     let (show_delete_modal, set_show_delete_modal) = signal(false);
@@ -169,9 +182,10 @@ pub fn PlanDetail() -> impl IntoView {
         });
     });
 
+    let navigate_for_variation = navigate.clone();
     let on_variation = Callback::new(move |v_type: VariationType| {
         let id_val = id_signal();
-        let navigate = navigate.clone();
+        let navigate = navigate_for_variation.clone();
         set_generating_variation.set(true);
         spawn_local(async move {
             match generate_variation(&id_val, v_type).await {
@@ -207,6 +221,42 @@ pub fn PlanDetail() -> impl IntoView {
             set_sending_email.set(false);
         });
     };
+
+    let on_delete_confirm = {
+        let navigate = navigate;
+        Callback::new(move |_: web_sys::MouseEvent| {
+            let id_val = id_signal();
+            let navigate = navigate.clone();
+            set_deleting_plan.set(true);
+            spawn_local(async move {
+                match delete_plan(&id_val).await {
+                    Ok(_) => {
+                        navigate("/plan", Default::default());
+                    }
+                    Err(e) => {
+                        log!("Error deleting plan: {}", e);
+                        set_show_delete_modal.set(false);
+                    }
+                }
+                set_deleting_plan.set(false);
+            });
+        })
+    };
+    let on_assign_weekly = Callback::new(move |start_date: String| {
+        let id_val = id_signal();
+        set_assigning_weekly.set(true);
+        spawn_local(async move {
+            match assign_weekly_plan_to_date(&start_date, &id_val).await {
+                Ok(_) => {
+                    set_show_assign_modal.set(false);
+                }
+                Err(e) => {
+                    log!("Error assigning weekly plan: {}", e);
+                }
+            }
+            set_assigning_weekly.set(false);
+        });
+    });
 
     view! {
         <div class="w-full font-sans pb-32">
@@ -557,11 +607,34 @@ pub fn PlanDetail() -> impl IntoView {
                             </button>
                             <h2 class="text-4xl font-black uppercase tracking-tighter mb-12 dark:text-white">"Asignar a la Semana"</h2>
                             <div class="flex flex-col gap-4">
-                                {vec!["Próximo Lunes", "Próximo Martes", "Selección Manual"].into_iter().map(|label| view! {
-                                    <button class="w-full p-6 brutalist-border dark:border-neutral-700 dark:text-white text-left uppercase font-bold text-sm hover:bg-accent dark:hover:bg-accent transition-colors">
-                                        {label}
-                                    </button>
-                                }).collect::<Vec<_>>()}
+                                {move || {
+                                    let next_monday = get_next_weekday(Weekday::Mon);
+                                    let next_tuesday = get_next_weekday(Weekday::Tue);
+                                    let id_val = id_signal();
+
+                                    view! {
+                                        <button
+                                            on:click=move |_| on_assign_weekly.run(next_monday.clone())
+                                            disabled=assigning_weekly
+                                            class="w-full p-6 brutalist-border dark:border-neutral-700 dark:text-white text-left uppercase font-bold text-sm hover:bg-accent dark:hover:bg-accent transition-colors disabled:opacity-50"
+                                        >
+                                            {format!("Próximo Lunes ({})", next_monday)}
+                                        </button>
+                                        <button
+                                            on:click=move |_| on_assign_weekly.run(next_tuesday.clone())
+                                            disabled=assigning_weekly
+                                            class="w-full p-6 brutalist-border dark:border-neutral-700 dark:text-white text-left uppercase font-bold text-sm hover:bg-accent dark:hover:bg-accent transition-colors disabled:opacity-50"
+                                        >
+                                            {format!("Próximo Martes ({})", next_tuesday)}
+                                        </button>
+                                        <A
+                                            href=format!("/calendar")
+                                            attr:class="w-full p-6 brutalist-border dark:border-neutral-700 dark:text-white text-left uppercase font-bold text-sm hover:bg-accent dark:hover:bg-accent transition-colors block"
+                                        >
+                                            "Selección Manual (Ir al Calendario)"
+                                        </A>
+                                    }
+                                }}
                             </div>
                         </div>
                     </Portal>
@@ -593,7 +666,7 @@ pub fn PlanDetail() -> impl IntoView {
                                         "Cancelar"
                                     </button>
                                     <button
-                                        on:click=on_delete_confirm
+                                        on:click=move |ev| on_delete_confirm.run(ev)
                                         disabled=move || deleting_plan.get()
                                         class="flex-1 py-4 bg-red-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
