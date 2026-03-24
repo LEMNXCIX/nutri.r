@@ -31,19 +31,19 @@ pub fn Add() -> impl IntoView {
                 <A href="/" attr:class="flex items-center">
                     <span class="material-symbols-outlined">arrow_back_ios</span>
                 </A>
-                <div class="text-[10px] font-bold tracking-[0.25em] uppercase text-neutral-400 dark:text-zinc-500">Create / V1.0</div>
+                <div class="text-[10px] font-bold tracking-[0.25em] uppercase text-neutral-400 dark:text-zinc-500">Generar Plan</div>
                 <div class="w-6"></div>
             </header>
 
             <main class="px-6 py-8">
                 <section class="mb-12">
-                    <h1 class="text-6xl font-extrabold uppercase leading-[0.85] tracking-tighter mb-4">
+                    <h1 class="text-[72px] break-words font-extrabold uppercase leading-[0.85] tracking-tighter mb-4">
                         Build <br/> Next
                     </h1>
                     <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-zinc-500">
                         <span>"Manual Override Ready"</span>
                         <span class="w-1 h-1 bg-neutral-300 dark:bg-neutral-600 rounded-full"></span>
-                        <span>"AI Assisted"</span>
+                        <span>"AI Generado"</span>
                     </div>
                 </section>
 

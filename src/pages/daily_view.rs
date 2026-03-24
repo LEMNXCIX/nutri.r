@@ -1,8 +1,11 @@
-use crate::components::ui::Loading;
-use crate::tauri_bridge::{get_calendar_range, get_index, remove_calendar_entry, MealType};
+use crate::components::ui::{Loading, Modal};
+use crate::tauri_bridge::{
+    assign_plan_to_date, get_calendar_range, get_index, remove_calendar_entry, MealType,
+};
 use chrono::{Datelike, NaiveDate};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
+use leptos::portal::Portal;
 use leptos_router::hooks::{use_navigate, use_params_map};
 use std::collections::HashMap;
 
@@ -12,6 +15,7 @@ pub fn DailyView() -> impl IntoView {
     let navigate = use_navigate();
     let navigate_add = navigate.clone();
     let navigate_main = navigate.clone();
+    let (show_assign_modal, set_show_assign_modal) = signal(Option::<MealType>::None);
     let date_param = move || {
         params
             .read()
@@ -70,6 +74,19 @@ pub fn DailyView() -> impl IntoView {
                 calendar_resource.refetch();
             }
         });
+    };
+
+    let on_assign = move |plan_id: String| {
+        if let Some(meal_type) = show_assign_modal.get() {
+            let date = date_param();
+            let calendar_resource = calendar_resource.clone();
+            spawn_local(async move {
+                if let Ok(_) = assign_plan_to_date(date, meal_type, plan_id).await {
+                    calendar_resource.refetch();
+                }
+            });
+            set_show_assign_modal.set(None);
+        }
     };
 
     view! {
@@ -158,9 +175,9 @@ pub fn DailyView() -> impl IntoView {
                                 };
 
                                 let nav_detail = navigate_main.clone();
-                                let nav_assign = navigate_main.clone();
                                 let p_id_for_nav = plan_id.clone();
                                 let meal_type_for_remove = m_type;
+                                let meal_type_for_assign = m_type;
 
                                 view! {
                                     <section>
@@ -208,7 +225,7 @@ pub fn DailyView() -> impl IntoView {
                                                             } else {
                                                                 view! {
                                                                     <button
-                                                                        on:click=move |_| nav_assign("/calendar", Default::default())
+                                                                        on:click=move |_| set_show_assign_modal.set(Some(meal_type_for_assign))
                                                                         class="text-zinc-300 hover:text-primary transition-colors"
                                                                     >
                                                                         <span class="material-icons-outlined text-xl">add_circle_outline</span>
@@ -235,6 +252,59 @@ pub fn DailyView() -> impl IntoView {
                     Generar Nuevo Plan
                 </button>
             </main>
+
+            {move || if show_assign_modal.get().is_some() {
+                view! {
+                    <Portal>
+                        <Modal on_close=Callback::new(move |_| set_show_assign_modal.set(None))>
+                            <div class="relative">
+                                <div class="absolute top-0 left-0 w-full h-1 bg-accent"></div>
+                                <div class="pt-4">
+                                    <h3 class="text-2xl font-black uppercase tracking-tight text-neutral-950 dark:text-white">"Asignar plan"</h3>
+                                    <p class="mt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">
+                                        "Selecciona un plan para esta comida"
+                                    </p>
+
+                                    <div class="mt-8 max-h-[50vh] overflow-y-auto space-y-3 pr-1">
+                                        {move || plans_resource.get().map(|plans| {
+                                            let on_assign = on_assign.clone();
+                                            plans.into_iter().map(|plan| {
+                                                let plan_id = plan.id.clone();
+                                                let proteins = if plan.proteinas.is_empty() {
+                                                    "Sin proteínas registradas".to_string()
+                                                } else {
+                                                    plan.proteinas.join(", ")
+                                                };
+                                                let on_assign = on_assign.clone();
+                                                view! {
+                                                    <button
+                                                        on:click=move |_| on_assign(plan_id.clone())
+                                                        class="w-full border border-neutral-200 dark:border-neutral-700 px-4 py-4 text-left hover:border-neutral-950 dark:hover:border-white hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                                                    >
+                                                        <div class="flex items-center justify-between gap-4">
+                                                            <div>
+                                                                <div class="text-xs font-black uppercase tracking-[0.2em] text-neutral-950 dark:text-white">
+                                                                    {plan.id.chars().take(12).collect::<String>()}
+                                                                </div>
+                                                                <div class="mt-2 text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500">
+                                                                    {proteins}
+                                                                </div>
+                                                            </div>
+                                                            <span class="material-symbols-outlined text-neutral-400">"add"</span>
+                                                        </div>
+                                                    </button>
+                                                }
+                                            }).collect_view()
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </Modal>
+                    </Portal>
+                }.into_any()
+            } else {
+                ().into_any()
+            }}
         </div>
     }
 }

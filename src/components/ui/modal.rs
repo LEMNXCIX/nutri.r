@@ -2,7 +2,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn Modal(
-    #[prop(into)] on_close: Box<dyn Fn(leptos::ev::MouseEvent) + Send + Sync>,
+    on_close: Callback<leptos::ev::MouseEvent>,
     children: Children,
 ) -> impl IntoView {
     view! {
@@ -10,7 +10,7 @@ pub fn Modal(
             <div class="bg-white dark:bg-neutral-900 brutalist-border dark:border-neutral-700 shadow-brutalist max-w-lg w-full relative">
                 <button
                     class="absolute top-4 right-4 text-neutral-400 dark:text-neutral-500 hover:text-neutral-950 dark:hover:text-white transition-colors"
-                    on:click=on_close
+                    on:click=move |ev| on_close.run(ev)
                 >
                     <span class="material-symbols-outlined !text-[24px]">"close"</span>
                 </button>

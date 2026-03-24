@@ -43,7 +43,7 @@ pub fn Plan() -> impl IntoView {
                 <A href="/" attr:class="flex items-center">
                     <span class="material-symbols-outlined">"arrow_back_ios"</span>
                 </A>
-                <div class="text-[10px] font-bold tracking-[0.25em] uppercase text-neutral-400 dark:text-neutral-500">"Biblioteca / V2.4"</div>
+                <div class="text-[10px] font-bold tracking-[0.25em] uppercase text-neutral-400 dark:text-neutral-500">"Planes"</div>
                 <div class="w-64 h-8 flex items-center justify-end border-b border-neutral-100 dark:border-neutral-700 focus-within:border-neutral-950 dark:focus-within:border-neutral-400 transition-colors">
                     <input
                         type="text"
@@ -58,8 +58,8 @@ pub fn Plan() -> impl IntoView {
 
             <main>
                 <section class="px-6 pt-8 pb-12">
-                    <div class="flex flex-row justify-between items-start gap-4">
-                        <h1 class="text-4xl md:text-6xl font-extrabold uppercase leading-[0.85] tracking-tighter mb-4 break-words">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                        <h1 class="text-[72px] md:text-6xl font-extrabold uppercase leading-[0.85] tracking-tighter mb-4 break-words">
                             "Planes" <br/> "Guardados"
                         </h1>
                         <button
@@ -73,7 +73,7 @@ pub fn Plan() -> impl IntoView {
                         </button>
                     </div>
                     <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
-                        <span>{move || filtered_plans().len()} " Prototipos Activos"</span>
+                        <span>{move || filtered_plans().len()} " Planes Activos"</span>
                         <span class="w-1 h-1 bg-neutral-300 dark:bg-neutral-600 rounded-full"></span>
                         <span>
                             {move || if sort_desc.get() { "Ordenado por Recientes" } else { "Ordenado por Antiguos" }}

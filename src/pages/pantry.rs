@@ -1,5 +1,5 @@
 use crate::components::features::PantryItemCard;
-use crate::components::ui::Input;
+use crate::components::ui::{Input, Modal};
 use crate::tauri_bridge::{
     add_pantry_item, delete_pantry_item, get_pantry_items, update_pantry_item, PantryItem,
 };
@@ -66,6 +66,10 @@ pub fn Pantry() -> impl IntoView {
                 Ok(_) => {
                     set_items_resource.update(|n| *n += 1);
                     set_new_item_name.set(String::new());
+                    set_new_item_qty.set(1.0);
+                    set_new_item_unit.set("kg".to_string());
+                    set_new_item_cat.set("Despensa".to_string());
+                    set_new_item_exp.set(String::new());
                     set_item_to_edit.set(None);
                     set_show_add_form.set(false);
                 }
@@ -105,8 +109,10 @@ pub fn Pantry() -> impl IntoView {
         set_new_item_cat.set(item.category.clone());
         set_new_item_exp.set(item.expiration_date.clone().unwrap_or_default());
         set_item_to_edit.set(Some(item));
-        set_show_add_form.set(true);
+        set_show_add_form.set(false);
     });
+
+    let is_creating = move || show_add_form.get() && item_to_edit.get().is_none();
 
     view! {
         <div class="w-full font-sans pb-32 bg-white dark:bg-background-dark min-h-screen">
@@ -122,18 +128,28 @@ pub fn Pantry() -> impl IntoView {
                     </h1>
                     <button
                         on:click=move |_| {
-                            if show_add_form.get() {
+                            if is_creating() {
                                 set_show_add_form.set(false);
                                 set_item_to_edit.set(None);
                                 set_new_item_name.set(String::new());
+                                set_new_item_qty.set(1.0);
+                                set_new_item_unit.set("kg".to_string());
+                                set_new_item_cat.set("Despensa".to_string());
+                                set_new_item_exp.set(String::new());
                             } else {
+                                set_item_to_edit.set(None);
+                                set_new_item_name.set(String::new());
+                                set_new_item_qty.set(1.0);
+                                set_new_item_unit.set("kg".to_string());
+                                set_new_item_cat.set("Despensa".to_string());
+                                set_new_item_exp.set(String::new());
                                 set_show_add_form.set(true);
                             }
                         }
                         class=format!("px-8 py-4 border border-neutral-950 dark:border-white transition-all active:scale-95 text-[10px] font-black tracking-widest uppercase {}",
-                            if show_add_form.get() { "bg-white text-error hover:bg-neutral-50" } else { "bg-neutral-950 text-white dark:bg-white dark:text-black hover:bg-accent hover:text-neutral-950 dark:hover:bg-accent" })
+                            if is_creating() { "bg-white text-error hover:bg-neutral-50" } else { "bg-neutral-950 text-white dark:bg-white dark:text-black hover:bg-accent hover:text-neutral-950 dark:hover:bg-accent" })
                     >
-                        {move || if show_add_form.get() { "CANCELAR" } else { "NUEVO INGREDIENTE" }}
+                        {move || if is_creating() { "CANCELAR" } else { "NUEVO INGREDIENTE" }}
                     </button>
                 </div>
                 <div class="mt-8 relative max-w-xl">
@@ -149,7 +165,7 @@ pub fn Pantry() -> impl IntoView {
             </section>
 
             <div class="max-w-4xl mx-auto px-8">
-                {move || if show_add_form.get() {
+                {move || if is_creating() {
                     view! {
                         <div class="mb-16 animate-in fade-in slide-in-from-top-4 duration-500">
                             <div class="p-8 bg-white dark:bg-neutral-900 border border-neutral-950 dark:border-neutral-800 shadow-brutalist relative overflow-hidden">
@@ -157,7 +173,7 @@ pub fn Pantry() -> impl IntoView {
 
                                 <h3 class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.3em] mb-10 flex items-center gap-3">
                                     <span class="material-symbols-outlined !text-[18px]">"inventory_2"</span>
-                                    {move || if item_to_edit.get().is_some() { "MODIFICAR REGISTRO" } else { "ALTA DE INSUMO" }}
+                                    "ALTA DE INSUMO"
                                 </h3>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -224,12 +240,116 @@ pub fn Pantry() -> impl IntoView {
                                 </div>
 
                                 <div class="mt-10 flex justify-end">
-                                    <button on:click=move |_| on_add_item(()) class="px-10 py-4 border border-neutral-950 dark:bg-white dark:text-black hover:bg-accent dark:hover:bg-accent hover:text-neutral-950 transition-all text-[11px] font-black tracking-[0.3em] uppercase">
-                                        {move || if item_to_edit.get().is_some() { "ACTUALIZAR" } else { "GUARDAR" }}
-                                    </button>
+                                    <button on:click=move |_| on_add_item(()) class="px-10 py-4 border border-neutral-950 dark:bg-white dark:text-black hover:bg-accent dark:hover:bg-accent hover:text-neutral-950 transition-all text-[11px] font-black tracking-[0.3em] uppercase">"GUARDAR"</button>
                                 </div>
                             </div>
                         </div>
+                    }.into_any()
+                } else {
+                    ().into_any()
+                }}
+
+                {move || if item_to_edit.get().is_some() {
+                    view! {
+                        <Modal on_close=Callback::new(move |_| {
+                            set_item_to_edit.set(None);
+                            set_new_item_name.set(String::new());
+                            set_new_item_qty.set(1.0);
+                            set_new_item_unit.set("kg".to_string());
+                            set_new_item_cat.set("Despensa".to_string());
+                            set_new_item_exp.set(String::new());
+                        })>
+                            <div class="relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-full h-1 bg-accent"></div>
+
+                                <h3 class="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.3em] mb-10 flex items-center gap-3">
+                                    <span class="material-symbols-outlined !text-[18px]">"edit_note"</span>
+                                    "MODIFICAR REGISTRO"
+                                </h3>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div class="space-y-3">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 pl-1">"Identificador"</label>
+                                        <Input
+                                            placeholder="Arroz, Pollo, Leche..."
+                                            value=new_item_name
+                                            on_input=h_update_name
+                                            class="bg-white dark:bg-neutral-800 dark:text-white dark:border-neutral-700 border border-neutral-950 p-4 font-bold text-sm uppercase"
+                                        />
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 pl-1">"Cantidad y Unidad"</label>
+                                        <div class="flex gap-0 border border-neutral-950 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                class="w-24 bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white px-4 py-4 outline-none border-r border-neutral-950 dark:border-neutral-600 font-black text-sm"
+                                                on:input=move |ev| {
+                                                    if let Ok(val) = event_target_value(&ev).parse::<f32>() {
+                                                        set_new_item_qty.set(val);
+                                                    }
+                                                }
+                                                prop:value=new_item_qty
+                                            />
+                                            <select
+                                                class="flex-1 bg-transparent dark:text-white px-4 py-4 text-neutral-950 outline-none font-black text-[10px] uppercase tracking-widest cursor-pointer"
+                                                on:change=move |ev| set_new_item_unit.set(event_target_value(&ev))
+                                                prop:value=new_item_unit
+                                            >
+                                                <option value="kg">"kg"</option>
+                                                <option value="g">"g"</option>
+                                                <option value="L">"L"</option>
+                                                <option value="un">"un"</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 pl-1">"Categoría"</label>
+                                        <select
+                                            class="w-full bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white px-5 py-4 border border-neutral-950 dark:border-neutral-700 focus:border-accent outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
+                                            on:change=move |ev| set_new_item_cat.set(event_target_value(&ev))
+                                            prop:value=new_item_cat
+                                        >
+                                            <option value="Despensa">"Despensa"</option>
+                                            <option value="Refrigerados">"Refrigerados"</option>
+                                            <option value="Congelados">"Congelados"</option>
+                                            <option value="Frutas/Verduras">"Frescos"</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <label class="block text-[9px] font-black uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500 pl-1">"Vencimiento"</label>
+                                        <input
+                                            type="date"
+                                            class="w-full bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white px-5 py-4 border border-neutral-950 dark:border-neutral-700 focus:border-accent outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
+                                            on:input=move |ev| set_new_item_exp.set(event_target_value(&ev))
+                                            prop:value=new_item_exp
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="mt-10 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                                    <button
+                                        on:click=move |_| {
+                                            set_item_to_edit.set(None);
+                                            set_new_item_name.set(String::new());
+                                            set_new_item_qty.set(1.0);
+                                            set_new_item_unit.set("kg".to_string());
+                                            set_new_item_cat.set("Despensa".to_string());
+                                            set_new_item_exp.set(String::new());
+                                        }
+                                        class="px-6 py-4 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-300 hover:border-neutral-950 dark:hover:border-white hover:text-neutral-950 dark:hover:text-white transition-all text-[10px] font-black tracking-[0.3em] uppercase"
+                                    >
+                                        "CANCELAR"
+                                    </button>
+                                    <button on:click=move |_| on_add_item(()) class="px-10 py-4 border border-neutral-950 dark:bg-white dark:text-black hover:bg-accent dark:hover:bg-accent hover:text-neutral-950 transition-all text-[11px] font-black tracking-[0.3em] uppercase">
+                                        "ACTUALIZAR"
+                                    </button>
+                                </div>
+                            </div>
+                        </Modal>
                     }.into_any()
                 } else {
                     ().into_any()

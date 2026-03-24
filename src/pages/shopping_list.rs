@@ -92,7 +92,7 @@ pub fn ShoppingList() -> impl IntoView {
                                         "Protocolo de Inventario"
                                     </span>
                                 </div>
-                                <h2 class="text-6xl md:text-7xl font-black text-neutral-950 dark:text-white tracking-tighter leading-none uppercase">
+                                <h2 class="text-[72px] break-words md:text-7xl font-black text-neutral-950 dark:text-white tracking-tighter leading-none uppercase">
                                     "Lista de" <br /> "Compras"
                                 </h2>
                             </div>

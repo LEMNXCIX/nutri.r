@@ -70,13 +70,13 @@ pub fn Ingredients() -> impl IntoView {
 
             // -- SEARCH & TITLE --
             <section class="px-6 py-10">
-                <h1 class="text-5xl font-extrabold uppercase leading-[0.9] tracking-tighter mb-8 dark:text-white">
+                <h1 class="text-[72px] break-words  font-extrabold uppercase leading-[0.9] tracking-tighter mb-8 dark:text-white">
                     "Seleccionar" <br/> "Ingredientes"
                 </h1>
                 <div class="relative">
                     <input
                         class="w-full border border-black dark:border-neutral-700 bg-white dark:bg-neutral-900 text-black dark:text-white px-4 py-4 text-xs font-bold tracking-widest uppercase placeholder:text-neutral-300 dark:placeholder:text-neutral-600 focus:ring-0 focus:border-black dark:focus:border-neutral-500 outline-none rounded-none"
-                        placeholder="BUSCAR EN LA BASE DE DATOS..."
+                        placeholder="BUSCAR INGREDIENTE..."
                         type="text"
                         on:input=move |ev| set_search_query.set(event_target_value(&ev))
                         prop:value=search_query
@@ -118,7 +118,7 @@ pub fn Ingredients() -> impl IntoView {
                             let name = stat.name.clone();
                             let is_excluded = stat.is_excluded;
                             let name_for_click = name.clone();
-                            
+
                             view! {
                                 <div class=move || format!("flex items-center justify-between transition-opacity {}", if is_excluded { "opacity-40" } else { "" })>
                                     <div class="flex flex-col gap-1">
@@ -157,12 +157,12 @@ pub fn Ingredients() -> impl IntoView {
             // -- FOOTER SELECTION STATUS --
             <div class="fixed bottom-[74px] md:bottom-0 left-0 right-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-sm border-t border-neutral-100 dark:border-neutral-800 px-6 py-6 flex justify-between items-center z-50">
                 <div class="flex flex-col">
-                     <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Estado de la Base de Datos"</span>
+                     <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Estado"</span>
                     <span class="text-lg font-light tracking-tighter uppercase dark:text-white">
                         {move || {
                             let total = ingredients_stats.get().len();
                             let active = ingredients_stats.get().iter().filter(|s| !s.is_excluded).count();
-                             format!("{} / {} Artículos Activos", active, total)
+                             format!("{} / {} Ingredientes Activos", active, total)
                         }}
                     </span>
                 </div>

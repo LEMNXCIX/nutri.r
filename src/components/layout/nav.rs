@@ -32,7 +32,7 @@ pub fn Navbar() -> impl IntoView {
                     <div class="text-[10px] font-bold tracking-[0.2em] uppercase">"Estado: Óptimo"</div>
                     <div class="flex items-center gap-1.5 mt-0.5">
                         <span class="h-[1px] w-3 bg-primary"></span>
-                        <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.25em]">"nutri.r / Maestría"</span>
+                        <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.5em]">"nutri.r"</span>
                     </div>
                 </div>
             </div>
@@ -66,11 +66,11 @@ pub fn Navbar() -> impl IntoView {
         // ── Mobile top bar (hidden on desktop) ─────────────────────────
         <header class="md:hidden pt-safe flex items-center justify-between px-5 py-3 sticky top-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl z-40 border-b border-neutral-200/30 dark:border-neutral-800/30">
             <div class="flex flex-col">
-                <div class="text-xs font-bold tracking-[0.15em] uppercase">"nutri.r"</div>
-                <div class="flex items-center gap-1.5 mt-0.5">
-                    <span class="h-[1px] w-3 bg-primary"></span>
-                    <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.25em]">"Maestría"</span>
-                </div>
+                <div class="text-xs font-bold font-extrabold leading-[0.9] tracking-tighter uppercase">"nutri.r"</div>
+                // <div class="flex items-center gap-1.5 mt-0.5">
+                //     <span class="h-[1px] w-3 bg-primary"></span>
+                //     // <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.25em]">"Maestría"</span>
+                // </div>
             </div>
             <div class="flex items-center gap-2">
                 <button

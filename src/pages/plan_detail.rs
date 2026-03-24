@@ -286,9 +286,9 @@ pub fn PlanDetail() -> impl IntoView {
 
                 <div class="absolute bottom-12 left-6 right-6">
                     <div class="bg-accent px-2 py-1 inline-block mb-4">
-                        <span class="text-[10px] font-bold uppercase tracking-[0.2em]">"Plan de Autor"</span>
+                        <span class="text-[10px] font-bold uppercase tracking-[0.2em]">"Plan generado"</span>
                     </div>
-                    <h1 class="text-6xl font-extrabold text-white uppercase leading-[0.85] tracking-tighter">
+                    <h1 class="text-[72px] break-words l font-extrabold text-white uppercase leading-[0.85] tracking-tighter">
                         {move || {
                             let title = if let Some(p) = structured_plan.get() {
                                 p.titulo

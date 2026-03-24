@@ -108,13 +108,12 @@ pub fn Home() -> impl IntoView {
         <div class="w-full font-sans pb-32">
             // -- SECCIÓN DE TÍTULO --
             <section class="px-6 pt-8 pb-10">
-                <h1 class="text-6xl font-extrabold uppercase leading-[0.9] tracking-tighter mb-4 text-header dark:text-white">
+                <h1 class="text-[72px] font-extrabold uppercase leading-[0.9] tracking-tighter mb-4 text-header dark:text-white break-words">
                     "Métricas" <br/> "Diarias"
                 </h1>
                 <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
                     <span>{Local::now().format("Ciclo %d.%m").to_string()}</span>
                     <span class="w-1 h-1 bg-neutral-300 rounded-full"></span>
-                    <span>"Cuenta Premium"</span>
                 </div>
             </section>
 
@@ -193,8 +192,8 @@ pub fn Home() -> impl IntoView {
                         </div>
                     </div>
                     <div class="relative w-full h-[2px] bg-neutral-100 dark:bg-neutral-800">
-                        <div 
-                            class="absolute top-0 left-0 h-full bg-neutral-950 dark:bg-white transition-all duration-700" 
+                        <div
+                            class="absolute top-0 left-0 h-full bg-neutral-950 dark:bg-white transition-all duration-700"
                             style:width=move || format!("{}%", (water_current.get() / water_target.get() * 100.0).min(100.0))
                         ></div>
                     </div>
@@ -227,9 +226,9 @@ pub fn Home() -> impl IntoView {
                         meals.into_iter().map(|(title, id, cal)| {
                             view! {
                                 <A href=format!("/plan/{}", id) attr:class="block relative group aspect-[4/5] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-                                    <img 
+                                    <img
                                         alt=title.clone()
-                                        class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
+                                        class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
                                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuLIs4J3BB-Asz5cdNOorESMj1X3AVHQ_CyacDzU2zpMKJ4AmCCVsAedD5NzL-tBYxXv2eygd4hFNASqgdKD0gQnv78equgwci1mxJTvwA2XoV8I5GKSnShEzhTNk-Sfq7lK0QTcqEUsgGCWjJnyFLnU1YJVwoIJEK5Hfo3fFegV_Qf78T58vwbdtEQOflSZsT_ZYtWI8zXgmyhEojqt3UqYpvZwNrIO1VYttV3E3A3lfStG6x_jIYbQxMszgc2jS4Z_ticQKZ8Mha"
                                     />
                                     <div class="absolute inset-0 bg-neutral-950/10 dark:bg-black/30"></div>

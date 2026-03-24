@@ -13,7 +13,9 @@ pub fn PantryItemCard(
     let item_dt = item.clone();
 
     let expiration_status = move || {
-        if let Some(ref date_str) = item_dt.expiration_date {
+        if item_dt.quantity <= 0.0 {
+            ("AGOTADO", "text-error bg-red-50 border-red-100")
+        } else if let Some(ref date_str) = item_dt.expiration_date {
             if let Ok(exp_date) = NaiveDate::parse_from_str(date_str, "%Y-%m-%d") {
                 let today = chrono::Local::now().date_naive();
                 let days_until = (exp_date - today).num_days();
@@ -37,8 +39,9 @@ pub fn PantryItemCard(
     };
 
     let (dot_class, text_class, status_label) = match expiration_status() {
-        (text, "text-red-500 bg-red-50 border-red-100") => ("bg-error", "text-error", "Caducado"),
-        (text, "text-[#D4AF37] bg-black border-black shadow-lg shadow-black/20") => {
+        (_, "text-error bg-red-50 border-red-100") => ("bg-error", "text-error", "Agotado"),
+        (_, "text-red-500 bg-red-50 border-red-100") => ("bg-error", "text-error", "Caducado"),
+        (_, "text-[#D4AF37] bg-black border-black shadow-lg shadow-black/20") => {
             ("bg-accent", "text-accent", "Disponibilidad Crítica")
         }
         _ => ("bg-neutral-200", "text-neutral-400", "Stock Normal"),

@@ -92,7 +92,7 @@ pub fn Calendar() -> impl IntoView {
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-2">
                         <div class="w-8 h-[2px] bg-primary"></div>
-                        <span class="text-[10px] font-black tracking-[0.3em] text-zinc-400 dark:text-zinc-500 uppercase">"System v3.0"</span>
+                        <span class="text-[10px] font-black tracking-[0.3em] text-zinc-400 dark:text-zinc-500 uppercase">"Calendario"</span>
                     </div>
                     <div class="flex space-x-4">
                         <button on:click=on_prev_month class="text-black dark:text-white active:scale-90 transition-transform">
@@ -103,7 +103,7 @@ pub fn Calendar() -> impl IntoView {
                         </button>
                     </div>
                 </div>
-                <h1 class="text-5xl font-[900] tracking-tighter uppercase leading-none">
+                <h1 class="text-[72px] break-words font-[900] tracking-tighter uppercase leading-none">
                     {move || format!("{} {}",
                         Month::try_from(current_month.get() as u8).ok()
                             .map(|m| match m {
