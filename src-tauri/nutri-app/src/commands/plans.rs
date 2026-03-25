@@ -1,4 +1,6 @@
-use nutri_core::models::{PlanIndex, SearchFilters, VariationType};
+use nutri_core::models::{
+    PlanDetail, PlanIndex, RecipeSuggestion, SearchFilters, StructuredRecipe, VariationType,
+};
 use nutri_core::state::{AppMetadataService, AppState};
 use tauri::State;
 use tokio::sync::MutexGuard;
@@ -63,6 +65,15 @@ pub async fn get_plan_content(state: State<'_, AppState>, id: String) -> Result<
 }
 
 #[tauri::command]
+pub async fn get_plan_detail(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<PlanDetail, String> {
+    let service = state.plan_service.lock().await;
+    service.get_plan_detail(&id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn generate_variation(
     state: State<'_, AppState>,
     plan_id: String,
@@ -86,5 +97,36 @@ pub async fn search_plans(
 ) -> Result<Vec<PlanIndex>, String> {
     let service = state.search_service.lock().await;
     service.search(filters).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn preview_recipe_edit(
+    state: State<'_, AppState>,
+    plan_id: String,
+    recipe_id: String,
+    prompt: String,
+) -> Result<RecipeSuggestion, String> {
+    let service = state.plan_service.lock().await;
+    service
+        .suggest_recipe_edit(&plan_id, &recipe_id, &prompt)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn apply_recipe_edit(
+    state: State<'_, AppState>,
+    plan_id: String,
+    recipe_id: String,
+    recipe: StructuredRecipe,
+) -> Result<PlanDetail, String> {
+    let service = state.plan_service.lock().await;
+    let result = service
+        .apply_recipe_edit(&plan_id, &recipe_id, recipe)
+        .map_err(|e| e.to_string());
+    if result.is_ok() {
+        state.trigger_sync().await;
+    }
+    result
 }
 

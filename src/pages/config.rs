@@ -5,7 +5,9 @@ use crate::tauri_bridge::{
 };
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use wasm_bindgen::{prelude::Closure, JsCast};
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::Closure;
+use wasm_bindgen::JsCast;
 
 #[component]
 pub fn Config() -> impl IntoView {
@@ -92,19 +94,27 @@ pub fn Config() -> impl IntoView {
 
     spawn_local(async move {
         match get_ui_preferences().await {
-            Ok(prefs) => {
+            Ok(mut prefs) => {
+                let resolved_theme = crate::theme::resolved_theme(Some(&prefs.theme));
+                let should_sync_preferences = prefs.theme != resolved_theme;
+
+                prefs.theme = resolved_theme.clone();
                 set_preferences.set(prefs.clone());
-                if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
-                    if let Some(html) = doc.document_element() {
-                        if prefs.theme == "dark" {
-                            let _ = html.class_list().add_1("dark");
-                        } else {
-                            let _ = html.class_list().remove_1("dark");
-                        }
-                    }
+                crate::theme::set_theme(&resolved_theme);
+
+                if should_sync_preferences {
+                    let _ = save_ui_preferences(prefs).await;
                 }
             }
-            Err(e) => log::warn!("No se pudieron cargar las preferencias: {}", e),
+            Err(e) => {
+                let fallback_theme = crate::theme::resolved_theme(None);
+                set_preferences.set(UIPreferences {
+                    theme: fallback_theme.clone(),
+                    primary_color: "green".to_string(),
+                });
+                crate::theme::set_theme(&fallback_theme);
+                log::warn!("No se pudieron cargar las preferencias: {}", e);
+            }
         }
     });
 
@@ -313,18 +323,11 @@ pub fn Config() -> impl IntoView {
                                 <select
                                     class="w-full bg-white dark:bg-neutral-900 border-black dark:border-neutral-700 text-black dark:text-white"
                                     on:change=move |ev| {
-                                        let val = event_target_value(&ev);
+                                        let theme = crate::theme::set_theme(&event_target_value(&ev));
+                                        set_preferences.update(|p| p.theme = theme.clone());
+                                        let prefs = preferences.get();
                                         spawn_local(async move {
-                                            set_preferences.update(|p| p.theme = val.clone());
-                                            let prefs = preferences.get();
                                             let _ = save_ui_preferences(prefs).await;
-                                            let document = web_sys::window().unwrap().document().unwrap();
-                                            let html = document.document_element().unwrap();
-                                            if val == "dark" {
-                                                let _ = html.class_list().add_1("dark");
-                                            } else {
-                                                let _ = html.class_list().remove_1("dark");
-                                            }
                                         });
                                     }
                                     prop:value=move || preferences.get().theme

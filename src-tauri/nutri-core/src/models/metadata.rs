@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 pub struct PlanMetadata {
     #[serde(alias = "plan_id")]
     pub plan_id: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
     #[serde(alias = "is_favorite")]
     pub is_favorite: bool,
     pub rating: Option<u8>, // 1-5

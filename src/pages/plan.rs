@@ -1,3 +1,4 @@
+use crate::plan_display::{format_plan_created_at, plan_display_name, plan_search_blob, plan_sort_key};
 use crate::tauri_bridge::{calculate_nutrition, get_index, PlanIndex};
 use leptos::prelude::*;
 use leptos_router::components::A;
@@ -19,17 +20,14 @@ pub fn Plan() -> impl IntoView {
             .map(|plans| {
                 let mut p = plans
                     .into_iter()
-                    .filter(|p| {
-                        p.id.to_lowercase().contains(&query)
-                            || p.fecha.to_lowercase().contains(&query)
-                    })
+                    .filter(|plan| plan_search_blob(plan).to_lowercase().contains(&query))
                     .collect::<Vec<_>>();
 
                 p.sort_by(|a, b| {
                     if is_desc {
-                        b.fecha.cmp(&a.fecha)
+                        plan_sort_key(b).cmp(&plan_sort_key(a))
                     } else {
-                        a.fecha.cmp(&b.fecha)
+                        plan_sort_key(a).cmp(&plan_sort_key(b))
                     }
                 });
                 p
@@ -124,8 +122,9 @@ fn PlanListItem(plan: PlanIndex) -> impl IntoView {
         }
     });
 
-    let id_display = plan.id.clone();
     let id_for_link = plan.id.clone();
+    let title = plan_display_name(&plan);
+    let created_at = format_plan_created_at(&plan);
 
     view! {
         <A href=format!("/plan/{}", id_for_link) attr:class="block group">
@@ -133,7 +132,7 @@ fn PlanListItem(plan: PlanIndex) -> impl IntoView {
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
                         <h2 class="text-2xl font-bold uppercase tracking-tight dark:text-white">
-                            {id_display.chars().take(12).collect::<String>()}
+                            {title}
                         </h2>
                         {if plan.is_favorite {
                             view! { <span class="bg-accent px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">"Favorito"</span> }.into_any()
@@ -142,7 +141,7 @@ fn PlanListItem(plan: PlanIndex) -> impl IntoView {
                         }}
                     </div>
                     <div class="flex items-center gap-4 text-[10px] font-medium uppercase tracking-[0.15em] text-neutral-500 dark:text-neutral-400">
-                        <span>{plan.fecha}</span>
+                        <span>{created_at}</span>
                         <span class="w-1 h-1 bg-neutral-200 dark:bg-neutral-600 rounded-full"></span>
                         <Suspense fallback=move || view! { <span>"..."</span> }>
                             {move || nutrition.get().and_then(|r| r.ok()).map(|n| {

@@ -10,6 +10,8 @@ static IS_API_ONLINE: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(true));
 #[serde(rename_all = "camelCase")]
 pub struct PlanMetadata {
     pub plan_id: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
     pub is_favorite: bool,
     pub rating: Option<u8>,
     pub notes: String,
@@ -20,13 +22,70 @@ pub struct PlanMetadata {
 #[serde(rename_all = "camelCase")]
 pub struct PlanIndex {
     pub id: String,
+    #[serde(default)]
     pub fecha: String,
+    #[serde(default)]
+    pub created_at: Option<String>,
+    #[serde(default)]
+    pub display_name: Option<String>,
     pub proteinas: Vec<String>,
     pub enviado: bool,
     #[serde(default)]
     pub is_favorite: bool,
     #[serde(default)]
     pub rating: Option<u8>,
+    #[serde(default)]
+    pub weekly_structure: Option<Vec<WeeklyMealInfo>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct WeeklyMealInfo {
+    pub day_index: u8,
+    pub meal_type: String,
+    pub description: Option<String>,
+    #[serde(default)]
+    pub day_id: Option<String>,
+    #[serde(default)]
+    pub recipe_id: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct StructuredPlan {
+    pub title: String,
+    pub instructions: Option<String>,
+    pub days: Vec<StructuredDay>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct StructuredDay {
+    pub day_id: String,
+    pub day_index: u8,
+    pub label: String,
+    pub recipes: Vec<StructuredRecipe>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct StructuredRecipe {
+    pub recipe_id: String,
+    pub meal_type: MealType,
+    pub name: String,
+    pub ingredients: Vec<String>,
+    pub instructions: Vec<String>,
+    pub notes: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RecipeSuggestion {
+    pub plan_id: String,
+    pub day_id: String,
+    pub recipe_id: String,
+    pub original_recipe: StructuredRecipe,
+    pub suggested_recipe: StructuredRecipe,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
@@ -34,6 +93,8 @@ pub struct PlanIndex {
 pub struct PlanDetail {
     pub id: String,
     pub markdown_content: String,
+    #[serde(default)]
+    pub structured_plan: Option<StructuredPlan>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
@@ -135,12 +196,38 @@ pub enum MealType {
     Snack,
 }
 
+impl MealType {
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            MealType::Breakfast => "Desayuno",
+            MealType::Lunch => "Almuerzo",
+            MealType::Dinner => "Cena",
+            MealType::Snack => "Snack",
+        }
+    }
+
+    pub fn key(&self) -> &'static str {
+        match self {
+            MealType::Breakfast => "breakfast",
+            MealType::Lunch => "lunch",
+            MealType::Dinner => "dinner",
+            MealType::Snack => "snack",
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct CalendarEntry {
     pub date: String,
     pub meal_type: MealType,
     pub plan_id: String,
+    #[serde(default)]
+    pub assignment_id: Option<String>,
+    #[serde(default)]
+    pub plan_day_index: Option<u8>,
+    #[serde(default)]
+    pub recipe_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
@@ -269,6 +356,13 @@ struct SetNoteArgs {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct SetDisplayNameArgs {
+    pub plan_id: String,
+    pub display_name: String,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct SaveConfigArgs {
     pub config: AppConfig,
 }
@@ -381,6 +475,9 @@ struct AssignPlanArgs {
     pub date: String,
     pub meal_type: MealType,
     pub plan_id: String,
+    pub recipe_id: Option<String>,
+    pub plan_day_index: Option<u8>,
+    pub assignment_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -395,6 +492,31 @@ struct AssignWeeklyPlanArgs {
 struct RemoveEntryArgs {
     pub date: String,
     pub meal_type: MealType,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecipeSuggestionArgs {
+    pub plan_id: String,
+    pub recipe_id: String,
+    pub prompt: String,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ApplyRecipeEditArgs {
+    pub plan_id: String,
+    pub recipe_id: String,
+    pub recipe: StructuredRecipe,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SwapEntriesArgs {
+    pub first_date: String,
+    pub first_meal_type: MealType,
+    pub second_date: String,
+    pub second_meal_type: MealType,
 }
 
 #[wasm_bindgen]
@@ -506,6 +628,20 @@ async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<J
             let content = res.json::<String>().await.map_err(|e| e.to_string())?;
             Ok(JsValue::from_str(&content))
         }
+        "get_plan_detail" => {
+            let id_args: IdArgs =
+                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
+            let res = client
+                .get(format!("{}/plans/{}/detail", api_base, id_args.id))
+                .send()
+                .await
+                .map_err(|e| e.to_string())?;
+            let detail = res
+                .json::<PlanDetail>()
+                .await
+                .map_err(|e| e.to_string())?;
+            serde_wasm_bindgen::to_value(&detail).map_err(|e| e.to_string())
+        }
         "delete_plan" => {
             let id_args: IdArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
@@ -579,6 +715,20 @@ async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<J
             client
                 .post(format!("{}/plans/{}/note", api_base, note_args.plan_id))
                 .json(&note_args)
+                .send()
+                .await
+                .map_err(|e| e.to_string())?;
+            Ok(JsValue::NULL)
+        }
+        "set_plan_display_name" => {
+            let display_name_args: SetDisplayNameArgs =
+                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
+            client
+                .post(format!(
+                    "{}/plans/{}/display-name",
+                    api_base, display_name_args.plan_id
+                ))
+                .json(&display_name_args)
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
@@ -673,6 +823,17 @@ async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<J
                 .map_err(|e| e.to_string())?;
             Ok(JsValue::NULL)
         }
+        "swap_calendar_entries" => {
+            let swap_args: SwapEntriesArgs =
+                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
+            client
+                .post(format!("{}/calendar/swap", api_base))
+                .json(&swap_args)
+                .send()
+                .await
+                .map_err(|e| e.to_string())?;
+            Ok(JsValue::NULL)
+        }
         "get_water_intake" => {
             let water_args: GetWaterArgs =
                 serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
@@ -755,6 +916,42 @@ async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<J
                 .map_err(|e| e.to_string())?;
             let content = res.json::<String>().await.map_err(|e| e.to_string())?;
             Ok(JsValue::from_str(&content))
+        }
+        "preview_recipe_edit" => {
+            let edit_args: RecipeSuggestionArgs =
+                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
+            let res = client
+                .post(format!(
+                    "{}/plans/{}/recipes/{}/suggestion",
+                    api_base, edit_args.plan_id, edit_args.recipe_id
+                ))
+                .json(&serde_json::json!({ "prompt": edit_args.prompt }))
+                .send()
+                .await
+                .map_err(|e| e.to_string())?;
+            let suggestion = res
+                .json::<RecipeSuggestion>()
+                .await
+                .map_err(|e| e.to_string())?;
+            serde_wasm_bindgen::to_value(&suggestion).map_err(|e| e.to_string())
+        }
+        "apply_recipe_edit" => {
+            let edit_args: ApplyRecipeEditArgs =
+                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
+            let res = client
+                .patch(format!(
+                    "{}/plans/{}/recipes/{}",
+                    api_base, edit_args.plan_id, edit_args.recipe_id
+                ))
+                .json(&serde_json::json!({ "recipe": edit_args.recipe }))
+                .send()
+                .await
+                .map_err(|e| e.to_string())?;
+            let detail = res
+                .json::<PlanDetail>()
+                .await
+                .map_err(|e| e.to_string())?;
+            serde_wasm_bindgen::to_value(&detail).map_err(|e| e.to_string())
         }
         "search_plans" => {
             let search_args: SearchArgs =
@@ -1387,6 +1584,15 @@ pub async fn get_plan_content(id: &str) -> Result<String, String> {
     notify(res, None)
 }
 
+pub async fn get_plan_detail(id: &str) -> Result<PlanDetail, String> {
+    let args = IdArgs { id: id.to_string() };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    let invoke_res = safe_invoke("get_plan_detail", args_js).await;
+    let res =
+        serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
+    notify(res, None)
+}
+
 pub async fn get_config() -> Result<AppConfig, String> {
     let res = match safe_invoke("get_config", JsValue::NULL).await {
         Ok(response) => match serde_wasm_bindgen::from_value(response) {
@@ -1551,6 +1757,19 @@ pub async fn set_plan_note(plan_id: &str, note: String) -> Result<(), String> {
     notify(res, Some("Nota guardada"))
 }
 
+pub async fn set_plan_display_name(plan_id: &str, display_name: String) -> Result<(), String> {
+    let args = SetDisplayNameArgs {
+        plan_id: plan_id.to_string(),
+        display_name,
+    };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    let res = match safe_invoke("set_plan_display_name", args_js).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e),
+    };
+    notify(res, Some("Nombre del plan actualizado"))
+}
+
 pub async fn generate_shopping_list(plan_id: &str) -> Result<ShoppingList, String> {
     let args = PlanIdArgs {
         plan_id: plan_id.to_string(),
@@ -1593,11 +1812,17 @@ pub async fn assign_plan_to_date(
     date: String,
     meal_type: MealType,
     plan_id: String,
+    recipe_id: Option<String>,
+    plan_day_index: Option<u8>,
+    assignment_id: Option<String>,
 ) -> Result<(), String> {
     let args = AssignPlanArgs {
         date,
         meal_type,
         plan_id,
+        recipe_id,
+        plan_day_index,
+        assignment_id,
     };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
     let res = match safe_invoke("assign_plan_to_date", args_js).await {
@@ -1629,6 +1854,26 @@ pub async fn remove_calendar_entry(date: String, meal_type: MealType) -> Result<
         Err(e) => Err(e),
     };
     notify(res, Some("Entrada eliminada"))
+}
+
+pub async fn swap_calendar_entries(
+    first_date: String,
+    first_meal_type: MealType,
+    second_date: String,
+    second_meal_type: MealType,
+) -> Result<(), String> {
+    let args = SwapEntriesArgs {
+        first_date,
+        first_meal_type,
+        second_date,
+        second_meal_type,
+    };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    let res = match safe_invoke("swap_calendar_entries", args_js).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e),
+    };
+    notify(res, Some("Recetas intercambiadas"))
 }
 
 pub async fn get_statistics() -> Result<Statistics, String> {
@@ -1672,6 +1917,40 @@ pub async fn generate_variation(plan_id: &str, variation: VariationType) -> Resu
     let invoke_res = safe_invoke("generate_variation", args_js).await;
     let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
     notify(res, Some("Variación generada"))
+}
+
+pub async fn preview_recipe_edit(
+    plan_id: &str,
+    recipe_id: &str,
+    prompt: String,
+) -> Result<RecipeSuggestion, String> {
+    let args = RecipeSuggestionArgs {
+        plan_id: plan_id.to_string(),
+        recipe_id: recipe_id.to_string(),
+        prompt,
+    };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    let invoke_res = safe_invoke("preview_recipe_edit", args_js).await;
+    let res =
+        serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
+    notify(res, None)
+}
+
+pub async fn apply_recipe_edit(
+    plan_id: &str,
+    recipe_id: &str,
+    recipe: StructuredRecipe,
+) -> Result<PlanDetail, String> {
+    let args = ApplyRecipeEditArgs {
+        plan_id: plan_id.to_string(),
+        recipe_id: recipe_id.to_string(),
+        recipe,
+    };
+    let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
+    let invoke_res = safe_invoke("apply_recipe_edit", args_js).await;
+    let res =
+        serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
+    notify(res, Some("Receta actualizada"))
 }
 
 pub async fn search_plans(filters: SearchFilters) -> Result<Vec<PlanIndex>, String> {

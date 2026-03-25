@@ -1,8 +1,10 @@
 use crate::models::{
     ChatMessage, OllamaChatRequest, OllamaChatResponse, OllamaListResponse, OllamaModelInfo,
+    RecipeSuggestion, StructuredDay, StructuredPlan, StructuredRecipe, WeeklyMealInfo,
 };
 use crate::utils::{AppError, AppResult};
 use reqwest::Client;
+use serde::de::DeserializeOwned;
 
 /// Service for interacting with Ollama API
 pub struct OllamaService {
@@ -10,6 +12,23 @@ pub struct OllamaService {
 }
 
 impl OllamaService {
+    fn extract_json<T: DeserializeOwned>(&self, text: &str) -> AppResult<T> {
+        serde_json::from_str::<T>(text)
+            .or_else(|_| {
+                let start = text.find('{').or_else(|| text.find('[')).ok_or_else(|| {
+                    AppError::Serialization("No JSON payload found in AI response".to_string())
+                })?;
+                let end = text.rfind('}').or_else(|| text.rfind(']')).ok_or_else(|| {
+                    AppError::Serialization("Incomplete JSON payload in AI response".to_string())
+                })?;
+                serde_json::from_str::<T>(&text[start..=end]).map_err(AppError::from)
+            })
+            .map_err(|e| match e {
+                AppError::Serialization(_) => e,
+                other => AppError::Serialization(other.to_string()),
+            })
+    }
+
     pub fn new() -> Self {
         Self {
             client: Client::new(),
@@ -101,6 +120,115 @@ impl OllamaService {
         Ok(chat_response.message.content)
     }
 
+    async fn extract_proteins(
+        &self,
+        ollama_url: &str,
+        model: &str,
+        markdown: &str,
+    ) -> AppResult<Vec<String>> {
+        let extract_prompt = format!(
+            "Analiza el siguiente plan nutricional y extrae TODAS las fuentes de proteína (animal y vegetal).\n\
+            Responde SOLAMENTE con un array JSON de strings.\n\
+            EJEMPLO: [\"Pollo\", \"Lentejas\", \"Huevo\", \"Tofu\"]\n\
+            NO añadas texto adicional, ni markdown, ni explicaciones.\n\
+            PLAN:\n{}",
+            markdown
+        );
+
+        let extract_messages = vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content:
+                    "Eres un extractor de datos JSON preciso. Solo respondes con el array JSON."
+                        .to_string(),
+            },
+            ChatMessage {
+                role: "user".to_string(),
+                content: extract_prompt,
+            },
+        ];
+
+        let content_text = self.chat(ollama_url, model, extract_messages).await?;
+        log::info!("Raw extract text: {}", content_text);
+        self.extract_json::<Vec<String>>(&content_text)
+            .or_else(|_| Ok(Vec::new()))
+    }
+
+    async fn extract_structured_plan(
+        &self,
+        ollama_url: &str,
+        model: &str,
+        markdown: &str,
+    ) -> AppResult<Option<StructuredPlan>> {
+        let struct_prompt = format!(
+            "Analiza el siguiente plan nutricional y conviertelo a JSON estructurado.\n\
+            Responde SOLAMENTE con un objeto JSON con esta forma:\n\
+            {{\"title\":\"...\",\"instructions\":\"...\",\"days\":[{{\"dayIndex\":0,\"label\":\"Lunes\",\"recipes\":[{{\"mealType\":\"Breakfast\",\"name\":\"...\",\"ingredients\":[\"...\"],\"instructions\":[\"...\"],\"notes\":\"...\"}}]}}]}}\n\
+            Reglas:\n\
+            - Usa mealType solo con Breakfast, Lunch, Dinner o Snack.\n\
+            - Conserva el contenido del plan, no inventes dias vacios.\n\
+            - instructions puede ser string a nivel del plan y array de strings en cada receta.\n\
+            - No agregues texto fuera del JSON.\n\
+            PLAN:\n{}",
+            markdown
+        );
+
+        let struct_messages = vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content:
+                    "Eres un extractor de datos JSON preciso. Solo respondes con el objeto JSON."
+                        .to_string(),
+            },
+            ChatMessage {
+                role: "user".to_string(),
+                content: struct_prompt,
+            },
+        ];
+
+        let struct_text = self.chat(ollama_url, model, struct_messages).await?;
+        log::info!("Raw structured plan text: {}", struct_text);
+        Ok(self
+            .extract_json::<StructuredPlan>(&struct_text)
+            .ok()
+            .map(StructuredPlan::normalized))
+    }
+
+    async fn extract_weekly_structure(
+        &self,
+        ollama_url: &str,
+        model: &str,
+        markdown: &str,
+    ) -> AppResult<Option<Vec<WeeklyMealInfo>>> {
+        let struct_prompt = format!(
+            "Analiza el siguiente plan nutricional y extrae la estructura semanal de comidas.\n\
+            Responde SOLAMENTE con un array JSON de objetos.\n\
+            Formato de cada objeto:\n\
+            {{\"dayIndex\": numero_de_0_a_6, \"mealType\": \"Breakfast\"|\"Lunch\"|\"Dinner\"|\"Snack\"|\"Unknown\", \"description\": \"breve resumen\"}}\n\
+            Lunes = 0, Domingo = 6.\n\
+            NO añadas texto adicional.\n\
+            PLAN:\n{}",
+            markdown
+        );
+
+        let struct_messages = vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content:
+                    "Eres un extractor de datos JSON preciso. Solo respondes con el array JSON."
+                        .to_string(),
+            },
+            ChatMessage {
+                role: "user".to_string(),
+                content: struct_prompt,
+            },
+        ];
+
+        let struct_text = self.chat(ollama_url, model, struct_messages).await?;
+        log::info!("Raw weekly structure text: {}", struct_text);
+        Ok(self.extract_json::<Vec<WeeklyMealInfo>>(&struct_text).ok())
+    }
+
     /// Generate a meal plan with protein extraction
     pub async fn generate_plan(
         &self,
@@ -113,6 +241,7 @@ impl OllamaService {
         String,
         Vec<String>,
         Option<Vec<crate::models::WeeklyMealInfo>>,
+        Option<StructuredPlan>,
     )> {
         // Step 1: Generate meal plan
         let mut full_prompt = prompt;
@@ -148,104 +277,93 @@ impl OllamaService {
             return Err(AppError::Ollama("Generated plan is empty".to_string()));
         }
 
-        // Step 2: Extract proteins
-        let extract_prompt = format!(
-            "Analiza el siguiente plan nutricional y extrae TODAS las fuentes de proteína (animal y vegetal).\n\
-            Responde SOLAMENTE con un array JSON de strings.\n\
-            EJEMPLO: [\"Pollo\", \"Lentejas\", \"Huevo\", \"Tofu\"]\n\
-            NO añadas texto adicional, ni markdown, ni explicaciones.\n\
-            PLAN:\n{}",
-            markdown
-        );
-
-        let extract_messages = vec![
-            ChatMessage {
-                role: "system".to_string(),
-                content:
-                    "Eres un extractor de datos JSON preciso. Solo respondes con el array JSON."
-                        .to_string(),
-            },
-            ChatMessage {
-                role: "user".to_string(),
-                content: extract_prompt,
-            },
-        ];
-
-        let content_text = self.chat(ollama_url, model, extract_messages).await?;
-
-        log::info!("Raw extract text: {}", content_text);
-
-        // Try to parse as JSON directly
-        let proteins: Vec<String> = match serde_json::from_str::<Vec<String>>(&content_text) {
-            Ok(p) => p,
-            Err(_) => {
-                // Try to find JSON array in the response
-                if let Some(start) = content_text.find('[') {
-                    if let Some(end) = content_text.rfind(']') {
-                        let json_str = &content_text[start..=end];
-                        serde_json::from_str(json_str).unwrap_or_else(|_| Vec::new())
-                    } else {
-                        Vec::new()
-                    }
-                } else {
-                    Vec::new()
-                }
-            }
-        };
-
+        let proteins = self.extract_proteins(ollama_url, model, &markdown).await?;
         log::info!("Extracted proteins: {:?}", proteins);
 
-        // Step 3: Extract weekly structure
-        let struct_prompt = format!(
-            "Analiza el siguiente plan nutricional y extrae la estructura semanal de comidas.\n\
-            Responde SOLAMENTE con un array JSON de objetos.\n\
-            Formato de cada objeto:\n\
-            {{\"dayIndex\": numero_de_0_a_6, \"mealType\": \"Breakfast\"|\"Lunch\"|\"Dinner\"|\"Snack\"|\"Unknown\", \"description\": \"breve resumen\"}}\n\
-            Lunes = 0, Domingo = 6.\n\
-            NO añadas texto adicional.\n\
-            PLAN:\n{}",
-            markdown
-        );
+        let structured_plan = self
+            .extract_structured_plan(ollama_url, model, &markdown)
+            .await?;
 
-        let struct_messages = vec![
-            ChatMessage {
-                role: "system".to_string(),
-                content:
-                    "Eres un extractor de datos JSON preciso. Solo respondes con el array JSON."
-                        .to_string(),
-            },
-            ChatMessage {
-                role: "user".to_string(),
-                content: struct_prompt,
-            },
-        ];
-
-        let struct_text = self.chat(ollama_url, model, struct_messages).await?;
-        log::info!("Raw struct text: {}", struct_text);
-
-        let weekly_structure: Option<Vec<crate::models::WeeklyMealInfo>> =
-            match serde_json::from_str(&struct_text) {
-                Ok(s) => Some(s),
-                Err(_) => {
-                    if let Some(start) = struct_text.find('[') {
-                        if let Some(end) = struct_text.rfind(']') {
-                            let json_str = &struct_text[start..=end];
-                            serde_json::from_str(json_str).ok()
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                }
-            };
+        let weekly_structure = if let Some(plan) = structured_plan.as_ref() {
+            Some(plan.to_weekly_structure())
+        } else {
+            self.extract_weekly_structure(ollama_url, model, &markdown)
+                .await?
+        };
 
         log::info!(
             "Extracted structure items: {:?}",
             weekly_structure.as_ref().map(|v| v.len())
         );
 
-        Ok((markdown, proteins, weekly_structure))
+        Ok((markdown, proteins, weekly_structure, structured_plan))
+    }
+
+    pub async fn suggest_recipe_edit(
+        &self,
+        ollama_url: &str,
+        model: &str,
+        plan_id: &str,
+        plan: &StructuredPlan,
+        day: &StructuredDay,
+        recipe: &StructuredRecipe,
+        suggestion: &str,
+    ) -> AppResult<RecipeSuggestion> {
+        let prompt = format!(
+            "Actualiza SOLO la receta indicada a partir de la sugerencia del usuario.\n\
+            Responde SOLAMENTE con un objeto JSON para la receta con esta forma:\n\
+            {{\"mealType\":\"{}\",\"name\":\"...\",\"ingredients\":[\"...\"],\"instructions\":[\"...\"],\"notes\":\"...\"}}\n\
+            Reglas:\n\
+            - Mantén el mismo mealType de la receta original.\n\
+            - No edites otras recetas ni otros días.\n\
+            - Devuelve una receta completa y coherente, lista para reemplazar a la original.\n\
+            - No agregues texto fuera del JSON.\n\
+            Contexto del plan: {}\n\
+            Día actual: {}\n\
+            Receta original:\n{}\n\
+            Sugerencia del usuario:\n{}",
+            recipe.meal_type.key(),
+            plan.title,
+            day.label,
+            serde_json::to_string_pretty(recipe)
+                .unwrap_or_else(|_| "{}".to_string()),
+            suggestion
+        );
+
+        let messages = vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content:
+                    "Eres un chef experto en nutrición. Solo respondes con JSON válido para una receta."
+                        .to_string(),
+            },
+            ChatMessage {
+                role: "user".to_string(),
+                content: prompt,
+            },
+        ];
+
+        let suggested_text = self.chat(ollama_url, model, messages).await?;
+        let mut suggested_recipe = self.extract_json::<StructuredRecipe>(&suggested_text)?;
+        suggested_recipe.recipe_id = recipe.recipe_id.clone();
+        suggested_recipe.meal_type = recipe.meal_type.clone();
+        if suggested_recipe.name.trim().is_empty() {
+            suggested_recipe.name = recipe.name.clone();
+        }
+        if suggested_recipe.ingredients.is_empty() {
+            suggested_recipe.ingredients = recipe.ingredients.clone();
+        }
+        if suggested_recipe.instructions.is_empty() {
+            suggested_recipe.instructions = recipe.instructions.clone();
+        }
+
+        Ok(RecipeSuggestion {
+            plan_id: plan_id.to_string(),
+            day_id: day.day_id.clone(),
+            recipe_id: recipe.recipe_id.clone(),
+            original_recipe: recipe.clone(),
+            suggested_recipe,
+        })
     }
 }
 

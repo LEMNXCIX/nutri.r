@@ -31,8 +31,12 @@ pub async fn start_scheduler(state: Arc<AppState>) {
 
                         // We need the weekly_structure from the newly generated plan index
                         let mut plan_opt = None;
+                        let mut structured_plan = None;
                         if let Ok(index) = service.list_plans() {
                             plan_opt = index.into_iter().find(|p| p.id == id);
+                        }
+                        if let Ok(detail) = service.get_plan_detail(&id) {
+                            structured_plan = detail.structured_plan;
                         }
 
                         // Drop plan_service lock before getting the calendar lock
@@ -67,6 +71,7 @@ pub async fn start_scheduler(state: Arc<AppState>) {
                                 if let Err(e) = calendar_service.assign_weekly_plan_to_date(
                                     &next_monday.to_string(),
                                     &id,
+                                    structured_plan,
                                     plan.weekly_structure,
                                     config.default_meal_type,
                                 ) {

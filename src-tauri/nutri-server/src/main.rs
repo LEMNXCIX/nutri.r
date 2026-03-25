@@ -1,5 +1,5 @@
 use axum::{
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
     Router,
 };
 use directories::BaseDirs;
@@ -84,11 +84,21 @@ async fn main() {
             "/api/plans/:id",
             get(plans::get_plan).delete(plans::delete_plan),
         )
+        .route("/api/plans/:id/detail", get(plans::get_plan_detail))
         .route("/api/plans/:id/favorite", post(plans::toggle_favorite))
         .route("/api/plans/:id/metadata", get(plans::get_metadata))
         .route("/api/plans/:id/rating", post(plans::set_rating))
         .route("/api/plans/:id/note", post(plans::set_note))
+        .route("/api/plans/:id/display-name", post(plans::set_display_name))
         .route("/api/plans/:id/variation", post(plans::generate_variation))
+        .route(
+            "/api/plans/:id/recipes/:recipe_id/suggestion",
+            post(plans::suggest_recipe_edit),
+        )
+        .route(
+            "/api/plans/:id/recipes/:recipe_id",
+            patch(plans::apply_recipe_edit),
+        )
         // Nutrition
         .route(
             "/api/plans/:id/nutrition",
@@ -108,6 +118,7 @@ async fn main() {
                 .delete(calendar::remove_entry),
         )
         .route("/api/calendar/weekly", post(calendar::assign_weekly_plan))
+        .route("/api/calendar/swap", post(calendar::swap_entries))
         // Water
         .route(
             "/api/water/:date",

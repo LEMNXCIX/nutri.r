@@ -11,4 +11,5 @@ pub mod ingredients;
 pub mod pantry;
 pub mod plan;
 pub mod plan_detail;
+pub mod recipe_detail;
 pub mod shopping_list;

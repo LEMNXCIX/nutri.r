@@ -1,7 +1,9 @@
 mod app;
 mod components;
 mod pages;
+mod plan_display;
 mod tauri_bridge;
+mod theme;
 
 use app::*;
 use leptos::prelude::*;

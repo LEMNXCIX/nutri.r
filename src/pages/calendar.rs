@@ -1,4 +1,5 @@
 use crate::components::ui::Loading;
+use crate::plan_display::{format_plan_created_at, plan_display_name};
 use crate::tauri_bridge::{
     assign_weekly_plan_to_date, get_calendar_range, get_index, remove_calendar_entry,
     CalendarEntry, MealType,
@@ -231,13 +232,20 @@ pub fn Calendar() -> impl IntoView {
                                         let on_assign = on_assign.clone();
                                         list.into_iter().map(|plan| {
                                             let pid = plan.id.clone();
+                                            let title = plan_display_name(&plan);
+                                            let created_at = format_plan_created_at(&plan);
                                             let on_assign = on_assign.clone();
                                             view! {
                                                 <button
                                                     on:click=move |_| on_assign(pid.clone())
                                                     class="w-full text-left p-6 bg-zinc-50 dark:bg-neutral-800 hover:bg-primary dark:hover:bg-primary text-black dark:text-white hover:text-black dark:hover:text-black border border-hairline dark:border-neutral-700 transition-all flex items-center justify-between"
                                                 >
-                                                    <span class="font-black text-xs uppercase tracking-widest">{plan.id.chars().take(12).collect::<String>()}</span>
+                                                    <div class="flex flex-col gap-1">
+                                                        <span class="font-black text-xs uppercase tracking-widest">{title}</span>
+                                                        <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+                                                            {created_at}
+                                                        </span>
+                                                    </div>
                                                     <span class="material-symbols-outlined">"add"</span>
                                                 </button>
                                             }

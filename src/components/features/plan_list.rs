@@ -1,3 +1,4 @@
+use crate::plan_display::{format_plan_created_at, plan_display_name};
 use crate::tauri_bridge::PlanIndex;
 use leptos::prelude::*;
 use leptos_router::components::A;
@@ -15,6 +16,9 @@ pub fn PlanList(#[prop(into)] plans: Signal<Vec<PlanIndex>>) -> impl IntoView {
 
 #[component]
 pub fn PlanItem(plan: PlanIndex) -> impl IntoView {
+    let title = plan_display_name(&plan);
+    let created_at = format_plan_created_at(&plan);
+
     view! {
         <div class="group relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 shadow-xl shadow-black/5 hover:shadow-2xl hover:border-black/5 dark:hover:border-neutral-700 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
             // Favorite Badge - Refined
@@ -42,8 +46,11 @@ pub fn PlanItem(plan: PlanIndex) -> impl IntoView {
                         </span>
                     </div>
                     <h3 class="text-2xl font-black text-black dark:text-white tracking-tighter leading-none group-hover:text-[#D4AF37] transition-colors">
-                        {plan.fecha}
+                        {title}
                     </h3>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-neutral-500">
+                        {created_at}
+                    </p>
                 </div>
 
                 // Rating & ID
@@ -63,7 +70,7 @@ pub fn PlanItem(plan: PlanIndex) -> impl IntoView {
                         }}
                     </div>
                     <span class="text-[8px] font-black text-gray-400 dark:text-neutral-500 bg-[#FAFAFA] dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 px-3 py-1 rounded-lg uppercase tracking-widest">
-                        {format!("ID: {}", plan.id.chars().take(6).collect::<String>())}
+                        {format!("REF: {}", plan.id.chars().take(6).collect::<String>())}
                     </span>
                 </div>
 

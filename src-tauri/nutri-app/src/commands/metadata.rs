@@ -45,6 +45,20 @@ pub async fn set_plan_note(
 }
 
 #[tauri::command]
+pub async fn set_plan_display_name(
+    state: State<'_, AppState>,
+    plan_id: String,
+    display_name: String,
+) -> Result<(), String> {
+    let service: MutexGuard<'_, AppMetadataService> = state.metadata_service.lock().await;
+    service
+        .set_display_name(plan_id, display_name)
+        .map_err(|e: AppError| e.to_string())?;
+    state.trigger_sync().await;
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn get_plan_metadata(
     state: State<'_, AppState>,
     plan_id: String,

@@ -1,4 +1,5 @@
 use leptos::prelude::*;
+use crate::plan_display::{format_plan_created_at, plan_display_name};
 use crate::tauri_bridge::{
     calculate_nutrition, get_calendar_range, get_index, get_water_intake,
     update_water_intake, MealType,
@@ -262,13 +263,14 @@ pub fn Home() -> impl IntoView {
                         {move || plans_resource.get().map(|plans| {
                             plans.into_iter().take(5).map(|plan| {
                                 let pid = plan.id.clone();
-                                let date = plan.fecha.clone();
+                                let title = plan_display_name(&plan);
+                                let date = format_plan_created_at(&plan);
                                 view! {
                                     <A href=format!("/plan/{}", pid) attr:class="flex items-center justify-between py-6 border-b border-neutral-100 dark:border-neutral-800 group">
                                         <div class="flex items-center gap-6">
                                             <span class="text-xs font-black text-neutral-950 dark:text-white">"P"</span>
                                             <div class="flex flex-col gap-1">
-                                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-white group-hover:text-accent dark:group-hover:text-accent transition-colors">{pid.chars().take(12).collect::<String>()}</span>
+                                                <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-950 dark:text-white group-hover:text-accent dark:group-hover:text-accent transition-colors">{title}</span>
                                                 <span class="text-[8px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">{date.clone()}</span>
                                             </div>
                                         </div>

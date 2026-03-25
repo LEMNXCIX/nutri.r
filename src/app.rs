@@ -13,6 +13,7 @@ use crate::pages::ingredients::Ingredients;
 use crate::pages::pantry::Pantry;
 use crate::pages::plan::Plan;
 use crate::pages::plan_detail::PlanDetail;
+use crate::pages::recipe_detail::RecipeDetail;
 use crate::pages::shopping_list::ShoppingList;
 use leptos::prelude::*;
 use leptos_router::{
@@ -28,33 +29,7 @@ pub fn App() -> impl IntoView {
     let (is_error, set_is_error) = signal(false);
 
     Effect::new(move |_| {
-        if let Some(win) = web_sys::window() {
-            if let Some(doc) = win.document() {
-                if let Some(html) = doc.document_element() {
-                    let local_storage = win.local_storage().ok().flatten();
-                    let stored_theme = local_storage
-                        .as_ref()
-                        .and_then(|ls: &web_sys::Storage| ls.get_item("theme").ok().flatten());
-
-                    let is_dark = match stored_theme.as_deref() {
-                        Some("dark") => true,
-                        Some("light") => false,
-                        _ => win
-                            .match_media("(prefers-color-scheme: dark)")
-                            .ok()
-                            .flatten()
-                            .map(|mql: web_sys::MediaQueryList| mql.matches())
-                            .unwrap_or(false),
-                    };
-
-                    if is_dark {
-                        let _ = html.class_list().add_1("dark");
-                    } else {
-                        let _ = html.class_list().remove_1("dark");
-                    }
-                }
-            }
-        }
+        crate::theme::apply_theme(&crate::theme::initial_theme());
     });
 
     Effect::new(move |_| {
@@ -137,6 +112,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/history") view=History />
                         <Route path=path!("/plan") view=Plan />
                         <Route path=path!("/plan/:id") view=PlanDetail />
+                        <Route path=path!("/plan/:id/recipe/:recipe_id") view=RecipeDetail />
                         <Route path=path!("/shopping/:id") view=ShoppingList />
                         <Route path=path!("/calendar") view=Calendar />
                         <Route path=path!("/calendar/:date") view=DailyView />

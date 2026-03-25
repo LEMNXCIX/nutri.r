@@ -84,6 +84,7 @@ mod tests {
 
         let meta = PlanMetadata {
             plan_id: "plan1".to_string(),
+            display_name: Some("Plan Legible".to_string()),
             is_favorite: true,
             rating: Some(5),
             notes: "Great plan".to_string(),
@@ -94,6 +95,7 @@ mod tests {
 
         let retrieved = repo.get("plan1").unwrap().unwrap();
         assert_eq!(retrieved.plan_id, "plan1");
+        assert_eq!(retrieved.display_name.as_deref(), Some("Plan Legible"));
         assert!(retrieved.is_favorite);
 
         let all = repo.get_all().unwrap();

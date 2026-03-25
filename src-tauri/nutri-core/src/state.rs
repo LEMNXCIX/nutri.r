@@ -19,6 +19,7 @@ pub type AppPlanService = PlanService<
     FileConfigRepository,
     FileIngredientRepository,
     FilePantryRepository,
+    FileMetadataRepository,
 >;
 pub type AppIngredientService = IngredientService<FilePlanRepository, FileIngredientRepository>;
 pub type AppMetadataService = MetadataService<FileMetadataRepository>;
@@ -99,7 +100,13 @@ impl AppState {
         let pantry_repo = FilePantryRepository::new(data_dir.clone());
 
         let plan_service =
-            PlanService::new(plan_repo, config_repo.clone(), ingredient_repo, pantry_repo);
+            PlanService::new(
+                plan_repo,
+                config_repo.clone(),
+                ingredient_repo,
+                pantry_repo,
+                FileMetadataRepository::new(data_dir.clone()),
+            );
         let ingredient_service = IngredientService::new(
             FilePlanRepository::new(data_dir.clone()),
             FileIngredientRepository::new(excluded_path.clone()),

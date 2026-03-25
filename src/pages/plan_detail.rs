@@ -1,8 +1,10 @@
 use crate::components::ui::Loading;
+use crate::plan_display::resolve_plan_header_title;
 use crate::tauri_bridge::{
     add_tag_to_plan, assign_weekly_plan_to_date, calculate_nutrition, delete_plan,
-    generate_variation, get_all_tags, get_plan_content, get_plan_metadata, remove_tag_from_plan,
-    send_plan_email, set_plan_rating, toggle_favorite, PlanMetadata, Tag, VariationType,
+    generate_variation, get_all_tags, get_plan_detail, get_plan_metadata, remove_tag_from_plan,
+    send_plan_email, set_plan_display_name, set_plan_rating, toggle_favorite, PlanMetadata,
+    StructuredPlan, Tag, VariationType,
 };
 use chrono::{Datelike, Duration, Local, Weekday};
 use leptos::logging::log;
@@ -11,27 +13,6 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::A;
 use leptos_router::hooks::use_params_map;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct PlanDay {
-    dia: String,
-    comidas: Vec<PlanMeal>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct PlanMeal {
-    tipo: String,
-    nombre: String,
-    ingredientes: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct StructuredPlan {
-    titulo: String,
-    instrucciones: Option<String>,
-    dias: Vec<PlanDay>,
-}
 
 fn get_next_weekday(weekday: Weekday) -> String {
     let now = Local::now().date_naive();
@@ -42,6 +23,15 @@ fn get_next_weekday(weekday: Weekday) -> String {
     (now + Duration::days(days_ahead as i64))
         .format("%Y-%m-%d")
         .to_string()
+}
+
+fn render_header_title(title: String) -> AnyView {
+    let words = title.split_whitespace().collect::<Vec<_>>();
+    if words.len() >= 2 {
+        view! { {words[0]} <br/> {words[1..].join(" ")} }.into_any()
+    } else {
+        title.into_any()
+    }
 }
 
 #[component]
@@ -55,6 +45,9 @@ pub fn PlanDetail() -> impl IntoView {
     let (email, set_email) = signal(String::new());
     let (show_email_input, set_show_email_input) = signal(false);
     let (sending_email, set_sending_email) = signal(false);
+    let (editing_display_name, set_editing_display_name) = signal(false);
+    let (display_name_input, set_display_name_input) = signal(String::new());
+    let (saving_display_name, set_saving_display_name) = signal(false);
 
     // Calendar Assign State
     let (show_assign_modal, set_show_assign_modal) = signal(false);
@@ -105,39 +98,30 @@ pub fn PlanDetail() -> impl IntoView {
     let plan_resource = LocalResource::new(move || {
         let id_val = id_signal();
         async move {
-            let content_res = get_plan_content(&id_val).await;
+            let detail_res = get_plan_detail(&id_val).await;
             let meta_res = get_plan_metadata(&id_val).await;
 
-            if let Ok(m) = meta_res {
-                set_metadata.set(m);
+            if let Ok(meta) = meta_res {
+                let structured_title = detail_res
+                    .as_ref()
+                    .ok()
+                    .and_then(|detail| detail.structured_plan.as_ref())
+                    .map(|plan| plan.title.as_str());
+                if !editing_display_name.get_untracked() {
+                    set_display_name_input.set(resolve_plan_header_title(
+                        meta.display_name.as_deref(),
+                        structured_title,
+                        &id_val,
+                    ));
+                }
+                set_metadata.set(meta);
             }
 
-            match content_res {
-                Ok(content) => {
-                    // Try to parse as JSON first
-                    let trimmed = content.trim();
-                    if (trimmed.starts_with('{') && trimmed.ends_with('}'))
-                        || (trimmed.starts_with('[') && trimmed.ends_with(']'))
-                    {
-                        // Find the start and end of JSON if there is markdown fluff
-                        let start = trimmed.find('{').or_else(|| trimmed.find('[')).unwrap_or(0);
-                        let end = trimmed
-                            .rfind('}')
-                            .or_else(|| trimmed.rfind(']'))
-                            .unwrap_or(trimmed.len() - 1);
-                        let json_part = &trimmed[start..=end];
-
-                        if let Ok(sp) = serde_json::from_str::<StructuredPlan>(json_part) {
-                            set_structured_plan.set(Some(sp));
-                            return Some("STRUCTURED".to_string());
-                        } else if let Ok(dias) = serde_json::from_str::<Vec<PlanDay>>(json_part) {
-                            set_structured_plan.set(Some(StructuredPlan {
-                                titulo: "Plan Nutricional".to_string(),
-                                instrucciones: None,
-                                dias,
-                            }));
-                            return Some("STRUCTURED".to_string());
-                        }
+            match detail_res {
+                Ok(detail) => {
+                    if let Some(plan) = detail.structured_plan {
+                        set_structured_plan.set(Some(plan));
+                        return Some("STRUCTURED".to_string());
                     }
 
                     set_structured_plan.set(None);
@@ -150,14 +134,15 @@ pub fn PlanDetail() -> impl IntoView {
                     options.insert(pulldown_cmark::Options::ENABLE_FOOTNOTES);
                     options.insert(pulldown_cmark::Options::ENABLE_SMART_PUNCTUATION);
 
-                    let parser = pulldown_cmark::Parser::new_ext(&content, options);
+                    let parser =
+                        pulldown_cmark::Parser::new_ext(&detail.markdown_content, options);
                     let mut html = String::new();
                     pulldown_cmark::html::push_html(&mut html, parser);
 
                     Some(html)
                 }
                 Err(err) => {
-                    log!("Error fetching plan content: {}", err);
+                    log!("Error fetching plan detail: {}", err);
                     None
                 }
             }
@@ -172,6 +157,77 @@ pub fn PlanDetail() -> impl IntoView {
             }
         });
     };
+
+    let on_start_editing_name = Callback::new(move |_: web_sys::MouseEvent| {
+        let metadata = metadata.get();
+        let structured_title = structured_plan.get().map(|plan| plan.title);
+        set_display_name_input.set(resolve_plan_header_title(
+            metadata.display_name.as_deref(),
+            structured_title.as_deref(),
+            &id_signal(),
+        ));
+        set_editing_display_name.set(true);
+    });
+
+    let on_cancel_editing_name = Callback::new(move |_: web_sys::MouseEvent| {
+        let metadata = metadata.get();
+        let structured_title = structured_plan.get().map(|plan| plan.title);
+        set_display_name_input.set(resolve_plan_header_title(
+            metadata.display_name.as_deref(),
+            structured_title.as_deref(),
+            &id_signal(),
+        ));
+        set_editing_display_name.set(false);
+    });
+
+    let on_reset_display_name = Callback::new(move |_: web_sys::MouseEvent| {
+        set_display_name_input.set(String::new());
+    });
+
+    let on_save_display_name = Callback::new(move |_: web_sys::MouseEvent| {
+        let id_val = id_signal();
+        let entered_name = display_name_input.get();
+        let metadata_display_name = metadata.get().display_name;
+        let structured_title = structured_plan.get().map(|plan| plan.title);
+        let auto_title =
+            resolve_plan_header_title(None, structured_title.as_deref(), &id_val);
+        let trimmed = entered_name.trim().to_string();
+        let should_clear_override = trimmed.is_empty() || trimmed == auto_title;
+
+        set_saving_display_name.set(true);
+        spawn_local(async move {
+            let payload = if should_clear_override {
+                String::new()
+            } else {
+                trimmed.clone()
+            };
+
+            match set_plan_display_name(&id_val, payload).await {
+                Ok(_) => {
+                    set_metadata.update(|meta| {
+                        meta.display_name = if should_clear_override {
+                            None
+                        } else {
+                            Some(trimmed.clone())
+                        };
+                    });
+                    set_display_name_input.set(if should_clear_override {
+                        auto_title
+                    } else {
+                        trimmed
+                    });
+                    set_editing_display_name.set(false);
+                }
+                Err(error) => {
+                    log!("Error updating display name: {}", error);
+                    if let Some(previous_name) = metadata_display_name {
+                        set_display_name_input.set(previous_name);
+                    }
+                }
+            }
+            set_saving_display_name.set(false);
+        });
+    });
 
     let on_rate = Callback::new(move |rating: u8| {
         let id_val = id_signal();
@@ -288,21 +344,68 @@ pub fn PlanDetail() -> impl IntoView {
                     <div class="bg-accent px-2 py-1 inline-block mb-4">
                         <span class="text-[10px] font-bold uppercase tracking-[0.2em]">"Plan generado"</span>
                     </div>
-                    <h1 class="text-[72px] break-words l font-extrabold text-white uppercase leading-[0.85] tracking-tighter">
-                        {move || {
-                            let title = if let Some(p) = structured_plan.get() {
-                                p.titulo
-                            } else {
-                                format!("Plan Nutricional #{}", id_signal().chars().take(4).collect::<String>())
-                            };
-                            let words: Vec<&str> = title.split_whitespace().collect();
-                            if words.len() >= 2 {
-                                view! { {words[0]} <br/> {words[1..].join(" ")} }.into_any()
-                            } else {
-                                title.into_any()
-                            }
-                        }}
-                    </h1>
+                    {move || if editing_display_name.get() {
+                        view! {
+                            <div class="max-w-2xl space-y-4">
+                                <input
+                                    type="text"
+                                    placeholder="Nombre visible del plan"
+                                    class="w-full bg-white/95 text-neutral-950 px-5 py-4 text-lg font-bold tracking-tight border border-white/30 outline-none"
+                                    on:input=move |ev| set_display_name_input.set(event_target_value(&ev))
+                                    prop:value=display_name_input
+                                />
+                                <div class="flex flex-wrap gap-3">
+                                    <button
+                                        on:click=move |ev| on_save_display_name.run(ev)
+                                        class="px-5 py-3 bg-accent text-black text-[10px] font-black uppercase tracking-[0.25em] border border-accent disabled:opacity-60"
+                                        disabled=move || saving_display_name.get()
+                                    >
+                                        {move || if saving_display_name.get() { "Guardando..." } else { "Guardar Nombre" }}
+                                    </button>
+                                    <button
+                                        on:click=move |ev| on_reset_display_name.run(ev)
+                                        class="px-5 py-3 bg-white/15 text-white text-[10px] font-black uppercase tracking-[0.25em] border border-white/30"
+                                        type="button"
+                                    >
+                                        "Usar Automático"
+                                    </button>
+                                    <button
+                                        on:click=move |ev| on_cancel_editing_name.run(ev)
+                                        class="px-5 py-3 bg-transparent text-white text-[10px] font-black uppercase tracking-[0.25em] border border-white/30"
+                                        type="button"
+                                    >
+                                        "Cancelar"
+                                    </button>
+                                </div>
+                            </div>
+                        }.into_any()
+                    } else {
+                        let metadata = metadata.get();
+                        let structured_title = structured_plan.get().map(|plan| plan.title);
+                        let title = resolve_plan_header_title(
+                            metadata.display_name.as_deref(),
+                            structured_title.as_deref(),
+                            &id_signal(),
+                        );
+                        view! {
+                            <div class="space-y-4">
+                                <h1 class="text-[72px] break-words l font-extrabold text-white uppercase leading-[0.85] tracking-tighter">
+                                    {render_header_title(title)}
+                                </h1>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <button
+                                        on:click=move |ev| on_start_editing_name.run(ev)
+                                        class="px-4 py-2 bg-white/15 text-white text-[10px] font-black uppercase tracking-[0.25em] border border-white/30 backdrop-blur-sm"
+                                    >
+                                        "Renombrar"
+                                    </button>
+                                    <span class="px-4 py-2 bg-black/20 text-white/75 text-[10px] font-black uppercase tracking-[0.25em] border border-white/15">
+                                        {format!("Ref {}", id_signal().chars().take(6).collect::<String>())}
+                                    </span>
+                                </div>
+                            </div>
+                        }.into_any()
+                    }}
                 </div>
             </header>
 
@@ -509,7 +612,7 @@ pub fn PlanDetail() -> impl IntoView {
                                     <div class="space-y-12">
                                         <h2 class="text-xs font-bold uppercase tracking-[0.2em] mb-8 text-neutral-400">"Desglose del Plan Seleccionado"</h2>
 
-                                        {if let Some(instr) = sp.instrucciones {
+                                        {if let Some(instr) = sp.instructions {
                                             view! {
                                                 <div class="prose-brutalist mb-12" inner_html=instr />
                                             }.into_any()
@@ -518,20 +621,30 @@ pub fn PlanDetail() -> impl IntoView {
                                         }}
 
                                         <div class="space-y-12">
-                                            {sp.dias.into_iter().map(|day| view! {
+                                            {sp.days.into_iter().map(|day| view! {
                                                 <div class="space-y-6">
                                                     <div class="flex items-center gap-4">
-                                                        <span class="text-sm font-black uppercase tracking-widest dark:text-white">{day.dia}</span>
+                                                        <span class="text-sm font-black uppercase tracking-widest dark:text-white">{day.label}</span>
                                                         <div class="hairline-divider dark:bg-neutral-800 flex-1"></div>
                                                     </div>
                                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                                                        {day.comidas.into_iter().map(|meal| view! {
-                                                            <div class="flex flex-col gap-1">
-                                                                 <span class="text-sm font-medium dark:text-white">{meal.nombre}</span>
+                                                        {day.recipes.into_iter().map(|meal| view! {
+                                                            <A
+                                                                href=format!("/plan/{}/recipe/{}", id_signal(), meal.recipe_id)
+                                                                attr:class="border border-neutral-200 dark:border-neutral-800 p-4 flex flex-col gap-3 hover:border-neutral-950 dark:hover:border-white transition-colors"
+                                                            >
+                                                                 <span class="text-sm font-medium dark:text-white">{meal.name}</span>
                                                                  <span class="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">
-                                                                     {format!("{} / {}", meal.tipo, meal.ingredientes.join(", "))}
+                                                                     {format!("{} / {}", meal.meal_type.display_name(), meal.ingredients.join(", "))}
                                                                  </span>
-                                                            </div>
+                                                                 <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
+                                                                     {if meal.instructions.is_empty() {
+                                                                         "Ver Detalle".to_string()
+                                                                     } else {
+                                                                         format!("{} pasos · ver preparación", meal.instructions.len())
+                                                                     }}
+                                                                 </span>
+                                                            </A>
                                                         }).collect::<Vec<_>>()}
                                                     </div>
                                                 </div>
@@ -582,7 +695,7 @@ pub fn PlanDetail() -> impl IntoView {
                     on:click=move |_| set_show_assign_modal.set(true)
                     class="w-full bg-accent py-5 flex items-center justify-center gap-3 active:scale-[0.98] transition-transform text-neutral-950"
                 >
-                    <span class="text-sm font-bold uppercase tracking-[0.3em]">"Registrar Comida"</span>
+                    <span class="text-sm font-bold uppercase tracking-[0.3em]">"Asignar Semana Completa"</span>
                     <span class="material-symbols-outlined !text-base">"add"</span>
                 </button>
             </footer>
@@ -605,12 +718,14 @@ pub fn PlanDetail() -> impl IntoView {
                             <button on:click=move |_| set_show_assign_modal.set(false) class="absolute top-6 left-6 w-10 h-10 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center rounded-full">
                                 <span class="material-symbols-outlined">"close"</span>
                             </button>
-                            <h2 class="text-4xl font-black uppercase tracking-tighter mb-12 dark:text-white">"Asignar a la Semana"</h2>
+                            <h2 class="text-4xl font-black uppercase tracking-tighter mb-4 dark:text-white">"Asignar Semana Completa"</h2>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500 mb-12">
+                                "Se asignarán automáticamente las recetas del plan a cada día correspondiente."
+                            </p>
                             <div class="flex flex-col gap-4">
                                 {move || {
                                     let next_monday = get_next_weekday(Weekday::Mon);
                                     let next_tuesday = get_next_weekday(Weekday::Tue);
-                                    let id_val = id_signal();
 
                                     view! {
                                         <button

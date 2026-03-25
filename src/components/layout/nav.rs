@@ -1,4 +1,6 @@
+use crate::tauri_bridge::{get_ui_preferences, save_ui_preferences, UIPreferences};
 use leptos::prelude::*;
+use leptos::task::spawn_local;
 use leptos_router::components::A;
 use leptos_router::hooks::use_location;
 
@@ -10,17 +12,15 @@ pub fn Navbar() -> impl IntoView {
     let location = use_location();
 
     let toggle_dark = move |_| {
-        if let Some(win) = web_sys::window() {
-            if let Some(doc) = win.document() {
-                if let Some(html) = doc.document_element() {
-                    let _ = html.class_list().toggle("dark");
-                    let is_dark = html.class_list().contains("dark");
-                    if let Some(ls) = win.local_storage().ok().flatten() {
-                        let _ = ls.set_item("theme", if is_dark { "dark" } else { "light" });
-                    }
-                }
-            }
-        }
+        let next_theme = crate::theme::toggle_theme();
+        spawn_local(async move {
+            let mut preferences = get_ui_preferences().await.unwrap_or(UIPreferences {
+                theme: next_theme.clone(),
+                primary_color: "green".to_string(),
+            });
+            preferences.theme = next_theme;
+            let _ = save_ui_preferences(preferences).await;
+        });
     };
 
     view! {

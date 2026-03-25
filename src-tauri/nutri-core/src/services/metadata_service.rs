@@ -66,6 +66,26 @@ impl<R: MetadataRepository> MetadataService<R> {
         Ok(())
     }
 
+    pub fn set_display_name(&self, plan_id: String, display_name: String) -> AppResult<()> {
+        let mut meta = self
+            .repository
+            .get(&plan_id)?
+            .unwrap_or_else(|| PlanMetadata {
+                plan_id: plan_id.clone(),
+                ..Default::default()
+            });
+
+        let trimmed = display_name.trim();
+        meta.display_name = if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_string())
+        };
+
+        self.repository.save(meta)?;
+        Ok(())
+    }
+
     pub fn get_favorites(&self) -> AppResult<Vec<PlanMetadata>> {
         let all = self.repository.get_all()?;
         Ok(all.into_iter().filter(|m| m.is_favorite).collect())
