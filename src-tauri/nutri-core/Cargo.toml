@@ -16,3 +16,4 @@ lettre = { version = "0.11", features = ["tokio1-rustls-tls", "hostname", "build
 async-trait = "0.1"
 thiserror = "1.0"
 uuid = { version = "1.0", features = ["v4", "serde"] }
+pulldown-cmark = "0.12"

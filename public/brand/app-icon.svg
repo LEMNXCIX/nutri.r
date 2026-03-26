@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-labelledby="title desc">
+  <title id="title">nutri.r app icon</title>
+  <desc id="desc">Black rounded square with a white lowercase n and a green dot, forming n.</desc>
+  <rect width="240" height="240" rx="58" fill="#0A0A0A"/>
+  <g transform="translate(42 17)">
+    <rect x="1" y="52.511" width="30" height="101.189" rx="3" fill="#FFFFFF"/>
+    <path d="M 11.9 100.122 C 13.063 62.093 46.435 54.243 62.881 54.143 C 90.16 53.976 120.918 65.66 120.918 103.66 L 120.918 153.66 L 90.918 153.66 L 90.428 110.192 C 89.446 89.718 79.919 80.966 61.919 80.966 C 43.919 80.966 34.409 87.437 33.409 107.437 L 32.918 153.66 L 10.918 153.66 L 11.9 100.122 Z" fill="#FFFFFF"/>
+    <circle cx="144.427" cy="141.098" r="12" fill="#0DF259"/>
+  </g>
+</svg>

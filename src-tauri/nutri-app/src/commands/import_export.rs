@@ -13,4 +13,3 @@ pub async fn import_data(state: State<'_, AppState>, backup: AppBackup) -> Resul
     let service = state.import_export_service.lock().await;
     service.restore_backup(backup).map_err(|e| e.to_string())
 }
-

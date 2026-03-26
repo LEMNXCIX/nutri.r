@@ -7,4 +7,3 @@ pub async fn get_achievements(state: State<'_, AppState>) -> Result<Vec<Achievem
     let service = state.achievement_service.lock().await;
     service.get_achievements().map_err(|e| e.to_string())
 }
-

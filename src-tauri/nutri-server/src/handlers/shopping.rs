@@ -1,11 +1,11 @@
+use crate::error::ApiError;
 use axum::{
     extract::{Path, State},
     Json,
 };
 use nutri_core::{models::ShoppingList, state::AppState};
-use std::sync::Arc;
-use crate::error::ApiError;
 use serde::Deserialize;
+use std::sync::Arc;
 
 pub async fn get_shopping_list(
     State(state): State<Arc<AppState>>,

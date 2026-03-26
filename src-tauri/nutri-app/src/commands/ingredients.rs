@@ -43,4 +43,3 @@ pub async fn toggle_ingredient_exclusion(
     }
     res
 }
-

@@ -20,7 +20,10 @@ struct RecipeDetailData {
     recipe: StructuredRecipe,
 }
 
-fn find_recipe(plan: &StructuredPlan, recipe_id: &str) -> Option<(StructuredDay, StructuredRecipe)> {
+fn find_recipe(
+    plan: &StructuredPlan,
+    recipe_id: &str,
+) -> Option<(StructuredDay, StructuredRecipe)> {
     plan.days.iter().find_map(|day| {
         day.recipes
             .iter()
@@ -109,38 +112,43 @@ pub fn RecipeDetail() -> impl IntoView {
         });
     });
 
-    let recipe_resource = LocalResource::new(move || {
-        let plan_id_value = plan_id();
-        let recipe_id_value = recipe_id();
-        let _refresh = refresh_nonce.get();
-        async move {
-            match get_plan_detail(&plan_id_value).await {
-                Ok(detail) => {
-                    let Some(plan) = detail.structured_plan else {
-                        return Err("Este plan no tiene detalle estructurado para mostrar la receta.".to_string());
-                    };
+    let recipe_resource =
+        LocalResource::new(move || {
+            let plan_id_value = plan_id();
+            let recipe_id_value = recipe_id();
+            let _refresh = refresh_nonce.get();
+            async move {
+                match get_plan_detail(&plan_id_value).await {
+                    Ok(detail) => {
+                        let Some(plan) = detail.structured_plan else {
+                            return Err(
+                                "Este plan no tiene detalle estructurado para mostrar la receta."
+                                    .to_string(),
+                            );
+                        };
 
-                    let plan_title = if plan.title.trim().is_empty() {
-                        format!("Plan {}", plan_id_value.chars().take(8).collect::<String>())
-                    } else {
-                        plan.title.clone()
-                    };
+                        let plan_title = if plan.title.trim().is_empty() {
+                            format!("Plan {}", plan_id_value.chars().take(8).collect::<String>())
+                        } else {
+                            plan.title.clone()
+                        };
 
-                    match find_recipe(&plan, &recipe_id_value) {
-                        Some((day, recipe)) => Ok(RecipeDetailData {
-                            plan_id: plan_id_value,
-                            plan_title,
-                            plan_instructions: plan.instructions.clone(),
-                            day,
-                            recipe,
-                        }),
-                        None => Err("No encontramos esa receta dentro del plan seleccionado.".to_string()),
+                        match find_recipe(&plan, &recipe_id_value) {
+                            Some((day, recipe)) => Ok(RecipeDetailData {
+                                plan_id: plan_id_value,
+                                plan_title,
+                                plan_instructions: plan.instructions.clone(),
+                                day,
+                                recipe,
+                            }),
+                            None => Err("No encontramos esa receta dentro del plan seleccionado."
+                                .to_string()),
+                        }
                     }
+                    Err(error) => Err(error),
                 }
-                Err(error) => Err(error),
             }
-        }
-    });
+        });
 
     Effect::new(move |_| {
         if let Some(Ok(data)) = recipe_resource.get() {

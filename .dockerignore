@@ -5,8 +5,16 @@ node_modules/
 dist/
 trunk
 .git/
+.gitignore
 .vscode/
-
+README.md
+*.log
+Dockerfile*
+docker-compose.yml
+node_modules
+trunk
+src-tauri/target
+**/*.rs.bk
 # Recursive exclusions
 **/target
 **/node_modules

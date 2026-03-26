@@ -87,7 +87,8 @@ where
             ));
         }
 
-        if first_entry.assignment_id.is_none() || first_entry.assignment_id != second_entry.assignment_id
+        if first_entry.assignment_id.is_none()
+            || first_entry.assignment_id != second_entry.assignment_id
         {
             return Err(AppError::Validation(
                 "Solo se pueden intercambiar recetas de la misma asignación semanal".to_string(),
@@ -161,7 +162,8 @@ where
 
         for meal_info in structure {
             let current_date = start + chrono::Duration::days(meal_info.day_index as i64);
-            let meal_type = MealType::from_label(&meal_info.meal_type).unwrap_or(default_meal_type.clone());
+            let meal_type =
+                MealType::from_label(&meal_info.meal_type).unwrap_or(default_meal_type.clone());
 
             let entry = CalendarEntry {
                 date: current_date.format("%Y-%m-%d").to_string(),

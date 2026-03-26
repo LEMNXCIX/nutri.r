@@ -16,7 +16,8 @@ use leptos_router::hooks::use_params_map;
 
 fn get_next_weekday(weekday: Weekday) -> String {
     let now = Local::now().date_naive();
-    let mut days_ahead = weekday.number_from_monday() as i32 - now.weekday().number_from_monday() as i32;
+    let mut days_ahead =
+        weekday.number_from_monday() as i32 - now.weekday().number_from_monday() as i32;
     if days_ahead <= 0 {
         days_ahead += 7;
     }
@@ -134,8 +135,7 @@ pub fn PlanDetail() -> impl IntoView {
                     options.insert(pulldown_cmark::Options::ENABLE_FOOTNOTES);
                     options.insert(pulldown_cmark::Options::ENABLE_SMART_PUNCTUATION);
 
-                    let parser =
-                        pulldown_cmark::Parser::new_ext(&detail.markdown_content, options);
+                    let parser = pulldown_cmark::Parser::new_ext(&detail.markdown_content, options);
                     let mut html = String::new();
                     pulldown_cmark::html::push_html(&mut html, parser);
 
@@ -189,8 +189,7 @@ pub fn PlanDetail() -> impl IntoView {
         let entered_name = display_name_input.get();
         let metadata_display_name = metadata.get().display_name;
         let structured_title = structured_plan.get().map(|plan| plan.title);
-        let auto_title =
-            resolve_plan_header_title(None, structured_title.as_deref(), &id_val);
+        let auto_title = resolve_plan_header_title(None, structured_title.as_deref(), &id_val);
         let trimmed = entered_name.trim().to_string();
         let should_clear_override = trimmed.is_empty() || trimmed == auto_title;
 

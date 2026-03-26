@@ -1,10 +1,7 @@
 use leptos::prelude::*;
 
 #[component]
-pub fn Modal(
-    on_close: Callback<leptos::ev::MouseEvent>,
-    children: Children,
-) -> impl IntoView {
+pub fn Modal(on_close: Callback<leptos::ev::MouseEvent>, children: Children) -> impl IntoView {
     view! {
         <div class="fixed inset-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-sm flex items-center justify-center z-[500] p-6">
             <div class="bg-white dark:bg-neutral-900 brutalist-border dark:border-neutral-700 shadow-brutalist max-w-lg w-full relative">

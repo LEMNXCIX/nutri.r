@@ -74,4 +74,3 @@ pub async fn get_favorites(state: State<'_, AppState>) -> Result<Vec<PlanMetadat
     let service: MutexGuard<'_, AppMetadataService> = state.metadata_service.lock().await;
     service.get_favorites().map_err(|e: AppError| e.to_string())
 }
-

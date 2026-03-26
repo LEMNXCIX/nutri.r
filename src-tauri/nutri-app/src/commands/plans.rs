@@ -65,10 +65,7 @@ pub async fn get_plan_content(state: State<'_, AppState>, id: String) -> Result<
 }
 
 #[tauri::command]
-pub async fn get_plan_detail(
-    state: State<'_, AppState>,
-    id: String,
-) -> Result<PlanDetail, String> {
+pub async fn get_plan_detail(state: State<'_, AppState>, id: String) -> Result<PlanDetail, String> {
     let service = state.plan_service.lock().await;
     service.get_plan_detail(&id).map_err(|e| e.to_string())
 }
@@ -129,4 +126,3 @@ pub async fn apply_recipe_edit(
     }
     result
 }
-

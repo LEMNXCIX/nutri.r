@@ -636,10 +636,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<J
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
-            let detail = res
-                .json::<PlanDetail>()
-                .await
-                .map_err(|e| e.to_string())?;
+            let detail = res.json::<PlanDetail>().await.map_err(|e| e.to_string())?;
             serde_wasm_bindgen::to_value(&detail).map_err(|e| e.to_string())
         }
         "delete_plan" => {
@@ -947,10 +944,7 @@ async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<J
                 .send()
                 .await
                 .map_err(|e| e.to_string())?;
-            let detail = res
-                .json::<PlanDetail>()
-                .await
-                .map_err(|e| e.to_string())?;
+            let detail = res.json::<PlanDetail>().await.map_err(|e| e.to_string())?;
             serde_wasm_bindgen::to_value(&detail).map_err(|e| e.to_string())
         }
         "search_plans" => {
@@ -1340,11 +1334,19 @@ pub async fn auto_pull() {
 }
 
 pub async fn auto_push() {
+    run_auto_push().await;
+}
+
+async fn run_auto_push() {
     log_trace("SYNC: Auto Push Starting...".to_string());
     match safe_invoke("push_to_server", JsValue::NULL).await {
         Ok(_) => log_trace("SYNC: Auto Push OK".to_string()),
         Err(e) => log_trace(format!("SYNC: Auto Push Failed: {}", e)),
     }
+}
+
+fn schedule_auto_push() {
+    leptos::task::spawn_local(run_auto_push());
 }
 
 async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
@@ -1438,9 +1440,7 @@ async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
 
     // Unified auto_push for all successful write operations
     if res.is_ok() && is_write {
-        leptos::task::spawn_local(async {
-            auto_push().await;
-        });
+        schedule_auto_push();
     }
 
     res
@@ -1588,8 +1588,7 @@ pub async fn get_plan_detail(id: &str) -> Result<PlanDetail, String> {
     let args = IdArgs { id: id.to_string() };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
     let invoke_res = safe_invoke("get_plan_detail", args_js).await;
-    let res =
-        serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
     notify(res, None)
 }
 
@@ -1931,8 +1930,7 @@ pub async fn preview_recipe_edit(
     };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
     let invoke_res = safe_invoke("preview_recipe_edit", args_js).await;
-    let res =
-        serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
     notify(res, None)
 }
 
@@ -1948,8 +1946,7 @@ pub async fn apply_recipe_edit(
     };
     let args_js = serde_wasm_bindgen::to_value(&args).map_err(|e| e.to_string())?;
     let invoke_res = safe_invoke("apply_recipe_edit", args_js).await;
-    let res =
-        serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
+    let res = serde_wasm_bindgen::from_value(invoke_res.map_err(|e| e)?).map_err(|e| e.to_string());
     notify(res, Some("Receta actualizada"))
 }
 

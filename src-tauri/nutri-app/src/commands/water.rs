@@ -73,4 +73,3 @@ pub fn get_water_history(
         .filter(|(date, _)| date >= &start_date && date <= &end_date)
         .collect()
 }
-

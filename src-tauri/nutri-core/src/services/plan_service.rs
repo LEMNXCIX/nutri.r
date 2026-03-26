@@ -1,7 +1,8 @@
 use tracing::info;
 
 use crate::models::{
-    derive_plan_display_name, metadata::PlanMetadata, PlanDetail, PlanIndex, RecipeSuggestion,
+    derive_plan_display_name, format_plan_created_at_for_email, metadata::PlanMetadata,
+    short_plan_reference, PlanDetail, PlanEmailContext, PlanIndex, RecipeSuggestion,
     StructuredPlan, StructuredRecipe, VariationType,
 };
 use crate::repositories::{
@@ -51,11 +52,7 @@ where
         }
     }
 
-    fn sync_plan_index(
-        &self,
-        plan_id: &str,
-        structured_plan: &StructuredPlan,
-    ) -> AppResult<()> {
+    fn sync_plan_index(&self, plan_id: &str, structured_plan: &StructuredPlan) -> AppResult<()> {
         let mut index = self.plan_repo.get_all()?;
         if let Some(entry) = index.iter_mut().find(|plan| plan.id == plan_id) {
             entry.weekly_structure = Some(structured_plan.to_weekly_structure());
@@ -176,18 +173,16 @@ where
         let plan_id = self.plan_repo.save(&detail)?;
 
         // Update index
-        self.plan_repo
-            .update_index(
-                &plan_id,
-                proteins.clone(),
-                weekly_structure
-                    .or_else(|| structured_plan.clone().map(|plan| plan.to_weekly_structure())),
-            )?;
-        self.persist_initial_display_name(
+        self.plan_repo.update_index(
             &plan_id,
-            &proteins,
-            detail.structured_plan.as_ref(),
+            proteins.clone(),
+            weekly_structure.or_else(|| {
+                structured_plan
+                    .clone()
+                    .map(|plan| plan.to_weekly_structure())
+            }),
         )?;
+        self.persist_initial_display_name(&plan_id, &proteins, detail.structured_plan.as_ref())?;
 
         log::info!("Plan generated successfully: {}", plan_id);
 
@@ -219,11 +214,8 @@ where
                 plan.rating = meta.rating;
             }
 
-            plan.display_name = Some(self.resolve_display_name(
-                plan,
-                metadata.as_ref(),
-                structured_plan.as_ref(),
-            ));
+            plan.display_name =
+                Some(self.resolve_display_name(plan, metadata.as_ref(), structured_plan.as_ref()));
         }
 
         Ok(plans)
@@ -237,6 +229,27 @@ where
 
     pub fn get_plan_detail(&self, plan_id: &str) -> AppResult<PlanDetail> {
         self.plan_repo.get_by_id(plan_id)
+    }
+
+    pub fn get_plan_email_context(&self, plan_id: &str) -> AppResult<PlanEmailContext> {
+        let plan_index = self.plan_repo.get_index_by_id(plan_id)?;
+        let plan_detail = self.plan_repo.get_by_id(plan_id)?;
+        let metadata = self.metadata_repo.get(plan_id)?;
+        let display_name = self.resolve_display_name(
+            &plan_index,
+            metadata.as_ref(),
+            plan_detail.structured_plan.as_ref(),
+        );
+
+        Ok(PlanEmailContext {
+            plan_id: plan_id.to_string(),
+            short_reference: short_plan_reference(plan_id),
+            display_name,
+            created_at_label: format_plan_created_at_for_email(&plan_index),
+            plan_detail,
+            plan_index,
+            metadata,
+        })
     }
 
     /// Delete a plan by ID
@@ -307,13 +320,15 @@ where
         let new_plan_id = self.plan_repo.save(&detail)?;
 
         // Update index with new proteins
-        self.plan_repo
-            .update_index(
-                &new_plan_id,
-                proteins.clone(),
-                weekly_structure
-                    .or_else(|| structured_plan.clone().map(|plan| plan.to_weekly_structure())),
-            )?;
+        self.plan_repo.update_index(
+            &new_plan_id,
+            proteins.clone(),
+            weekly_structure.or_else(|| {
+                structured_plan
+                    .clone()
+                    .map(|plan| plan.to_weekly_structure())
+            }),
+        )?;
         self.persist_initial_display_name(
             &new_plan_id,
             &proteins,
@@ -347,16 +362,26 @@ where
                 )
             })?;
 
-        let mut located: Option<(crate::models::StructuredDay, crate::models::StructuredRecipe)> = None;
+        let mut located: Option<(
+            crate::models::StructuredDay,
+            crate::models::StructuredRecipe,
+        )> = None;
         for day in &structured_plan.days {
-            if let Some(recipe) = day.recipes.iter().find(|recipe| recipe.recipe_id == recipe_id) {
+            if let Some(recipe) = day
+                .recipes
+                .iter()
+                .find(|recipe| recipe.recipe_id == recipe_id)
+            {
                 located = Some((day.clone(), recipe.clone()));
                 break;
             }
         }
 
         let (day, recipe) = located.ok_or_else(|| {
-            AppError::NotFound(format!("Recipe {} not found in plan {}", recipe_id, plan_id))
+            AppError::NotFound(format!(
+                "Recipe {} not found in plan {}",
+                recipe_id, plan_id
+            ))
         })?;
 
         let config = self.config_repo.get()?;
@@ -449,10 +474,13 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::{MealType, PlanMetadata};
     use crate::repositories::{
-        FileConfigRepository, FileIngredientRepository, FilePantryRepository, FilePlanRepository,
+        FileConfigRepository, FileIngredientRepository, FileMetadataRepository,
+        FilePantryRepository, FilePlanRepository, MetadataRepository, PlanRepository,
     };
     use std::env;
+    use std::fs;
 
     #[test]
     fn test_plan_service_creation() {
@@ -473,5 +501,108 @@ mod tests {
 
         // Cleanup
         let _ = std::fs::remove_dir_all(temp_dir);
+    }
+
+    #[test]
+    fn get_plan_email_context_should_prefer_metadata_display_name() {
+        let temp_dir = env::temp_dir().join("nutri_r_email_context_metadata");
+        let _ = fs::remove_dir_all(&temp_dir);
+        let _ = fs::create_dir_all(&temp_dir);
+
+        let plan_repo = FilePlanRepository::new(temp_dir.clone());
+        let metadata_repo = FileMetadataRepository::new(temp_dir.clone());
+        let config_repo = FileConfigRepository::new(temp_dir.join("config.json"));
+        let ingredient_repo = FileIngredientRepository::new(temp_dir.join("excluded.json"));
+        let pantry_repo = FilePantryRepository::new(temp_dir.clone());
+        let service = PlanService::new(
+            plan_repo.clone(),
+            config_repo,
+            ingredient_repo,
+            pantry_repo,
+            metadata_repo.clone(),
+        );
+
+        let plan_id = plan_repo
+            .save(&PlanDetail {
+                id: String::new(),
+                markdown_content: "# Base".to_string(),
+                structured_plan: Some(sample_structured_plan("Plan Potencia")),
+            })
+            .unwrap();
+        plan_repo
+            .update_index(&plan_id, vec!["Pollo".to_string()], None)
+            .unwrap();
+        metadata_repo
+            .save(PlanMetadata {
+                plan_id: plan_id.clone(),
+                display_name: Some("Plan Cliente VIP".to_string()),
+                is_favorite: false,
+                rating: None,
+                notes: String::new(),
+                tags: vec![],
+            })
+            .unwrap();
+
+        let context = service.get_plan_email_context(&plan_id).unwrap();
+
+        assert_eq!(context.display_name, "Plan Cliente VIP");
+
+        let _ = fs::remove_dir_all(temp_dir);
+    }
+
+    #[test]
+    fn get_plan_email_context_should_use_structured_title_when_metadata_is_missing() {
+        let temp_dir = env::temp_dir().join("nutri_r_email_context_structured");
+        let _ = fs::remove_dir_all(&temp_dir);
+        let _ = fs::create_dir_all(&temp_dir);
+
+        let plan_repo = FilePlanRepository::new(temp_dir.clone());
+        let config_repo = FileConfigRepository::new(temp_dir.join("config.json"));
+        let ingredient_repo = FileIngredientRepository::new(temp_dir.join("excluded.json"));
+        let pantry_repo = FilePantryRepository::new(temp_dir.clone());
+        let service = PlanService::new(
+            plan_repo.clone(),
+            config_repo,
+            ingredient_repo,
+            pantry_repo,
+            FileMetadataRepository::new(temp_dir.clone()),
+        );
+
+        let plan_id = plan_repo
+            .save(&PlanDetail {
+                id: String::new(),
+                markdown_content: "# Base".to_string(),
+                structured_plan: Some(sample_structured_plan("Fuerza Base")),
+            })
+            .unwrap();
+        plan_repo
+            .update_index(&plan_id, vec!["Pollo".to_string()], None)
+            .unwrap();
+
+        let context = service.get_plan_email_context(&plan_id).unwrap();
+
+        assert_eq!(context.display_name, "Fuerza Base");
+
+        let _ = fs::remove_dir_all(temp_dir);
+    }
+
+    fn sample_structured_plan(title: &str) -> StructuredPlan {
+        StructuredPlan {
+            title: title.to_string(),
+            instructions: None,
+            days: vec![crate::models::StructuredDay {
+                day_id: "day-0".to_string(),
+                day_index: 0,
+                label: "Lunes".to_string(),
+                recipes: vec![crate::models::StructuredRecipe {
+                    recipe_id: "recipe-0".to_string(),
+                    meal_type: MealType::Breakfast,
+                    name: "Avena".to_string(),
+                    ingredients: vec!["Avena".to_string()],
+                    instructions: vec!["Servir".to_string()],
+                    notes: None,
+                }],
+            }],
+        }
     }
 }

@@ -86,9 +86,10 @@ impl FilePlanRepository {
             let structured_content = fs::read_to_string(&structured_path).map_err(|e| {
                 AppError::Database(format!("Failed to read structured plan: {}", e))
             })?;
-            let structured = serde_json::from_str::<StructuredPlan>(&structured_content).map_err(
-                |e| AppError::Serialization(format!("Failed to parse structured plan: {}", e)),
-            )?;
+            let structured =
+                serde_json::from_str::<StructuredPlan>(&structured_content).map_err(|e| {
+                    AppError::Serialization(format!("Failed to parse structured plan: {}", e))
+                })?;
             return Ok(Some(structured.normalized()));
         }
 

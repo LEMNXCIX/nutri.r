@@ -1,10 +1,10 @@
-use leptos::prelude::*;
 use crate::plan_display::{format_plan_created_at, plan_display_name};
 use crate::tauri_bridge::{
-    calculate_nutrition, get_calendar_range, get_index, get_water_intake,
-    update_water_intake, MealType,
+    calculate_nutrition, get_calendar_range, get_index, get_water_intake, update_water_intake,
+    MealType,
 };
 use chrono::Local;
+use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::components::A;
 
@@ -61,9 +61,8 @@ pub fn Home() -> impl IntoView {
             .unwrap_or_default()
     });
 
-    let plans_resource = LocalResource::new(move || async move {
-        get_index().await.unwrap_or_default()
-    });
+    let plans_resource =
+        LocalResource::new(move || async move { get_index().await.unwrap_or_default() });
 
     // Computed Stats & Meals
     let (daily_stats, set_daily_stats) = signal((0.0, 0.0, 0.0, 0.0));

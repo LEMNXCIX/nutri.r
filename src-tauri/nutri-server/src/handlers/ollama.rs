@@ -1,11 +1,8 @@
-use axum::{
-    extract::{State},
-    Json,
-};
-use nutri_core::state::AppState;
-use std::sync::Arc;
 use crate::error::ApiError;
+use axum::{extract::State, Json};
+use nutri_core::state::AppState;
 use serde::Serialize;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 pub struct OllamaModel {

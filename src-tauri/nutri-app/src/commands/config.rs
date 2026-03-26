@@ -18,4 +18,3 @@ pub async fn save_config(state: State<'_, AppState>, config: AppConfig) -> Resul
 pub fn is_mobile() -> bool {
     cfg!(mobile)
 }
-

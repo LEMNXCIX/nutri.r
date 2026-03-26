@@ -57,4 +57,3 @@ pub async fn remove_tag_from_plan(
     state.trigger_sync().await;
     Ok(())
 }
-

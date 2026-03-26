@@ -17,4 +17,3 @@ pub async fn list_ollama_models(
         .await
         .map_err(|e| e.to_string())
 }
-

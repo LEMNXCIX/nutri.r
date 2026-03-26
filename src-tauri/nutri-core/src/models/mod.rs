@@ -2,6 +2,7 @@ pub mod achievement;
 pub mod backup;
 pub mod calendar;
 pub mod config;
+pub mod email;
 pub mod ingredient;
 pub mod metadata;
 pub mod nutrition;
@@ -20,6 +21,9 @@ pub use achievement::Achievement;
 pub use backup::AppBackup;
 pub use calendar::{CalendarEntry, MealType};
 pub use config::AppConfig;
+pub use email::{
+    format_plan_created_at_for_email, short_plan_reference, PlanEmailContext, RenderedEmail,
+};
 pub use ingredient::ExcludedIngredients;
 pub use metadata::PlanMetadata;
 pub use nutrition::{NutritionalInfo, PlanNutrition};

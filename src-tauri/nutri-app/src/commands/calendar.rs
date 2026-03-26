@@ -101,12 +101,7 @@ pub async fn swap_calendar_entries(
 ) -> Result<(), String> {
     let service: MutexGuard<'_, AppCalendarService> = state.calendar_service.lock().await;
     service
-        .swap_entries(
-            &first_date,
-            first_meal_type,
-            &second_date,
-            second_meal_type,
-        )
+        .swap_entries(&first_date, first_meal_type, &second_date, second_meal_type)
         .map_err(|e: AppError| e.to_string())?;
     state.trigger_sync().await;
     Ok(())

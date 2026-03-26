@@ -1,15 +1,10 @@
-use axum::{
-    extract::State,
-    Json,
-};
-use nutri_core::{models::AppConfig, state::AppState, repositories::ConfigRepository};
-use std::sync::Arc;
 use crate::error::ApiError;
+use axum::{extract::State, Json};
+use nutri_core::{models::AppConfig, repositories::ConfigRepository, state::AppState};
+use std::sync::Arc;
 use tracing::info;
 
-pub async fn get_config(
-    State(state): State<Arc<AppState>>,
-) -> Result<Json<AppConfig>, ApiError> {
+pub async fn get_config(State(state): State<Arc<AppState>>) -> Result<Json<AppConfig>, ApiError> {
     let config = state.config_repo.get()?;
     Ok(Json(config))
 }

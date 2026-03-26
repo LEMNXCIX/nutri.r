@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" width="250" height="50" role="img" aria-labelledby="title desc">
+  <title id="title">nutri.r wordmark light</title>
+  <desc id="desc">Transparent wordmark with black text and a green dot separator.</desc>
+  <text x="0" y="36" fill="#0A0A0A" font-family="'Inter', Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="-2">nutri</text>
+  <circle cx="159" cy="22" r="7" fill="#0DF259"/>
+  <text x="176" y="36" fill="#0A0A0A" font-family="'Inter', Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="-2">r</text>
+</svg>

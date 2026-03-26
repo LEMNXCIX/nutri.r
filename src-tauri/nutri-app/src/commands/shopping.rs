@@ -39,4 +39,3 @@ pub async fn toggle_shopping_item(
         .toggle_item(&plan_id, &item_name, checked)
         .map_err(|e: AppError| e.to_string())
 }
-

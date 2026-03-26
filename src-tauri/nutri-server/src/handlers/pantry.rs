@@ -1,10 +1,10 @@
+use crate::error::ApiError;
 use axum::{
     extract::{Path, State},
     Json,
 };
 use nutri_core::{models::pantry::PantryItem, state::AppState};
 use std::sync::Arc;
-use crate::error::ApiError;
 
 pub async fn list_pantry_items(
     State(state): State<Arc<AppState>>,

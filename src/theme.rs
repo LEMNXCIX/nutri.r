@@ -5,7 +5,11 @@ pub fn initial_theme() -> String {
 pub fn resolved_theme(preferred_theme: Option<&str>) -> String {
     active_theme()
         .or_else(stored_theme)
-        .or_else(|| preferred_theme.and_then(normalize_theme).map(str::to_string))
+        .or_else(|| {
+            preferred_theme
+                .and_then(normalize_theme)
+                .map(str::to_string)
+        })
         .unwrap_or_else(system_theme)
 }
 
@@ -46,7 +50,12 @@ fn stored_theme() -> Option<String> {
 
 fn system_theme() -> String {
     let prefers_dark = web_sys::window()
-        .and_then(|window| window.match_media("(prefers-color-scheme: dark)").ok().flatten())
+        .and_then(|window| {
+            window
+                .match_media("(prefers-color-scheme: dark)")
+                .ok()
+                .flatten()
+        })
         .map(|query| query.matches())
         .unwrap_or(false);
 
@@ -71,7 +80,8 @@ pub fn apply_theme(theme: &str) {
 }
 
 fn persist_theme(theme: &str) {
-    if let Some(storage) = web_sys::window().and_then(|window| window.local_storage().ok().flatten())
+    if let Some(storage) =
+        web_sys::window().and_then(|window| window.local_storage().ok().flatten())
     {
         let _ = storage.set_item("theme", theme);
     }

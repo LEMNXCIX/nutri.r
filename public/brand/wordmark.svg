@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 76" width="860" height="76" role="img" aria-labelledby="title desc">
+  <title id="title">nutri.r wordmark</title>
+  <desc id="desc">Black pill wordmark with white nutri and r text, and a green dot separator.</desc>
+  <rect width="860" height="76" rx="24" fill="#0A0A0A"/>
+  <text x="44" y="50" fill="#FFFFFF" font-family="'Inter', Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="-2">nutri</text>
+  <circle cx="203" cy="36" r="7" fill="#0DF259"/>
+  <text x="220" y="50" fill="#FFFFFF" font-family="'Inter', Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="-2">r</text>
+</svg>

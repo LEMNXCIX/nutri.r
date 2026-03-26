@@ -21,4 +21,3 @@ pub async fn save_ui_preferences(
     state.trigger_sync().await;
     Ok(())
 }
-

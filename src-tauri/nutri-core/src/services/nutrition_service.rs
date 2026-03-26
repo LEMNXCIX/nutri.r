@@ -92,7 +92,11 @@ where
         self.get_nutrition_internal(&mut cache, name).await
     }
 
-    async fn get_nutrition_internal(&self, cache: &mut NutritionCache, name: &str) -> AppResult<NutritionalInfo> {
+    async fn get_nutrition_internal(
+        &self,
+        cache: &mut NutritionCache,
+        name: &str,
+    ) -> AppResult<NutritionalInfo> {
         if let Some(info) = cache.ingredients.get(name) {
             info!("Found nutrition for '{}' in local cache", name);
             return Ok(info.clone());
@@ -138,7 +142,7 @@ where
             .unwrap_or_else(|_| cleaned_name.clone());
 
         let search_query = english_name.trim().trim_matches('"').to_string();
-        
+
         // STEP 3: Fetch from USDA
         let client = reqwest::Client::new();
         let url = format!(
@@ -146,12 +150,17 @@ where
             config.usda_api_key, search_query
         );
 
-        let response = client.get(&url).send().await.map_err(|e| {
-            AppError::Network(format!("USDA API error: {}", e))
-        })?;
+        let response = client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| AppError::Network(format!("USDA API error: {}", e)))?;
 
         let search_res: USDASearchResponse = response.json().await.map_err(|e| {
-            error!("Failed to parse USDA response for '{}': {}", search_query, e);
+            error!(
+                "Failed to parse USDA response for '{}': {}",
+                search_query, e
+            );
             AppError::Serialization(format!("Failed to parse USDA response: {}", e))
         })?;
 
@@ -159,7 +168,11 @@ where
             let mut info = NutritionalInfo::default();
             for n in &food.food_nutrients {
                 match n.id {
-                    1008 | 2047 | 2048 | 1001 => if info.calories == 0.0 { info.calories = n.value; },
+                    1008 | 2047 | 2048 | 1001 => {
+                        if info.calories == 0.0 {
+                            info.calories = n.value;
+                        }
+                    }
                     1003 => info.protein = n.value,
                     1005 => info.carbohydrates = n.value,
                     1004 => info.fat = n.value,
@@ -171,7 +184,10 @@ where
             let _ = self.save_cache(&cache);
             Ok(info)
         } else {
-            Err(AppError::NotFound(format!("Ingredient '{}' not found", name)))
+            Err(AppError::NotFound(format!(
+                "Ingredient '{}' not found",
+                name
+            )))
         }
     }
 
@@ -182,12 +198,21 @@ where
             return Ok(plan_nutrition.clone());
         }
 
-        let items_to_process = if let Ok(Some(shopping_list)) = self.shopping_repo.get_by_plan_id(plan_id) {
-            shopping_list.items.into_iter().map(|i| (i.name, i.quantity)).collect::<Vec<_>>()
-        } else {
-            let plan_idx = self.plan_repo.get_index_by_id(plan_id)?;
-            plan_idx.proteinas.into_iter().map(|p| (p, None)).collect::<Vec<_>>()
-        };
+        let items_to_process =
+            if let Ok(Some(shopping_list)) = self.shopping_repo.get_by_plan_id(plan_id) {
+                shopping_list
+                    .items
+                    .into_iter()
+                    .map(|i| (i.name, i.quantity))
+                    .collect::<Vec<_>>()
+            } else {
+                let plan_idx = self.plan_repo.get_index_by_id(plan_id)?;
+                plan_idx
+                    .proteinas
+                    .into_iter()
+                    .map(|p| (p, None))
+                    .collect::<Vec<_>>()
+            };
 
         let mut nutrition = PlanNutrition {
             plan_id: plan_id.to_string(),
@@ -221,9 +246,19 @@ where
     fn parse_multiplier(&self, qty_str: &str) -> f32 {
         let qty_str = qty_str.to_lowercase();
         if qty_str.contains("kg") {
-            qty_str.replace("kg", "").trim().parse::<f32>().unwrap_or(1.0) * 10.0
+            qty_str
+                .replace("kg", "")
+                .trim()
+                .parse::<f32>()
+                .unwrap_or(1.0)
+                * 10.0
         } else if qty_str.contains('g') {
-            qty_str.replace('g', "").trim().parse::<f32>().unwrap_or(100.0) / 100.0
+            qty_str
+                .replace('g', "")
+                .trim()
+                .parse::<f32>()
+                .unwrap_or(100.0)
+                / 100.0
         } else {
             1.0
         }

@@ -300,7 +300,10 @@ pub fn DailyView() -> impl IntoView {
         let calendar_resource = calendar_resource.clone();
         let surrounding_entries_resource = surrounding_entries_resource.clone();
         spawn_local(async move {
-            if remove_calendar_entry(entry.date, entry.meal_type).await.is_ok() {
+            if remove_calendar_entry(entry.date, entry.meal_type)
+                .await
+                .is_ok()
+            {
                 calendar_resource.refetch();
                 surrounding_entries_resource.refetch();
             }

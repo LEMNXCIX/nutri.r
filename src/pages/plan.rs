@@ -1,4 +1,6 @@
-use crate::plan_display::{format_plan_created_at, plan_display_name, plan_search_blob, plan_sort_key};
+use crate::plan_display::{
+    format_plan_created_at, plan_display_name, plan_search_blob, plan_sort_key,
+};
 use crate::tauri_bridge::{calculate_nutrition, get_index, PlanIndex};
 use leptos::prelude::*;
 use leptos_router::components::A;

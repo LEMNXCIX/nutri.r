@@ -15,10 +15,7 @@ pub fn resolve_plan_header_title(
     structured_title: Option<&str>,
     id: &str,
 ) -> String {
-    if let Some(name) = display_name
-        .map(str::trim)
-        .filter(|name| !name.is_empty())
-    {
+    if let Some(name) = display_name.map(str::trim).filter(|name| !name.is_empty()) {
         return name.to_string();
     }
 
@@ -136,7 +133,12 @@ fn format_day_month(date: NaiveDate) -> String {
 }
 
 fn format_day_month_year(date: NaiveDate) -> String {
-    format!("{} {} {}", date.day(), month_label(date.month()), date.year())
+    format!(
+        "{} {} {}",
+        date.day(),
+        month_label(date.month()),
+        date.year()
+    )
 }
 
 fn format_time(datetime: DateTime<Local>) -> String {

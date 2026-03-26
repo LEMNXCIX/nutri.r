@@ -1,7 +1,7 @@
+use chrono::{DateTime, Local, Utc};
 use nutri_core::models::AppBackup;
 use nutri_core::repositories::ConfigRepository;
 use nutri_core::state::{AppState, SyncStatus};
-use chrono::{DateTime, Local, Utc};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
@@ -238,4 +238,3 @@ pub async fn push_to_server(state: State<'_, AppState>) -> Result<String, String
         ))
     }
 }
-

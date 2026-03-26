@@ -12,4 +12,3 @@ pub async fn get_statistics(state: State<'_, AppState>) -> AppResult<Statistics>
 pub async fn get_ingredient_trends(state: State<'_, AppState>) -> AppResult<Vec<IngredientTrend>> {
     state.statistics_service.get_ingredient_trends()
 }
-

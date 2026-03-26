@@ -1,10 +1,7 @@
-use axum::{
-    extract::State,
-    Json,
-};
+use crate::error::ApiError;
+use axum::{extract::State, Json};
 use nutri_core::{models::statistics::Statistics, state::AppState};
 use std::sync::Arc;
-use crate::error::ApiError;
 
 pub async fn get_statistics(
     State(state): State<Arc<AppState>>,

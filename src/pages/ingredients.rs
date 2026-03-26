@@ -1,5 +1,4 @@
-use crate::tauri_bridge::{
-get_ingredient_stats, toggle_ingredient_exclusion, IngredientStats};
+use crate::tauri_bridge::{get_ingredient_stats, toggle_ingredient_exclusion, IngredientStats};
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -50,7 +49,9 @@ pub fn Ingredients() -> impl IntoView {
 
     let filtered_ingredients = move || {
         let query = search_query.get().to_lowercase();
-        ingredients_stats.get().into_iter()
+        ingredients_stats
+            .get()
+            .into_iter()
             .filter(|s| s.name.to_lowercase().contains(&query))
             .collect::<Vec<_>>()
     };

@@ -1,10 +1,7 @@
-use axum::{
-    extract::{State},
-    Json,
-};
+use crate::error::ApiError;
+use axum::{extract::State, Json};
 use nutri_core::{models::achievement::Achievement, state::AppState};
 use std::sync::Arc;
-use crate::error::ApiError;
 
 pub async fn get_achievements(
     State(state): State<Arc<AppState>>,

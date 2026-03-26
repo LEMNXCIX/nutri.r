@@ -1,11 +1,8 @@
-use axum::{
-    extract::{State},
-    Json,
-};
-use nutri_core::{state::AppState, services::IngredientStats};
-use std::sync::Arc;
 use crate::error::ApiError;
+use axum::{extract::State, Json};
+use nutri_core::{services::IngredientStats, state::AppState};
 use serde::Deserialize;
+use std::sync::Arc;
 
 pub async fn get_excluded_ingredients(
     State(state): State<Arc<AppState>>,

@@ -11,4 +11,3 @@ pub async fn calculate_nutrition(
     let service = state.nutrition_service.lock().await;
     service.get_plan_nutrition(&plan_id).await
 }
-

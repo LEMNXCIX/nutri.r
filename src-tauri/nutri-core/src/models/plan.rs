@@ -7,9 +7,8 @@ where
     D: Deserializer<'de>,
 {
     let raw = String::deserialize(deserializer)?;
-    MealType::from_label(&raw).ok_or_else(|| {
-        serde::de::Error::custom(format!("Unsupported meal type value: {}", raw))
-    })
+    MealType::from_label(&raw)
+        .ok_or_else(|| serde::de::Error::custom(format!("Unsupported meal type value: {}", raw)))
 }
 
 fn deserialize_vec_or_string<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
@@ -85,7 +84,11 @@ pub struct StructuredRecipe {
     pub name: String,
     #[serde(default, alias = "ingredientes")]
     pub ingredients: Vec<String>,
-    #[serde(default, alias = "instrucciones", deserialize_with = "deserialize_vec_or_string")]
+    #[serde(
+        default,
+        alias = "instrucciones",
+        deserialize_with = "deserialize_vec_or_string"
+    )]
     pub instructions: Vec<String>,
     #[serde(default)]
     pub notes: Option<String>,
@@ -164,7 +167,10 @@ impl StructuredPlan {
         let mut lines = Vec::new();
         lines.push(format!("# {}", self.title));
 
-        if let Some(instructions) = self.instructions.as_ref().filter(|text| !text.trim().is_empty())
+        if let Some(instructions) = self
+            .instructions
+            .as_ref()
+            .filter(|text| !text.trim().is_empty())
         {
             lines.push(String::new());
             lines.push(instructions.trim().to_string());
@@ -271,12 +277,10 @@ pub fn derive_plan_display_name(
         return title;
     }
 
-    let protein = proteins
-        .iter()
-        .find_map(|protein| {
-            let trimmed = protein.trim();
-            (!trimmed.is_empty()).then(|| trimmed.to_string())
-        });
+    let protein = proteins.iter().find_map(|protein| {
+        let trimmed = protein.trim();
+        (!trimmed.is_empty()).then(|| trimmed.to_string())
+    });
 
     match (created_at, protein) {
         (Some(created_at), Some(protein)) => {

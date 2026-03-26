@@ -34,4 +34,3 @@ pub async fn delete_pantry_item(state: State<'_, AppState>, id: String) -> Resul
     state.trigger_sync().await;
     Ok(())
 }
-
