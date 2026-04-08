@@ -1,9 +1,13 @@
+mod api;
 mod app;
 mod components;
 mod pages;
 mod plan_display;
+mod state;
+mod tauri;
 mod tauri_bridge;
 mod theme;
+mod types;
 
 use app::*;
 use leptos::prelude::*;

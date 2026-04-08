@@ -1,7 +1,8 @@
+use crate::state::use_app_context;
 use crate::tauri_bridge::{
-    check_endpoint, clear_debug_logs, get_config, get_debug_logs, get_excluded_ingredients,
-    get_ui_preferences, is_mobile, list_ollama_models, save_config, save_excluded_ingredients,
-    save_ui_preferences, AppConfig, OllamaModel, UIPreferences,
+    check_endpoint, clear_debug_logs, get_debug_logs, get_excluded_ingredients,
+    is_mobile, list_ollama_models, save_config, save_excluded_ingredients,
+    save_ui_preferences, OllamaModel,
 };
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -11,33 +12,22 @@ use wasm_bindgen::JsCast;
 
 #[component]
 pub fn Config() -> impl IntoView {
-    let (config, set_config) = signal(AppConfig {
-        smtp_host: String::new(),
-        smtp_port: 0,
-        smtp_user: String::new(),
-        smtp_password: String::new(),
-        smtp_to: String::new(),
-        prompt_maestro: String::new(),
-        ollama_model: String::new(),
-        ollama_url: String::new(),
-        usda_api_key: String::new(),
-        sync_server_url: String::new(),
-        last_updated: String::new(),
-        auto_generate_plan: false,
-        cron_expression: "0 0 0 * * MON".to_string(),
-        default_meal_type: crate::tauri_bridge::MealType::Lunch,
-    });
-    let (_loading, set_loading) = signal(true);
+    let ctx = use_app_context();
+    let config = ctx.config;
+    let set_config = ctx.set_config;
+    let preferences = ctx.preferences;
+    let set_preferences = ctx.set_preferences;
+
+    let (_loading, set_loading) = signal(false);
     let (status_msg, set_status_msg) = signal(String::new());
     let (ollama_models, set_ollama_models) = signal(Vec::<OllamaModel>::new());
     let (excluded_ingredients, set_excluded_ingredients) = signal(Vec::<String>::new());
     let (new_ingredient, set_new_ingredient) = signal(String::new());
-    let (preferences, set_preferences) = signal(UIPreferences::default());
     let (_is_mobile_ui, set_is_mobile_ui) = signal(false);
     let (ollama_status_msg, set_ollama_status_msg) = signal(String::new());
     let (sync_status_msg, set_sync_status_msg) = signal(String::new());
-    let (sync_op_status, set_sync_op_status) = signal(Option::<(bool, String, String)>::None); // (is_ok, title, detail)
-    let (is_syncing, set_is_syncing) = signal(Option::<&'static str>::None); // which op is running
+    let (sync_op_status, set_sync_op_status) = signal(Option::<(bool, String, String)>::None); 
+    let (is_syncing, set_is_syncing) = signal(Option::<&'static str>::None); 
     let (debug_logs, set_debug_logs) = signal(get_debug_logs());
 
     // Listen for debug logs
@@ -63,21 +53,6 @@ pub fn Config() -> impl IntoView {
         set_is_mobile_ui.set(is_mobile().await);
     });
 
-    log::info!("Rendering Config page");
-
-    spawn_local(async move {
-        match get_config().await {
-            Ok(c) => {
-                set_config.set(c);
-                set_loading.set(false);
-            }
-            Err(err) => {
-                set_status_msg.set(format!("Aviso: {}", err));
-                set_loading.set(false);
-            }
-        }
-    });
-
     spawn_local(async move {
         match list_ollama_models().await {
             Ok(models) => set_ollama_models.set(models),
@@ -89,32 +64,6 @@ pub fn Config() -> impl IntoView {
         match get_excluded_ingredients().await {
             Ok(ingredients) => set_excluded_ingredients.set(ingredients),
             Err(e) => log::warn!("No se pudieron cargar los ingredientes excluidos: {}", e),
-        }
-    });
-
-    spawn_local(async move {
-        match get_ui_preferences().await {
-            Ok(mut prefs) => {
-                let resolved_theme = crate::theme::resolved_theme(Some(&prefs.theme));
-                let should_sync_preferences = prefs.theme != resolved_theme;
-
-                prefs.theme = resolved_theme.clone();
-                set_preferences.set(prefs.clone());
-                crate::theme::set_theme(&resolved_theme);
-
-                if should_sync_preferences {
-                    let _ = save_ui_preferences(prefs).await;
-                }
-            }
-            Err(e) => {
-                let fallback_theme = crate::theme::resolved_theme(None);
-                set_preferences.set(UIPreferences {
-                    theme: fallback_theme.clone(),
-                    primary_color: "green".to_string(),
-                });
-                crate::theme::set_theme(&fallback_theme);
-                log::warn!("No se pudieron cargar las preferencias: {}", e);
-            }
         }
     });
 
@@ -161,26 +110,6 @@ pub fn Config() -> impl IntoView {
         });
     };
 
-    let _h_update_ollama_url =
-        Callback::new(move |val: String| set_config.update(|c| c.ollama_url = val));
-    let _h_update_smtp_host =
-        Callback::new(move |val: String| set_config.update(|c| c.smtp_host = val));
-    let _h_update_smtp_port = Callback::new(move |val: String| {
-        if let Ok(port) = val.parse::<u16>() {
-            set_config.update(|c| c.smtp_port = port);
-        }
-    });
-    let _h_update_smtp_user =
-        Callback::new(move |val: String| set_config.update(|c| c.smtp_user = val));
-    let _h_update_smtp_pass =
-        Callback::new(move |val: String| set_config.update(|c| c.smtp_password = val));
-    let _h_update_smtp_to =
-        Callback::new(move |val: String| set_config.update(|c| c.smtp_to = val));
-    let _h_update_usda_key =
-        Callback::new(move |val: String| set_config.update(|c| c.usda_api_key = val));
-    let _h_update_sync_url =
-        Callback::new(move |val: String| set_config.update(|c| c.sync_server_url = val));
-
     let h_sync_click = Callback::new(move |_: web_sys::MouseEvent| {
         set_is_syncing.set(Some("sync"));
         set_sync_op_status.set(None);
@@ -192,7 +121,7 @@ pub fn Config() -> impl IntoView {
                         "Sincronización completada".to_string(),
                         msg,
                     )));
-                    if let Ok(c) = get_config().await {
+                    if let Ok(c) = crate::tauri_bridge::get_config().await {
                         set_config.set(c);
                     }
                 }
@@ -211,7 +140,7 @@ pub fn Config() -> impl IntoView {
             match crate::tauri_bridge::pull_from_server().await {
                 Ok(msg) => {
                     set_sync_op_status.set(Some((true, "Datos recibidos".to_string(), msg)));
-                    if let Ok(c) = get_config().await {
+                    if let Ok(c) = crate::tauri_bridge::get_config().await {
                         set_config.set(c);
                     }
                 }
@@ -230,7 +159,7 @@ pub fn Config() -> impl IntoView {
             match crate::tauri_bridge::push_to_server().await {
                 Ok(msg) => {
                     set_sync_op_status.set(Some((true, "Datos enviados".to_string(), msg)));
-                    if let Ok(c) = get_config().await {
+                    if let Ok(c) = crate::tauri_bridge::get_config().await {
                         set_config.set(c);
                     }
                 }
@@ -241,11 +170,6 @@ pub fn Config() -> impl IntoView {
             set_is_syncing.set(None);
         });
     });
-
-    let _h_update_new_ing = Callback::new(move |val: String| set_new_ingredient.set(val));
-
-    let _h_add_ingredient = Callback::new(add_ingredient);
-    let _h_save_click = Callback::new(move |_: web_sys::MouseEvent| {});
 
     let handle_export = Callback::new(move |_: web_sys::MouseEvent| {
         spawn_local(async move {
@@ -844,32 +768,5 @@ fn ConfigSection(title: &'static str, icon: &'static str, children: Children) ->
             {children()}
             <div class="hairline-divider mt-10 dark:bg-neutral-800"></div>
         </section>
-    }
-}
-
-#[component]
-fn SyncButton(
-    label: &'static str,
-    on_click: Callback<web_sys::MouseEvent>,
-    icon: &'static str,
-    #[prop(default = false)] primary: bool,
-) -> impl IntoView {
-    let base_class = if primary {
-        "bg-black dark:bg-white text-white dark:text-black p-4 flex flex-col items-center gap-1 active:bg-neutral-800 dark:active:bg-neutral-200 transition-colors"
-    } else {
-        "border border-black dark:border-neutral-700 dark:text-white p-4 flex flex-col items-center gap-1 group active:bg-neutral-50 dark:active:bg-neutral-900 transition-colors"
-    };
-
-    let icon_class = if primary {
-        "material-symbols-outlined text-accent"
-    } else {
-        "material-symbols-outlined"
-    };
-
-    view! {
-        <button type="button" on:click=move |e| on_click.run(e) class=base_class>
-            <span class=icon_class>{icon}</span>
-            <span class="text-[9px] font-bold uppercase">{label}</span>
-        </button>
     }
 }

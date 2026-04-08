@@ -200,8 +200,9 @@ pub fn RecipeDetail() -> impl IntoView {
         set_preview_loading.set(true);
         let plan_id_value = data.plan_id.clone();
         let recipe_id_value = data.recipe.recipe_id.clone();
+        let day_id_value = data.day.day_id.clone();
         spawn_local(async move {
-            match preview_recipe_edit(&plan_id_value, &recipe_id_value, prompt).await {
+            match preview_recipe_edit(&plan_id_value, &recipe_id_value, &day_id_value, prompt).await {
                 Ok(preview) => set_edit_preview.set(Some(preview)),
                 Err(error) => set_edit_feedback.set(error),
             }
@@ -235,7 +236,7 @@ pub fn RecipeDetail() -> impl IntoView {
     });
 
     view! {
-        <div class="min-h-screen bg-white dark:bg-background-dark text-black dark:text-white pb-32">
+        <div class="min-h-full bg-white dark:bg-background-dark text-black dark:text-white pb-48 md:pb-32">
             <Suspense fallback=move || view! { <Loading /> }>
                 {move || match recipe_resource.get() {
                     Some(Ok(data)) => {
@@ -407,7 +408,7 @@ pub fn RecipeDetail() -> impl IntoView {
                 }}
             </Suspense>
 
-            <footer class="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-neutral-100 dark:border-neutral-800 z-[45]">
+            <footer class="fixed mobile-bottom-nav-offset left-0 right-0 p-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-neutral-100 dark:border-neutral-800 z-[45]">
                 <button
                     on:click=move |_| set_show_assign_modal.set(true)
                     class="w-full bg-accent py-5 flex items-center justify-center gap-3 active:scale-[0.98] transition-transform text-neutral-950"

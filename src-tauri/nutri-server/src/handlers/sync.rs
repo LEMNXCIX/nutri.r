@@ -1,6 +1,7 @@
 use crate::error::ApiError;
 use axum::{extract::State, http::StatusCode, Json};
 use nutri_core::models::backup::AppBackup;
+use nutri_core::services::{SyncAction, SyncService};
 use nutri_core::state::{AppState, SyncStatus};
 use std::sync::Arc;
 
@@ -27,51 +28,62 @@ pub async fn get_vault(State(state): State<Arc<AppState>>) -> Result<Json<AppBac
 // POST /vault
 pub async fn update_vault(
     State(state): State<Arc<AppState>>,
-    Json(backup): Json<AppBackup>,
+    Json(remote_backup): Json<AppBackup>,
 ) -> Result<axum::response::Response, ApiError> {
     use axum::response::IntoResponse;
 
     let vault_path = state.data_dir.join("vault.json");
 
-    let remote_ts = chrono::DateTime::parse_from_rfc3339(&backup.last_updated)
-        .map(|dt| dt.timestamp_millis())
-        .unwrap_or(0);
-
-    let mut local_ts = 0;
+    let mut local_backup = AppBackup::default();
 
     if vault_path.exists() {
         if let Ok(content) = tokio::fs::read_to_string(&vault_path).await {
-            if let Ok(local_data) = serde_json::from_str::<AppBackup>(&content) {
-                local_ts = chrono::DateTime::parse_from_rfc3339(&local_data.last_updated)
-                    .map(|dt| dt.timestamp_millis())
-                    .unwrap_or(0);
+            if let Ok(data) = serde_json::from_str::<AppBackup>(&content) {
+                local_backup = data;
             }
         }
     }
 
-    // LWW logic: Guardar solo si remoto >= local
-    if remote_ts >= local_ts {
-        let content = serde_json::to_string_pretty(&backup)
-            .map_err(|e| nutri_core::utils::error::AppError::Serialization(e.to_string()))?;
+    // Resolve conflict using core service
+    // Note: local is server's data, remote is client's incoming data
+    let (action, reason) = SyncService::resolve_conflict(&local_backup, &remote_backup);
 
-        tokio::fs::write(&vault_path, content)
-            .await
-            .map_err(|e| nutri_core::utils::error::AppError::Database(e.to_string()))?;
+    match action {
+        SyncAction::PullRemote | SyncAction::NoAction => {
+            // El remoto es más nuevo o igual, aceptamos el cambio
+            let content = serde_json::to_string_pretty(&remote_backup)
+                .map_err(|e| nutri_core::utils::error::AppError::Serialization(e.to_string()))?;
 
-        let response_body = serde_json::json!({
-            "status": "updated",
-            "last_updated": backup.last_updated
-        });
+            tokio::fs::write(&vault_path, content)
+                .await
+                .map_err(|e| nutri_core::utils::error::AppError::Database(e.to_string()))?;
 
-        Ok((StatusCode::OK, Json(response_body)).into_response())
-    } else {
-        let response_body = serde_json::json!({
-            "status": "ignored",
-            "reason": "stale_data",
-            "current_ts": chrono::DateTime::from_timestamp_millis(local_ts).map(|dt| dt.to_rfc3339()).unwrap_or_default()
-        });
+            let response_body = serde_json::json!({
+                "status": "updated",
+                "last_updated": remote_backup.last_updated,
+                "reason": reason
+            });
 
-        Ok((StatusCode::CONFLICT, Json(response_body)).into_response())
+            Ok((StatusCode::OK, Json(response_body)).into_response())
+        }
+        SyncAction::PushLocal => {
+            // El servidor tiene datos más nuevos, rechazamos la subida del cliente
+            let response_body = serde_json::json!({
+                "status": "ignored",
+                "reason": "stale_data",
+                "detail": reason,
+                "current_ts": local_backup.last_updated
+            });
+
+            Ok((StatusCode::CONFLICT, Json(response_body)).into_response())
+        }
+        SyncAction::Conflict => {
+            let response_body = serde_json::json!({
+                "status": "conflict",
+                "reason": "manual_intervention_required"
+            });
+            Ok((StatusCode::PRECONDITION_FAILED, Json(response_body)).into_response())
+        }
     }
 }
 

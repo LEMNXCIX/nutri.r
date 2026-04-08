@@ -354,9 +354,6 @@
   .bottom-32 {
     bottom: calc(var(--spacing) * 32);
   }
-  .bottom-\[74px\] {
-    bottom: 74px;
-  }
   .-left-1 {
     left: calc(var(--spacing) * -1);
   }
@@ -612,6 +609,9 @@
   .h-\[60vh\] {
     height: 60vh;
   }
+  .h-\[100dvh\] {
+    height: 100dvh;
+  }
   .h-full {
     height: 100%;
   }
@@ -627,11 +627,20 @@
   .max-h-\[400px\] {
     max-height: 400px;
   }
+  .min-h-0 {
+    min-height: calc(var(--spacing) * 0);
+  }
   .min-h-28 {
     min-height: calc(var(--spacing) * 28);
   }
+  .min-h-\[100dvh\] {
+    min-height: 100dvh;
+  }
   .min-h-\[400px\] {
     min-height: 400px;
+  }
+  .min-h-full {
+    min-height: 100%;
   }
   .min-h-screen {
     min-height: 100vh;
@@ -1246,6 +1255,9 @@
   .bg-neutral-300 {
     background-color: var(--color-neutral-300);
   }
+  .bg-neutral-400 {
+    background-color: var(--color-neutral-400);
+  }
   .bg-neutral-600 {
     background-color: var(--color-neutral-600);
   }
@@ -1557,6 +1569,9 @@
   }
   .pb-32 {
     padding-bottom: calc(var(--spacing) * 32);
+  }
+  .pb-48 {
+    padding-bottom: calc(var(--spacing) * 48);
   }
   .pb-64 {
     padding-bottom: calc(var(--spacing) * 64);
@@ -1939,6 +1954,10 @@
   }
   .shadow-2xl {
     --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .shadow-\[0_-12px_24px_rgba\(15\,23\,42\,0\.08\)\] {
+    --tw-shadow: 0 -12px 24px var(--tw-shadow-color, rgba(15,23,42,0.08));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .shadow-\[0_0_8px_rgba\(34\,197\,94\,0\.4\)\] {
@@ -2627,11 +2646,6 @@
       scale: 0.98;
     }
   }
-  .active\:bg-neutral-50 {
-    &:active {
-      background-color: var(--color-neutral-50);
-    }
-  }
   .active\:bg-neutral-100 {
     &:active {
       background-color: var(--color-neutral-100);
@@ -2680,11 +2694,6 @@
   .md\:right-8 {
     @media (width >= 48rem) {
       right: calc(var(--spacing) * 8);
-    }
-  }
-  .md\:bottom-0 {
-    @media (width >= 48rem) {
-      bottom: calc(var(--spacing) * 0);
     }
   }
   .md\:bottom-32 {
@@ -3069,6 +3078,12 @@
       color: var(--color-zinc-600);
     }
   }
+  .dark\:shadow-\[0_-12px_24px_rgba\(0\,0\,0\,0\.28\)\] {
+    &:where(.dark, .dark *) {
+      --tw-shadow: 0 -12px 24px var(--tw-shadow-color, rgba(0,0,0,0.28));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
   .dark\:group-hover\:bg-\[\#D4AF37\] {
     &:where(.dark, .dark *) {
       &:is(:where(.group):hover *) {
@@ -3287,21 +3302,17 @@
       }
     }
   }
-  .dark\:active\:bg-neutral-900 {
-    &:where(.dark, .dark *) {
-      &:active {
-        background-color: var(--color-neutral-900);
-      }
-    }
-  }
 }
 @layer base {
   * {
     border-color: #f3f4f6;
   }
   html {
+    height: 100%;
+    width: 100%;
     background-color: #FFFFFF;
     color-scheme: light;
+    overscroll-behavior: none;
   }
   html.dark {
     background-color: #0A0A0A;
@@ -3313,7 +3324,13 @@
     color: var(--color-neutral-950);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    min-height: max(884px, 100dvh);
+    min-height: 100dvh;
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
   }
   .dark body {
     background-color: #0A0A0A;
@@ -3378,6 +3395,9 @@
       --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
       box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
     }
+  }
+  body > * {
+    min-height: 0;
   }
 }
 @layer components {
@@ -3662,6 +3682,22 @@
   }
   .shadow-brutalist {
     box-shadow: 4px 4px 0 0 #0a0a0a;
+  }
+  .native-app-scroll {
+    height: 100%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobile-bottom-nav-offset {
+    bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+}
+@media (min-width: 768px) {
+  .mobile-bottom-nav-offset {
+    bottom: 0;
   }
 }
 @property --tw-translate-x {

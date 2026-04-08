@@ -4,8 +4,17 @@ use leptos::prelude::*;
 
 #[component]
 pub fn Dashboard() -> impl IntoView {
-    let stats_resource = LocalResource::new(move || async move { get_statistics().await });
-    let trends_resource = LocalResource::new(move || async move { get_ingredient_trends().await });
+    let ctx = crate::state::use_app_context();
+    let refresh = ctx.data_changed_signal;
+
+    let stats_resource = LocalResource::new(move || {
+        let _ = refresh.get();
+        async move { get_statistics().await }
+    });
+    let trends_resource = LocalResource::new(move || {
+        let _ = refresh.get();
+        async move { get_ingredient_trends().await }
+    });
 
     view! {
         <div class="w-full font-sans pb-32 animate-in fade-in duration-700">

@@ -1,6 +1,7 @@
-use chrono::{DateTime, Local, Utc};
+use chrono::{Local, Utc};
 use nutri_core::models::AppBackup;
 use nutri_core::repositories::ConfigRepository;
+use nutri_core::services::{SyncAction, SyncService};
 use nutri_core::state::{AppState, SyncStatus};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
@@ -46,13 +47,12 @@ pub async fn perform_sync_internal(app: &AppHandle, state: &AppState) -> Result<
             service.create_backup().map_err(|e| e.to_string())?
         };
 
-        // Si hay una modificación local pendiente, esa es nuestra marca de tiempo real para el contenido actual
+        // Si hay una modificación local pendiente, esa es nuestra marca de tiempo real
         let last_mod = state.last_modified.lock().await;
         if let Some(ts) = &*last_mod {
             local_backup.last_updated = ts.clone();
         }
 
-        // Si nunca se ha sincronizado y no hay modificaciones, usamos la fecha actual como fallback
         if local_backup.last_updated.is_empty() {
             local_backup.last_updated = Utc::now().to_rfc3339();
         }
@@ -67,53 +67,45 @@ pub async fn perform_sync_internal(app: &AppHandle, state: &AppState) -> Result<
                     .await
                     .map_err(|e| format!("Error parseando backup remoto: {}", e))?;
 
-                let local_ts: DateTime<Utc> = DateTime::parse_from_rfc3339(&local_backup.last_updated)
-                    .map_err(|_| "Invalid local timestamp")?
-                    .with_timezone(&Utc);
-                let remote_ts: DateTime<Utc> =
-                    DateTime::parse_from_rfc3339(&remote_backup.last_updated)
-                        .map_err(|_| "Invalid remote timestamp")?
-                        .with_timezone(&Utc);
+                let (action, reason) = SyncService::resolve_conflict(&local_backup, &remote_backup);
 
-                if remote_ts > local_ts {
-                    // EL REMOTO GANA
-                    {
-                        let service = state.import_export_service.lock().await;
-                        service
-                            .restore_backup(remote_backup.clone())
-                            .map_err(|e| e.to_string())?;
-                    }
+                match action {
+                    SyncAction::PullRemote => {
+                        // EL REMOTO GANA
+                        {
+                            let service = state.import_export_service.lock().await;
+                            service
+                                .restore_backup(remote_backup.clone())
+                                .map_err(|e| e.to_string())?;
+                        }
 
-                    // Actualizar last_updated local
-                    config.last_updated = remote_backup.last_updated;
-                    state.config_repo.save(&config).map_err(|e| e.to_string())?;
-
-                    Ok("Sincronización completada: Datos remotos importados (LWW)".to_string())
-                } else if local_ts > remote_ts {
-                    // EL LOCAL GANA - Subir al servidor
-                    let post_resp = client
-                        .post(&server_url)
-                        .json(&local_backup)
-                        .send()
-                        .await
-                        .map_err(|e| format!("Error subiendo al servidor: {}", e))?;
-
-                    if post_resp.status().is_success() {
-                        // Actualizar last_updated local con lo que acabamos de enviar
-                        config.last_updated = local_backup.last_updated.clone();
+                        // Actualizar last_updated local
+                        config.last_updated = remote_backup.last_updated;
                         state.config_repo.save(&config).map_err(|e| e.to_string())?;
-                        Ok(
-                            "Sincronización completada: Datos locales subidos al servidor (LWW)"
-                                .to_string(),
-                        )
-                    } else {
-                        Err(format!(
-                            "El servidor rechazó el backup: {}",
-                            post_resp.status()
-                        ))
+
+                        let _ = app.emit("data-changed", ());
+
+                        Ok(format!("Sincronización (PULL): {}", reason))
                     }
-                } else {
-                    Ok("Ya estás sincronizado (mismo timestamp)".to_string())
+                    SyncAction::PushLocal => {
+                        // EL LOCAL GANA - Subir al servidor
+                        let post_resp = client
+                            .post(&server_url)
+                            .json(&local_backup)
+                            .send()
+                            .await
+                            .map_err(|e| format!("Error subiendo al servidor: {}", e))?;
+
+                        if post_resp.status().is_success() {
+                            config.last_updated = local_backup.last_updated.clone();
+                            state.config_repo.save(&config).map_err(|e| e.to_string())?;
+                            Ok(format!("Sincronización (PUSH): {}", reason))
+                        } else {
+                            Err(format!("El servidor rechazó el backup: {}", post_resp.status()))
+                        }
+                    }
+                    SyncAction::NoAction => Ok(reason),
+                    SyncAction::Conflict => Err("Conflicto detectado. Se requiere intervención manual.".to_string()),
                 }
             }
             Ok(resp) if resp.status() == 404 || resp.status() == 204 => {
@@ -130,16 +122,10 @@ pub async fn perform_sync_internal(app: &AppHandle, state: &AppState) -> Result<
                     state.config_repo.save(&config).map_err(|e| e.to_string())?;
                     Ok("Servidor inicializado con éxito".to_string())
                 } else {
-                    Err(format!(
-                        "Error inicializando servidor: {}",
-                        post_resp.status()
-                    ))
+                    Err(format!("Error inicializando servidor: {}", post_resp.status()))
                 }
             }
-            _ => {
-                // Falló la conexión o el servidor no responde bien
-                Err("No se pudo conectar con el servidor de sincronización. Verifica la URL y que el servidor de sincronización (Node.js) esté iniciado.".to_string())
-            }
+            _ => Err("No se pudo conectar con el servidor de sincronización.".to_string()),
         }
     })().await;
 
@@ -156,7 +142,7 @@ pub async fn perform_sync_internal(app: &AppHandle, state: &AppState) -> Result<
 }
 
 #[tauri::command]
-pub async fn pull_from_server(state: State<'_, AppState>) -> Result<String, String> {
+pub async fn pull_from_server(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<String, String> {
     let mut config = state.config_repo.get().map_err(|e| e.to_string())?;
 
     if config.sync_server_url.is_empty() {
@@ -187,6 +173,10 @@ pub async fn pull_from_server(state: State<'_, AppState>) -> Result<String, Stri
             // Actualizar last_updated local
             config.last_updated = remote_backup.last_updated;
             state.config_repo.save(&config).map_err(|e| e.to_string())?;
+
+            // Emitir evento de cambio de datos para que el frontend recargue
+            let _ = state.sync_trigger.notify_one();
+            let _ = app.emit("data-changed", ());
 
             Ok("Pull completado: Datos del servidor importados".to_string())
         }

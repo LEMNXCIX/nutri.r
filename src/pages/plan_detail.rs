@@ -314,7 +314,7 @@ pub fn PlanDetail() -> impl IntoView {
     });
 
     view! {
-        <div class="w-full font-sans pb-32">
+        <div class="w-full font-sans pb-48 md:pb-32">
             // -- HEADER SECTION --
             <header class="relative h-[60vh] w-full overflow-hidden">
                 <img
@@ -689,7 +689,7 @@ pub fn PlanDetail() -> impl IntoView {
             </section>
 
             // -- FOOTER ACTIONS --
-            <footer class="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-neutral-100 dark:border-neutral-800 z-[45]">
+            <footer class="fixed mobile-bottom-nav-offset left-0 right-0 p-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-neutral-100 dark:border-neutral-800 z-[45]">
                 <button
                     on:click=move |_| set_show_assign_modal.set(true)
                     class="w-full bg-accent py-5 flex items-center justify-center gap-3 active:scale-[0.98] transition-transform text-neutral-950"

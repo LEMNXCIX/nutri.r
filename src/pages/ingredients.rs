@@ -156,7 +156,7 @@ pub fn Ingredients() -> impl IntoView {
             </section>
 
             // -- FOOTER SELECTION STATUS --
-            <div class="fixed bottom-[74px] md:bottom-0 left-0 right-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-sm border-t border-neutral-100 dark:border-neutral-800 px-6 py-6 flex justify-between items-center z-50">
+            <div class="fixed mobile-bottom-nav-offset left-0 right-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-sm border-t border-neutral-100 dark:border-neutral-800 px-6 py-6 flex justify-between items-center z-50">
                 <div class="flex flex-col">
                      <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">"Estado"</span>
                     <span class="text-lg font-light tracking-tighter uppercase dark:text-white">

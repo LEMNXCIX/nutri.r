@@ -440,7 +440,8 @@ pub fn DailyView() -> impl IntoView {
         set_edit_feedback.set(String::new());
         set_preview_loading.set(true);
         spawn_local(async move {
-            match preview_recipe_edit(&entry.plan_id, &recipe_id, prompt).await {
+            let day_id = entry.day_id.clone().unwrap_or_default();
+            match preview_recipe_edit(&entry.plan_id, &recipe_id, &day_id, prompt).await {
                 Ok(preview) => {
                     set_edit_preview.set(Some(preview));
                 }
@@ -555,7 +556,7 @@ pub fn DailyView() -> impl IntoView {
     );
 
     view! {
-        <div class="bg-white dark:bg-background-dark text-black dark:text-white min-h-screen">
+        <div class="bg-white dark:bg-background-dark text-black dark:text-white min-h-full">
             <header class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-black dark:border-neutral-800 px-6 py-4 flex justify-between items-center">
                 <button
                     on:click=move |_| {

@@ -25,6 +25,7 @@ use wasm_bindgen::JsCast;
 
 #[component]
 pub fn App() -> impl IntoView {
+    crate::state::provide_app_context();
     let (toast_msg, set_toast_msg) = signal(String::new());
     let (is_error, set_is_error) = signal(false);
 
@@ -72,37 +73,17 @@ pub fn App() -> impl IntoView {
     });
 
     Effect::new(move |_| {
-        let cb = Closure::wrap(Box::new(move |_ev: web_sys::Event| {
-            leptos::task::spawn_local(async {
-                crate::tauri_bridge::log_trace(
-                    "NET: Connection restored, triggering sync".to_string(),
-                );
-                crate::tauri_bridge::auto_pull().await;
-                crate::tauri_bridge::auto_push().await;
-            });
-        }) as Box<dyn FnMut(_)>);
-
-        if let Some(win) = web_sys::window() {
-            let _ = win.add_event_listener_with_callback("online", cb.as_ref().unchecked_ref());
-            cb.forget();
-        }
-    });
-
-    Effect::new(move |_| {
         leptos::task::spawn_local(async {
-            // Do an immediate health check first so IS_API_ONLINE is accurate
-            // before any page data fetch happens, then start the periodic loop.
-            crate::tauri_bridge::check_health().await;
-            crate::tauri_bridge::start_health_check_loop().await;
+            // Initial auto-pull on startup
             crate::tauri_bridge::auto_pull().await;
         });
     });
 
     view! {
         <Router>
-            <div class="min-h-screen bg-white text-neutral-950 dark:bg-background-dark dark:text-white selection:bg-accent selection:text-neutral-950">
+            <div class="flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden bg-white text-neutral-950 dark:bg-background-dark dark:text-white selection:bg-accent selection:text-neutral-950">
                 <Navbar />
-                <main class="w-full pb-32 md:pb-0">
+                <main class="native-app-scroll min-h-0 w-full flex-1 pb-32 md:pb-0">
                     <Routes fallback=|| "Not Found">
                         <Route path=path!("/") view=Home />
                         <Route path=path!("/add") view=Add />

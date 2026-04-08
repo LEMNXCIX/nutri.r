@@ -10,6 +10,8 @@ use leptos_router::hooks::use_location;
 #[component]
 pub fn Navbar() -> impl IntoView {
     let location = use_location();
+    let ctx = crate::state::use_app_context();
+    let is_online = ctx.is_online;
 
     let toggle_dark = move |_| {
         let next_theme = crate::theme::toggle_theme();
@@ -25,13 +27,15 @@ pub fn Navbar() -> impl IntoView {
 
     view! {
         // ── Desktop top navbar (hidden on mobile) ──────────────────────
-        <header class="hidden md:flex items-center justify-between px-6 py-5 sticky top-0 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md z-40 border-b border-neutral-200/50 dark:border-neutral-800/50">
+        <header class="hidden md:flex shrink-0 items-center justify-between px-6 py-5 sticky top-0 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md z-40 border-b border-neutral-200/50 dark:border-neutral-800/50">
             // Brand / left section
             <div class="flex items-center gap-4 flex-1">
                 <div class="flex flex-col">
-                    <div class="text-[10px] font-bold tracking-[0.2em] uppercase">"Estado: Óptimo"</div>
+                    <div class="text-[10px] font-bold tracking-[0.2em] uppercase transition-colors">
+                        {move || if is_online.get() { "Estado: Sincronizado" } else { "Estado: Modo Local" }}
+                    </div>
                     <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="h-[1px] w-3 bg-primary"></span>
+                        <span class=move || format!("h-[1px] w-3 transition-colors {}", if is_online.get() { "bg-primary" } else { "bg-neutral-400" })></span>
                         <span class="text-[7px] font-black text-neutral-400 uppercase tracking-[0.5em]">"nutri.r"</span>
                     </div>
                 </div>
@@ -64,7 +68,7 @@ pub fn Navbar() -> impl IntoView {
         </header>
 
         // ── Mobile top bar (hidden on desktop) ─────────────────────────
-        <header class="md:hidden pt-safe flex items-center justify-between px-5 py-3 sticky top-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl z-40 border-b border-neutral-200/30 dark:border-neutral-800/30">
+        <header class="md:hidden shrink-0 pt-safe flex items-center justify-between px-5 py-3 sticky top-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl z-40 border-b border-neutral-200/30 dark:border-neutral-800/30">
             <div class="flex flex-col">
                 <div class="text-xs font-bold font-extrabold leading-[0.9] tracking-tighter uppercase">"nutri.r"</div>
                 // <div class="flex items-center gap-1.5 mt-0.5">
@@ -88,7 +92,7 @@ pub fn Navbar() -> impl IntoView {
         </header>
 
         // ── Mobile bottom navbar (hidden on desktop) ───────────────────
-        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl border-t border-neutral-200/30 dark:border-neutral-800/30 px-6 pb-10 pt-4 pb-safe z-40">
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-xl border-t border-neutral-200/30 dark:border-neutral-800/30 px-6 pb-10 pt-4 pb-safe z-40 shadow-[0_-12px_24px_rgba(15,23,42,0.08)] dark:shadow-[0_-12px_24px_rgba(0,0,0,0.28)]">
             <div class="flex items-center justify-between max-w-md mx-auto relative">
                 <BottomNavLink
                     href="/"

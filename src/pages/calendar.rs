@@ -85,10 +85,7 @@ pub fn Calendar() -> impl IntoView {
     };
 
     view! {
-        <div class="bg-white dark:bg-background-dark min-h-screen font-sans text-black dark:text-white flex flex-col pb-32">
-            // Spacer for notch/status bar area
-            <div class="h-12 w-full bg-white dark:bg-background-dark"></div>
-
+        <div class="bg-white dark:bg-background-dark min-h-full font-sans text-black dark:text-white flex flex-col pb-32">
             <header class="px-6 py-6 border-b border-hairline dark:border-neutral-800">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-2">
@@ -126,7 +123,7 @@ pub fn Calendar() -> impl IntoView {
                 </h1>
             </header>
 
-            <main class="flex-1">
+            <main class="min-h-0 flex-1">
                 <div class="grid grid-cols-7 border-b border-hairline dark:border-neutral-800 bg-zinc-50 dark:bg-neutral-900">
                     {vec!["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].into_iter().map(|day| view! {
                         <div class="py-3 text-center text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{day}</div>

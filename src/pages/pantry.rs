@@ -115,7 +115,7 @@ pub fn Pantry() -> impl IntoView {
     let is_creating = move || show_add_form.get() && item_to_edit.get().is_none();
 
     view! {
-        <div class="w-full font-sans pb-32 bg-white dark:bg-background-dark min-h-screen">
+        <div class="w-full font-sans pb-32 bg-white dark:bg-background-dark min-h-full">
             // -- SECCIÓN DE CABECERA --
             <section class="max-w-4xl mx-auto px-8 pt-16 pb-12">
                 <div class="flex items-center gap-3 mb-6">

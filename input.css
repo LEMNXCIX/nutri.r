@@ -23,8 +23,11 @@
     }
 
     html {
+        height: 100%;
+        width: 100%;
         background-color: #FFFFFF;
         color-scheme: light;
+        overscroll-behavior: none;
     }
 
     html.dark {
@@ -34,7 +37,13 @@
 
     body {
         @apply bg-white text-neutral-950 font-sans antialiased;
-        min-height: max(884px, 100dvh);
+        min-height: 100dvh;
+        height: 100dvh;
+        width: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x pan-y;
     }
 
     .dark body {
@@ -97,6 +106,10 @@
     select,
     textarea {
         @apply border-black border px-3 py-2 text-xs focus:ring-0 focus:border-accent outline-none appearance-none bg-transparent;
+    }
+
+    body > * {
+        min-height: 0;
     }
 }
 
@@ -246,5 +259,24 @@
 
     .shadow-brutalist {
         box-shadow: 4px 4px 0 0 #0a0a0a;
+    }
+
+    .native-app-scroll {
+        height: 100%;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .mobile-bottom-nav-offset {
+        bottom: calc(5rem + env(safe-area-inset-bottom));
+    }
+}
+
+@media (min-width: 768px) {
+    .mobile-bottom-nav-offset {
+        bottom: 0;
     }
 }

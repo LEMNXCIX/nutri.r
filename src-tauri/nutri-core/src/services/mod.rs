@@ -12,6 +12,7 @@ pub mod plan_service;
 pub mod search_service;
 pub mod shopping_service;
 pub mod statistics_service;
+pub mod sync_service;
 pub mod tag_service;
 
 pub use achievement_service::AchievementService;
@@ -28,4 +29,5 @@ pub use plan_service::PlanService;
 pub use search_service::SearchService;
 pub use shopping_service::ShoppingListService;
 pub use statistics_service::StatisticsService;
+pub use sync_service::{SyncAction, SyncService};
 pub use tag_service::TagService;

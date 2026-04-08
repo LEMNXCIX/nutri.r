@@ -1,3 +1,6 @@
+use crate::api;
+use crate::tauri::{self, invoke, is_tauri};
+pub use crate::types::*;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -6,563 +9,36 @@ use wasm_bindgen::prelude::*;
 static DEBUG_LOGS: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
 static IS_API_ONLINE: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(true));
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct PlanMetadata {
-    pub plan_id: String,
-    #[serde(default)]
-    pub display_name: Option<String>,
-    pub is_favorite: bool,
-    pub rating: Option<u8>,
-    pub notes: String,
-    pub tags: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct PlanIndex {
-    pub id: String,
-    #[serde(default)]
-    pub fecha: String,
-    #[serde(default)]
-    pub created_at: Option<String>,
-    #[serde(default)]
-    pub display_name: Option<String>,
-    pub proteinas: Vec<String>,
-    pub enviado: bool,
-    #[serde(default)]
-    pub is_favorite: bool,
-    #[serde(default)]
-    pub rating: Option<u8>,
-    #[serde(default)]
-    pub weekly_structure: Option<Vec<WeeklyMealInfo>>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct WeeklyMealInfo {
-    pub day_index: u8,
-    pub meal_type: String,
-    pub description: Option<String>,
-    #[serde(default)]
-    pub day_id: Option<String>,
-    #[serde(default)]
-    pub recipe_id: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct StructuredPlan {
-    pub title: String,
-    pub instructions: Option<String>,
-    pub days: Vec<StructuredDay>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct StructuredDay {
-    pub day_id: String,
-    pub day_index: u8,
-    pub label: String,
-    pub recipes: Vec<StructuredRecipe>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct StructuredRecipe {
-    pub recipe_id: String,
-    pub meal_type: MealType,
-    pub name: String,
-    pub ingredients: Vec<String>,
-    pub instructions: Vec<String>,
-    pub notes: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct RecipeSuggestion {
-    pub plan_id: String,
-    pub day_id: String,
-    pub recipe_id: String,
-    pub original_recipe: StructuredRecipe,
-    pub suggested_recipe: StructuredRecipe,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct PlanDetail {
-    pub id: String,
-    pub markdown_content: String,
-    #[serde(default)]
-    pub structured_plan: Option<StructuredPlan>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct AppConfig {
-    pub smtp_host: String,
-    pub smtp_port: u16,
-    pub smtp_user: String,
-    pub smtp_password: String,
-    pub smtp_to: String,
-    pub prompt_maestro: String,
-    pub ollama_model: String,
-    pub ollama_url: String,
-    pub usda_api_key: String,
-    pub sync_server_url: String,
-    pub last_updated: String,
-    pub auto_generate_plan: bool,
-    pub cron_expression: String,
-    pub default_meal_type: MealType,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct UIPreferences {
-    pub theme: String,
-    pub primary_color: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct Achievement {
-    pub id: String,
-    pub title: String,
-    pub description: String,
-    pub icon: String,
-    pub unlocked_at: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct OllamaModel {
-    pub name: String,
-    pub modified_at: String,
-    pub size: i64,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-pub struct ExcludedIngredients {
-    pub ingredients: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct IngredientStats {
-    pub name: String,
-    pub count: usize,
-    pub is_excluded: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct WaterRecord {
-    pub current: f32,
-    pub target: f32,
-    pub last_updated: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "PascalCase")]
-pub enum SyncStatus {
-    Idle,
-    Syncing,
-    Success,
-    Error(String),
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ShoppingItem {
-    pub name: String,
-    pub category: String,
-    pub quantity: Option<String>,
-    #[serde(default)]
-    pub checked: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ShoppingList {
-    pub id: String,
-    pub plan_id: String,
-    pub created_at: String,
-    pub items: Vec<ShoppingItem>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-pub enum MealType {
-    #[default]
-    Breakfast,
-    Lunch,
-    Dinner,
-    Snack,
-}
-
-impl MealType {
-    pub fn display_name(&self) -> &'static str {
-        match self {
-            MealType::Breakfast => "Desayuno",
-            MealType::Lunch => "Almuerzo",
-            MealType::Dinner => "Cena",
-            MealType::Snack => "Snack",
-        }
-    }
-
-    pub fn key(&self) -> &'static str {
-        match self {
-            MealType::Breakfast => "breakfast",
-            MealType::Lunch => "lunch",
-            MealType::Dinner => "dinner",
-            MealType::Snack => "snack",
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct CalendarEntry {
-    pub date: String,
-    pub meal_type: MealType,
-    pub plan_id: String,
-    #[serde(default)]
-    pub assignment_id: Option<String>,
-    #[serde(default)]
-    pub plan_day_index: Option<u8>,
-    #[serde(default)]
-    pub recipe_id: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct NutritionalInfo {
-    pub calories: f32,
-    pub protein: f32,
-    pub carbohydrates: f32,
-    pub fat: f32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct PlanNutrition {
-    pub plan_id: String,
-    pub total_calories: f32,
-    pub total_protein: f32,
-    pub total_carbs: f32,
-    pub total_fat: f32,
-    pub breakdown_by_item: std::collections::HashMap<String, NutritionalInfo>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
-pub enum VariationType {
-    Vegan,
-    Keto,
-    GlutenFree,
-    LowCarb,
-    HighProtein,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct Tag {
-    pub id: String,
-    pub name: String,
-    pub color: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct SearchFilters {
-    pub query: Option<String>,
-    pub only_favorites: bool,
-    pub min_rating: Option<u8>,
-    pub protein_contains: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct PantryItem {
-    pub id: String,
-    pub name: String,
-    pub quantity: f32,
-    pub unit: String,
-    pub expiration_date: Option<String>,
-    pub category: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-pub struct AppBackup {
-    pub version: String,
-    pub last_updated: String,
-    pub config: AppConfig,
-    pub plans: Vec<PlanIndex>,
-    pub plan_details: Vec<PlanDetail>,
-    pub metadata: Vec<PlanMetadata>,
-    pub tags: Vec<Tag>,
-    pub calendar: Vec<CalendarEntry>,
-    pub pantry: Vec<PantryItem>,
-    pub excluded_ingredients: ExcludedIngredients,
-    pub water: std::collections::HashMap<String, WaterRecord>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct Statistics {
-    pub total_plans: usize,
-    pub favorite_plans: usize,
-    pub recipes_count: usize,
-    pub ingredients_count: usize,
-    pub meal_distribution: std::collections::HashMap<String, usize>,
-    pub monthly_activity: Vec<MonthlyData>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct MonthlyData {
-    pub month: String,
-    pub count: usize,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IngredientTrend {
-    pub name: String,
-    pub count: usize,
-}
-
-// Internal arguments for invoke and fallback
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct PlanIdArgs {
-    pub plan_id: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct IdArgs {
-    pub id: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SetRatingArgs {
-    pub plan_id: String,
-    pub rating: u8,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SetNoteArgs {
-    pub plan_id: String,
-    pub note: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SetDisplayNameArgs {
-    pub plan_id: String,
-    pub display_name: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SaveConfigArgs {
-    pub config: AppConfig,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SaveExcludedArgs {
-    pub ingredients: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ToggleExclusionArgs {
-    pub ingredient: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ToggleItemArgs {
-    pub plan_id: String,
-    pub item_name: String,
-    pub checked: bool,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SendEmailArgs {
-    pub plan_id: String,
-    pub target_email: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct PlanTagArgs {
-    pub plan_id: String,
-    pub tag_id: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct VariationArgs {
-    pub plan_id: String,
-    pub variation: VariationType,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SearchArgs {
-    pub filters: SearchFilters,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CreateTagArgs {
-    pub name: String,
-    pub color: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct PantryItemArgs {
-    pub item: PantryItem,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ImportDataArgs {
-    pub backup: AppBackup,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SavePreferencesArgs {
-    pub preferences: UIPreferences,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct GetWaterArgs {
-    pub date: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct UpdateWaterArgs {
-    pub date: String,
-    pub current: f32,
-    pub target: f32,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct GetWaterHistoryArgs {
-    pub start_date: String,
-    pub end_date: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct GetRangeArgs {
-    #[serde(rename = "startDate")]
-    pub start_date: String,
-    #[serde(rename = "endDate")]
-    pub end_date: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct AssignPlanArgs {
-    pub date: String,
-    pub meal_type: MealType,
-    pub plan_id: String,
-    pub recipe_id: Option<String>,
-    pub plan_day_index: Option<u8>,
-    pub assignment_id: Option<String>,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct AssignWeeklyPlanArgs {
-    pub start_date: String,
-    pub plan_id: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct RemoveEntryArgs {
-    pub date: String,
-    pub meal_type: MealType,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct RecipeSuggestionArgs {
-    pub plan_id: String,
-    pub recipe_id: String,
-    pub prompt: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ApplyRecipeEditArgs {
-    pub plan_id: String,
-    pub recipe_id: String,
-    pub recipe: StructuredRecipe,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SwapEntriesArgs {
-    pub first_date: String,
-    pub first_meal_type: MealType,
-    pub second_date: String,
-    pub second_meal_type: MealType,
-}
-
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(js_namespace = ["window","__TAURI__","core"], catch)]
-    async fn invoke(cmd: &str, args: JsValue) -> Result<JsValue, JsValue>;
-}
-
-pub fn is_tauri() -> bool {
-    #[cfg(target_arch = "wasm32")]
-    {
-        if let Some(window) = web_sys::window() {
-            if let Ok(tauri) = js_sys::Reflect::get(&window, &"__TAURI__".into()) {
-                return !tauri.is_undefined() && !tauri.is_null();
-            }
-        }
-    }
-    false
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
 }
 
 pub fn log_trace(msg: String) {
+    #[cfg(target_arch = "wasm32")]
+    log(&msg);
+
     if let Ok(mut logs) = DEBUG_LOGS.lock() {
-        let logs: &mut Vec<String> = &mut *logs;
         logs.push(msg.clone());
         if logs.len() > 100 {
             logs.remove(0);
         }
     }
 
-    // Diagnostic console log for the developer
-    web_sys::console::debug_1(&JsValue::from_str(&format!("[DEBUG_LOG] {}", msg)));
-
     if let Some(window) = web_sys::window() {
-        let init = web_sys::CustomEventInit::new();
-        init.set_detail(&JsValue::from_str(&msg));
-        init.set_bubbles(true);
-        if let Ok(event) = web_sys::CustomEvent::new_with_event_init_dict("debug-log", &init) {
+        if let Ok(event) = web_sys::CustomEvent::new_with_event_init_dict("debug-log", &{
+            let init = web_sys::CustomEventInit::new();
+            init.set_detail(&JsValue::from_str(&msg));
+            init
+        }) {
             let _ = window.dispatch_event(&event);
         }
     }
-    log::info!("[TRACE] {}", msg);
 }
 
 pub fn get_debug_logs() -> Vec<String> {
     if let Ok(logs) = DEBUG_LOGS.lock() {
-        let logs: &Vec<String> = &*logs;
         logs.clone()
     } else {
         Vec::new()
@@ -571,782 +47,8 @@ pub fn get_debug_logs() -> Vec<String> {
 
 pub fn clear_debug_logs() {
     if let Ok(mut logs) = DEBUG_LOGS.lock() {
-        let logs: &mut Vec<String> = &mut *logs;
         logs.clear();
     }
-}
-
-async fn call_api_fallback(cmd: &str, args: JsValue, api_base: &str) -> Result<JsValue, String> {
-    let client = reqwest::Client::new();
-    log::info!(
-        "Fallback API: Ejecutando comando '{}' contra '{}'",
-        cmd,
-        api_base
-    );
-
-    match cmd {
-        "get_config" => {
-            let res = client
-                .get(format!("{}/config", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let config = res.json::<AppConfig>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&config).map_err(|e| e.to_string())
-        }
-        "save_config" => {
-            let save_args: SaveConfigArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/config", api_base))
-                .json(&save_args.config)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "get_index" => {
-            let res = client
-                .get(format!("{}/plans", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let index = res
-                .json::<Vec<PlanIndex>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&index).map_err(|e| e.to_string())
-        }
-        "get_plan_content" => {
-            let id_args: IdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .get(format!("{}/plans/{}", api_base, id_args.id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let content = res.json::<String>().await.map_err(|e| e.to_string())?;
-            Ok(JsValue::from_str(&content))
-        }
-        "get_plan_detail" => {
-            let id_args: IdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .get(format!("{}/plans/{}/detail", api_base, id_args.id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let detail = res.json::<PlanDetail>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&detail).map_err(|e| e.to_string())
-        }
-        "delete_plan" => {
-            let id_args: IdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .delete(format!("{}/plans/{}", api_base, id_args.id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "generate_week" => {
-            let res = client
-                .post(format!("{}/plans/generate", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let id = res.json::<String>().await.map_err(|e| e.to_string())?;
-            Ok(JsValue::from_str(&id))
-        }
-        "get_favorite_plans" => {
-            let res = client
-                .get(format!("{}/plans/favorites", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let plans = res
-                .json::<Vec<PlanIndex>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&plans).map_err(|e| e.to_string())
-        }
-        "toggle_favorite" => {
-            let fav_args: PlanIdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .post(format!("{}/plans/{}/favorite", api_base, fav_args.plan_id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let is_fav = res.json::<bool>().await.map_err(|e| e.to_string())?;
-            Ok(JsValue::from_bool(is_fav))
-        }
-        "get_plan_metadata" => {
-            let meta_args: PlanIdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .get(format!("{}/plans/{}/metadata", api_base, meta_args.plan_id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let meta = res
-                .json::<PlanMetadata>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&meta).map_err(|e| e.to_string())
-        }
-        "set_plan_rating" => {
-            let rate_args: SetRatingArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/plans/{}/rating", api_base, rate_args.plan_id))
-                .json(&rate_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "set_plan_note" => {
-            let note_args: SetNoteArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/plans/{}/note", api_base, note_args.plan_id))
-                .json(&note_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "set_plan_display_name" => {
-            let display_name_args: SetDisplayNameArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!(
-                    "{}/plans/{}/display-name",
-                    api_base, display_name_args.plan_id
-                ))
-                .json(&display_name_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "generate_shopping_list" => {
-            let shop_args: PlanIdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .post(format!("{}/shopping/{}", api_base, shop_args.plan_id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let list = res
-                .json::<ShoppingList>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&list).map_err(|e| e.to_string())
-        }
-        "get_shopping_list" => {
-            let shop_args: PlanIdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .get(format!("{}/shopping/{}", api_base, shop_args.plan_id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let list = res
-                .json::<Option<ShoppingList>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&list).map_err(|e| e.to_string())
-        }
-        "toggle_shopping_item" => {
-            let item_args: ToggleItemArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!(
-                    "{}/shopping/{}/toggle",
-                    api_base, item_args.plan_id
-                ))
-                .json(&item_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "get_calendar_range" => {
-            let range_args: GetRangeArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let url = format!(
-                "{}/calendar?startDate={}&endDate={}",
-                api_base, range_args.start_date, range_args.end_date
-            );
-            let res = client.get(url).send().await.map_err(|e| e.to_string())?;
-            let entries = res
-                .json::<Vec<CalendarEntry>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&entries).map_err(|e| e.to_string())
-        }
-        "assign_plan_to_date" => {
-            let assign_args: AssignPlanArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/calendar", api_base))
-                .json(&assign_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "assign_weekly_plan_to_date" => {
-            let assign_args: AssignWeeklyPlanArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/calendar/weekly", api_base))
-                .json(&assign_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "remove_calendar_entry" => {
-            let rem_args: RemoveEntryArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .delete(format!("{}/calendar", api_base))
-                .json(&rem_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "swap_calendar_entries" => {
-            let swap_args: SwapEntriesArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/calendar/swap", api_base))
-                .json(&swap_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "get_water_intake" => {
-            let water_args: GetWaterArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .get(format!("{}/water/{}", api_base, water_args.date))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let record = res.json::<WaterRecord>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&record).map_err(|e| e.to_string())
-        }
-        "update_water_intake" => {
-            let water_args: UpdateWaterArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/water/{}", api_base, water_args.date))
-                .json(&water_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "get_water_history" => {
-            let hist_args: GetWaterHistoryArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let url = format!(
-                "{}/water/history?startDate={}&endDate={}",
-                api_base, hist_args.start_date, hist_args.end_date
-            );
-            let res = client.get(url).send().await.map_err(|e| e.to_string())?;
-            let history = res
-                .json::<std::collections::HashMap<String, WaterRecord>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&history).map_err(|e| e.to_string())
-        }
-        "get_statistics" => {
-            let res = client
-                .get(format!("{}/stats", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let stats = res.json::<Statistics>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&stats).map_err(|e| e.to_string())
-        }
-        "get_ingredient_trends" => {
-            let res = client
-                .get(format!("{}/stats/trends", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let trends = res
-                .json::<Vec<IngredientTrend>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&trends).map_err(|e| e.to_string())
-        }
-        "calculate_nutrition" => {
-            let nut_args: PlanIdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .get(format!("{}/plans/{}/nutrition", api_base, nut_args.plan_id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let nutrition = res
-                .json::<PlanNutrition>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&nutrition).map_err(|e| e.to_string())
-        }
-        "generate_variation" => {
-            let var_args: VariationArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .post(format!("{}/plans/{}/variation", api_base, var_args.plan_id))
-                .json(&var_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let content = res.json::<String>().await.map_err(|e| e.to_string())?;
-            Ok(JsValue::from_str(&content))
-        }
-        "preview_recipe_edit" => {
-            let edit_args: RecipeSuggestionArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .post(format!(
-                    "{}/plans/{}/recipes/{}/suggestion",
-                    api_base, edit_args.plan_id, edit_args.recipe_id
-                ))
-                .json(&serde_json::json!({ "prompt": edit_args.prompt }))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let suggestion = res
-                .json::<RecipeSuggestion>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&suggestion).map_err(|e| e.to_string())
-        }
-        "apply_recipe_edit" => {
-            let edit_args: ApplyRecipeEditArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .patch(format!(
-                    "{}/plans/{}/recipes/{}",
-                    api_base, edit_args.plan_id, edit_args.recipe_id
-                ))
-                .json(&serde_json::json!({ "recipe": edit_args.recipe }))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let detail = res.json::<PlanDetail>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&detail).map_err(|e| e.to_string())
-        }
-        "search_plans" => {
-            let search_args: SearchArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .post(format!("{}/plans/search", api_base))
-                .json(&search_args.filters)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let plans = res
-                .json::<Vec<PlanIndex>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&plans).map_err(|e| e.to_string())
-        }
-        "get_all_tags" => {
-            let res = client
-                .get(format!("{}/tags", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let tags = res.json::<Vec<Tag>>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&tags).map_err(|e| e.to_string())
-        }
-        "create_tag" => {
-            let tag_args: CreateTagArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .post(format!("{}/tags", api_base))
-                .json(&tag_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let tag = res.json::<Tag>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&tag).map_err(|e| e.to_string())
-        }
-        "delete_tag" => {
-            let tag_args: IdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .delete(format!("{}/tags/{}", api_base, tag_args.id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "add_tag_to_plan" => {
-            let tag_args: PlanTagArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!(
-                    "{}/tags/{}/{}",
-                    api_base, tag_args.plan_id, tag_args.tag_id
-                ))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "remove_tag_from_plan" => {
-            let tag_args: PlanTagArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .delete(format!(
-                    "{}/tags/{}/{}",
-                    api_base, tag_args.plan_id, tag_args.tag_id
-                ))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "get_pantry_items" => {
-            let res = client
-                .get(format!("{}/pantry", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let items = res
-                .json::<Vec<PantryItem>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&items).map_err(|e| e.to_string())
-        }
-        "add_pantry_item" => {
-            let item_args: PantryItemArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/pantry", api_base))
-                .json(&item_args.item)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "update_pantry_item" => {
-            let item_args: PantryItemArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .put(format!("{}/pantry", api_base))
-                .json(&item_args.item)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "delete_pantry_item" => {
-            let id_args: IdArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .delete(format!("{}/pantry/{}", api_base, id_args.id))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "export_data" => {
-            let res = client
-                .get(format!("{}/backup/export", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let backup = res.json::<AppBackup>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&backup).map_err(|e| e.to_string())
-        }
-        "import_data" => {
-            let import_args: ImportDataArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/backup/import", api_base))
-                .json(&import_args.backup)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "get_achievements" => {
-            let res = client
-                .get(format!("{}/achievements", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let achievements = res
-                .json::<Vec<Achievement>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&achievements).map_err(|e| e.to_string())
-        }
-        "get_ui_preferences" => {
-            let res = client
-                .get(format!("{}/preferences", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let prefs = res
-                .json::<UIPreferences>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&prefs).map_err(|e| e.to_string())
-        }
-        "save_ui_preferences" => {
-            let pref_args: SavePreferencesArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/preferences", api_base))
-                .json(&pref_args.preferences)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "send_plan_email" => {
-            let email_args: SendEmailArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/email/send", api_base))
-                .json(&email_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "perform_sync" => {
-            let res = client
-                .post(format!("{}/sync", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let status = res.json::<String>().await.map_err(|e| e.to_string())?;
-            Ok(JsValue::from_str(&status))
-        }
-        "pull_from_server" => {
-            let res = client
-                .post(format!("{}/sync/pull", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let status = res.json::<String>().await.map_err(|e| e.to_string())?;
-            Ok(JsValue::from_str(&status))
-        }
-        "push_to_server" => {
-            let res = client
-                .post(format!("{}/sync/push", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let status = res.json::<String>().await.map_err(|e| e.to_string())?;
-            Ok(JsValue::from_str(&status))
-        }
-        "get_sync_status" => {
-            let res = client
-                .get(format!("{}/sync/status", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let status = res.json::<SyncStatus>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&status).map_err(|e| e.to_string())
-        }
-        "get_excluded_ingredients" => {
-            let res = client
-                .get(format!("{}/ingredients/excluded", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let ingredients = res.json::<Vec<String>>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&ingredients).map_err(|e| e.to_string())
-        }
-        "save_excluded_ingredients" => {
-            let excl_args: SaveExcludedArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            client
-                .post(format!("{}/ingredients/excluded", api_base))
-                .json(&excl_args.ingredients)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            Ok(JsValue::NULL)
-        }
-        "get_ingredient_stats" => {
-            let res = client
-                .get(format!("{}/ingredients/stats", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let stats = res
-                .json::<Vec<IngredientStats>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&stats).map_err(|e| e.to_string())
-        }
-        "toggle_ingredient_exclusion" => {
-            let excl_args: ToggleExclusionArgs =
-                serde_wasm_bindgen::from_value(args).map_err(|e| e.to_string())?;
-            let res = client
-                .post(format!("{}/ingredients/toggle", api_base))
-                .json(&excl_args)
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let ingredients = res.json::<Vec<String>>().await.map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&ingredients).map_err(|e| e.to_string())
-        }
-        "list_ollama_models" => {
-            let res = client
-                .get(format!("{}/ollama/models", api_base))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            let models = res
-                .json::<Vec<OllamaModel>>()
-                .await
-                .map_err(|e| e.to_string())?;
-            serde_wasm_bindgen::to_value(&models).map_err(|e| e.to_string())
-        }
-        _ => {
-            let err_msg = format!("Command '{}' not implemented for web fallback", cmd);
-            log::warn!("{}", err_msg);
-            Err(err_msg)
-        }
-    }
-}
-
-pub async fn check_endpoint(url: &str) -> Result<(), String> {
-    log_trace(format!("CHECK_ENDPOINT: {}", url));
-    let client = reqwest::Client::builder()
-        .build()
-        .map_err(|e: reqwest::Error| e.to_string())?;
-
-    match client.get(url).send().await {
-        Ok(res) => {
-            let status = res.status();
-            log_trace(format!("CHECK_RES: {} -> {}", url, status));
-            if status.is_success() {
-                Ok(())
-            } else {
-                Err(format!(
-                    "Servidor alcanzado pero devolvió error: {}",
-                    status
-                ))
-            }
-        }
-        Err(e) => {
-            let e: reqwest::Error = e;
-            let msg = e.to_string();
-            log_trace(format!("CHECK_ERR: {} -> {}", url, msg));
-            if msg.contains("Failed to fetch") || msg.contains("NetworkError") {
-                Err("No se pudo conectar al servidor. Verifica la IP, el puerto y que no haya un firewall bloqueando la conexión.".to_string())
-            } else {
-                Err(format!("Error de red: {}", msg))
-            }
-        }
-    }
-}
-
-async fn get_api_base_url() -> String {
-    if is_tauri() {
-        if let Ok(config_js) = invoke("get_config", JsValue::NULL).await {
-            if let Ok(config) = serde_wasm_bindgen::from_value::<AppConfig>(config_js) {
-                if !config.sync_server_url.is_empty() {
-                    let mut base = config.sync_server_url.trim_end_matches('/').to_string();
-                    if base.ends_with("/api/sync") {
-                        base = base.replace("/api/sync", "/api");
-                    } else if !base.contains("/api") {
-                        base = format!("{}/api", base);
-                    }
-                    return base;
-                }
-            }
-        }
-    }
-    // // Web
-    // if let Some(window) = web_sys::window() {
-    //     if let Ok(origin) = window.location().origin() {
-    //         if !origin.is_empty() && origin != "null" {
-    //             return format!("{}/api", origin);
-    //         }
-    //     }
-    // }
-    "http://localhost:3001/api".to_string()
-}
-
-pub async fn check_health() -> bool {
-    let api_base = get_api_base_url().await;
-    let url = format!("{}/health", api_base);
-    log_trace(format!("HEALTH_CHECK: {}", url));
-
-    let client = reqwest::Client::new();
-
-    let is_online = match client.get(&url).send().await {
-        Ok(res) => {
-            let ok = res.status().is_success();
-            log_trace(format!("HEALTH_RES: {} -> {}", url, ok));
-            ok
-        }
-        Err(e) => {
-            log_trace(format!("HEALTH_ERR: {} -> {}", url, e));
-            false
-        }
-    };
-
-    if let Ok(mut health) = IS_API_ONLINE.lock() {
-        *health = is_online;
-    }
-
-    is_online
-}
-
-pub async fn start_health_check_loop() {
-    log_trace("NET: Starting health check background loop".to_string());
-    leptos::task::spawn_local(async {
-        loop {
-            // Check health every 30 seconds
-            let _ = check_health().await;
-            gloo_timers::future::sleep(std::time::Duration::from_secs(30)).await;
-        }
-    });
-}
-
-pub async fn auto_pull() {
-    log_trace("SYNC: Auto Pull Starting...".to_string());
-    match safe_invoke("pull_from_server", JsValue::NULL).await {
-        Ok(_) => log_trace("SYNC: Auto Pull OK".to_string()),
-        Err(e) => log_trace(format!("SYNC: Auto Pull Failed: {}", e)),
-    }
-}
-
-pub async fn auto_push() {
-    run_auto_push().await;
-}
-
-async fn run_auto_push() {
-    log_trace("SYNC: Auto Push Starting...".to_string());
-    match safe_invoke("push_to_server", JsValue::NULL).await {
-        Ok(_) => log_trace("SYNC: Auto Push OK".to_string()),
-        Err(e) => log_trace(format!("SYNC: Auto Push Failed: {}", e)),
-    }
-}
-
-fn schedule_auto_push() {
-    leptos::task::spawn_local(run_auto_push());
 }
 
 async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
@@ -1372,7 +74,7 @@ async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
             || cmd.starts_with("clear_"));
 
     // If we are in Tauri (Desktop/Mobile), verify if we are in mobile to force API
-    if use_tauri && !is_config_cmd {
+    if use_tauri && !is_config_cmd && !is_sync_cmd {
         match invoke("is_mobile", JsValue::NULL).await {
             Ok(js_val) => {
                 if js_val.as_bool().unwrap_or(false) {
@@ -1381,6 +83,13 @@ async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
             }
             Err(_) => {}
         }
+    }
+
+    // Unified Write Strategy for Tauri environments (Desktop/Mobile)
+    // We ALWAYS write to the local store first to ensure offline data is up-to-date.
+    if is_tauri() && is_write && !is_config_cmd {
+        log_trace(format!("WRITE_LOCAL_FIRST: Persisting {} to local store", cmd));
+        let _ = invoke(cmd, args.clone()).await;
     }
 
     log_trace(format!("SAFE_INVOKE: {} (T_PREV: {})", cmd, use_tauri));
@@ -1395,14 +104,13 @@ async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
     } else {
         let api_base = get_api_base_url().await;
 
-        // Use cached health status
         let is_online = if let Ok(health) = IS_API_ONLINE.lock() {
             *health
         } else {
             true
         };
 
-        if !is_config_cmd && !is_sync_cmd && !is_online {
+        if !is_config_cmd && !is_online {
             log_trace(format!(
                 "FALLBACK: API marked as OFFLINE, skipping health check for {}",
                 cmd
@@ -1411,9 +119,8 @@ async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
         }
 
         log_trace(format!("REQ: {} a {}", cmd, api_base));
-        let res = call_api_fallback(cmd, args.clone(), &api_base).await;
+        let res = api::call_api_fallback(cmd, args.clone(), &api_base).await;
 
-        // Update health status based on result
         match &res {
             Ok(_) => {
                 log_trace(format!("RES: {} -> OK", cmd));
@@ -1438,7 +145,6 @@ async fn safe_invoke(cmd: &str, args: JsValue) -> Result<JsValue, String> {
         res
     };
 
-    // Unified auto_push for all successful write operations
     if res.is_ok() && is_write {
         schedule_auto_push();
     }
@@ -1921,10 +627,12 @@ pub async fn generate_variation(plan_id: &str, variation: VariationType) -> Resu
 pub async fn preview_recipe_edit(
     plan_id: &str,
     recipe_id: &str,
+    day_id: &str,
     prompt: String,
 ) -> Result<RecipeSuggestion, String> {
     let args = RecipeSuggestionArgs {
         plan_id: plan_id.to_string(),
+        day_id: day_id.to_string(),
         recipe_id: recipe_id.to_string(),
         prompt,
     };
@@ -2131,4 +839,105 @@ pub async fn get_water_history(
 pub async fn get_sync_status() -> Result<SyncStatus, String> {
     let res = safe_invoke("get_sync_status", JsValue::NULL).await;
     serde_wasm_bindgen::from_value(res.map_err(|e| e)?).map_err(|e| e.to_string())
+}
+
+pub async fn check_health() -> bool {
+    let api_base = get_api_base_url().await;
+    let url = format!("{}/health", api_base);
+    log_trace(format!("HEALTH_CHECK: {}", url));
+
+    let client = reqwest::Client::new();
+
+    let is_online = match client.get(&url).send().await {
+        Ok(res) => {
+            let ok = res.status().is_success();
+            log_trace(format!("HEALTH_RES: {} -> {}", url, ok));
+            ok
+        }
+        Err(e) => {
+            log_trace(format!("HEALTH_ERR: {} -> {}", url, e));
+            false
+        }
+    };
+
+    if let Ok(mut health) = IS_API_ONLINE.lock() {
+        *health = is_online;
+    }
+
+    is_online
+}
+
+pub async fn start_health_check_loop() {
+    log_trace("NET: Starting health check background loop".to_string());
+    leptos::task::spawn_local(async {
+        loop {
+            // Check health every 30 seconds
+            let _ = check_health().await;
+            gloo_timers::future::sleep(std::time::Duration::from_secs(30)).await;
+        }
+    });
+}
+
+pub async fn auto_pull() {
+    log_trace("SYNC: Auto Pull Starting...".to_string());
+    match safe_invoke("pull_from_server", JsValue::NULL).await {
+        Ok(_) => log_trace("SYNC: Auto Pull OK".to_string()),
+        Err(e) => log_trace(format!("SYNC: Auto Pull Failed: {}", e)),
+    }
+}
+
+pub async fn auto_push() {
+    run_auto_push().await;
+}
+
+async fn run_auto_push() {
+    log_trace("SYNC: Auto Push Starting...".to_string());
+    match safe_invoke("push_to_server", JsValue::NULL).await {
+        Ok(_) => log_trace("SYNC: Auto Push OK".to_string()),
+        Err(e) => log_trace(format!("SYNC: Auto Push Failed: {}", e)),
+    }
+}
+
+fn schedule_auto_push() {
+    leptos::task::spawn_local(run_auto_push());
+}
+
+pub async fn check_endpoint(url: &str) -> Result<(), String> {
+    api::check_endpoint(url).await
+}
+
+async fn get_api_base_url() -> String {
+    if is_tauri() {
+        if let Ok(config_js) = invoke("get_config", JsValue::NULL).await {
+            if let Ok(config) = serde_wasm_bindgen::from_value::<AppConfig>(config_js) {
+                if !config.sync_server_url.is_empty() {
+                    let mut base = config.sync_server_url.trim_end_matches('/').to_string();
+                    if base.ends_with("/api/sync") {
+                        base = base.replace("/api/sync", "/api");
+                    } else if !base.contains("/api") {
+                        base = format!("{}/api", base);
+                    }
+                    return base;
+                }
+            }
+        }
+    }
+    "http://localhost:3001/api".to_string()
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SwapEntriesArgs {
+    pub first_date: String,
+    pub first_meal_type: MealType,
+    pub second_date: String,
+    pub second_meal_type: MealType,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApplyRecipeEditArgs {
+    pub plan_id: String,
+    pub recipe_id: String,
+    pub recipe: StructuredRecipe,
 }
